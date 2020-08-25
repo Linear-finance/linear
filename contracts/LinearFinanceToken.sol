@@ -24,7 +24,6 @@ contract LinearFinance is IERC20, LnErc20Handler {
     //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
-        require(amount > 0, "Require amount > 0");
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).add(amount));
         totalSupply = totalSupply.add(amount);
@@ -36,9 +35,8 @@ contract LinearFinance is IERC20, LnErc20Handler {
         _mint(account, amount);
     }
 
-   function _burn(address account, uint256 amount) internal {
+   function _burn(address account, uint256 amount) private {
         require(account != address(0), "ERC20: burn from the zero address");
-        require(amount > 0, "Require amount > 0");
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).sub(amount));
         totalSupply = totalSupply.sub(amount);
@@ -73,16 +71,16 @@ contract LinearFinance is IERC20, LnErc20Handler {
     address linaToken;
     mapping (address => StakingData[]) private stakesdata;
     uint private stakingEndTime = 1596805918;
-    uint private claimStartTime = stakingEndTime + 1 days;
+    uint private claimStartTime = stakingEndTime + 1 days; // set later
     uint256 internal constant MIN_STAKING_AMOUNT = 1e18;
 
-    uint256 public stakingRewardFactor = 1;
-    uint256 public constant stakingRewardDenominator = 10000;
+    uint256 public stakingRewardFactor = 10;
+    uint256 public constant stakingRewardDenominator = 100000;
 
     uint256 public accountStakingListLimit = 50;
 
     function staking(uint256 amount) public notPaused returns (bool) {
-        require(now < stakingEndTime, "Staking stage has end.");
+        require(block.timestamp < stakingEndTime, "Staking stage has end.");
         require(amount >= MIN_STAKING_AMOUNT, "Staking amount too small.");
         require(stakesdata[msg.sender].length < accountStakingListLimit, "Staking list out of limit.");
 
@@ -90,16 +88,16 @@ contract LinearFinance is IERC20, LnErc20Handler {
      
         StakingData memory skaking = StakingData({
             amount: amount,
-            staketime: now
+            staketime: block.timestamp
         });
         stakesdata[msg.sender].push(skaking);
 
-        emit Staking(msg.sender, amount, now);
+        emit Staking(msg.sender, amount, block.timestamp);
         return true;
     }
 
     function cancelStaking(uint256 amount) public notPaused returns (bool) {
-        require(now < stakingEndTime, "Staking stage has end.");
+        require(block.timestamp < stakingEndTime, "Staking stage has end.");
         require(amount > 0, "Invalid amount.");
 
         uint256 returnToken = amount;
@@ -124,18 +122,20 @@ contract LinearFinance is IERC20, LnErc20Handler {
     }
 
     function claim() public notPaused returns (bool) {
-        require(now > claimStartTime, "Too early to claim");
+        require(block.timestamp > claimStartTime, "Too early to claim");
         require(stakingRewardFactor > 0, "Need stakingRewardFactor > 0");
         
         uint256 total = 0;
         uint256 rewardSum = 0;
         StakingData[] memory stakes = stakesdata[msg.sender];
         require(stakes.length > 0, "Nothing to claim");
+        uint256 timesDelta = 1 days;
         for (uint256 i=0; i < stakes.length; i++) {
             uint256 amount = stakes[i].amount;
             total = total.add(amount); // principal
 
-            uint256 stakedays = (claimStartTime - stakes[i].staketime)/1 days;
+            uint256 stakedays = (claimStartTime.sub(stakes[i].staketime)) / timesDelta;
+            stakedays = 1;
             uint256 reward = amount.mul(stakedays).mul(stakingRewardFactor).div(stakingRewardDenominator);
             rewardSum = rewardSum.add(reward);
         }
@@ -157,6 +157,8 @@ contract LinearFinance is IERC20, LnErc20Handler {
     }
 
     function set_StakingPeriod(uint stakingendtime, uint claimstarttime) external onlyAdmin() {
+        require(claimstarttime > stakingendtime);
+
         stakingEndTime = stakingendtime;
         claimStartTime = claimstarttime;
     }

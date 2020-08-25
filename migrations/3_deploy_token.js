@@ -17,6 +17,7 @@ module.exports = function (deployer, network, accounts) {
     await deployer.link(SafeDecimalMath, LinearFinance);
     let lina = await deployer.deploy(LinearFinance, proxyErc20.address, tokenstorage.address, admin, "0");
 
+    await tokenstorage.setOperator(lina.address);
     await proxyErc20.setTarget(lina.address);
     await lina.setProxy(proxyErc20.address);
   });
