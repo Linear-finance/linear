@@ -1,14 +1,24 @@
 {
   "name": "linear-finance-token",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "linear finance token",
-  "main": "index.js",
+  "main": "truffle-config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },  
   "dependencies": {
-    "truffle": "^5.1.41"
+  },
+  "devDependencies": {
+    "ethers": "^5.0.8",
+    "fs": "0.0.1-security",
+    "solc": "^0.5.17",
+    "string-format": "^2.0.0",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.5"
   }
 }

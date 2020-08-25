@@ -1,18 +1,17 @@
 pragma solidity ^0.5.17;
 
-import "./LnAdmin.sol";
-import "./SelfDestructible.sol";
-import "./LnProxyImpl.sol";
-
+import "./SafeMath.sol";
 import "./SafeDecimalMath.sol";
 
+import "./LnAdmin.sol";
+import "./LnProxyImpl.sol";
 import "./LnTokenStorage.sol";
 
 contract LnErc20Handler is LnAdmin, LnProxyImpl {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
-    LnTokenStorage public tokenData;
+    LnTokenStorage public tokenStorage;
 
     string public name;
     string public symbol;
@@ -21,14 +20,14 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
 
     constructor(
         address payable _proxy,
-        LnTokenStorage _tokenData,
+        LnTokenStorage _tokenStorage,
         string memory _name,
         string memory _symbol,
         uint _totalSupply,
         uint8 _decimals,
-        address _owner
-    ) public LnAdmin(_owner) SelfDestructible() LnProxyImpl(_proxy) {
-        tokenData = _tokenData;
+        address _admin
+    ) public LnAdmin(_admin) LnProxyImpl(_proxy) {
+        tokenStorage = _tokenStorage;
 
         name = _name;
         symbol = _symbol;
@@ -37,16 +36,16 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
     }
 
     function allowance(address owner, address spender) public view returns (uint) {
-        return tokenData.allowance(owner, spender);
+        return tokenStorage.allowance(owner, spender);
     }
 
     function balanceOf(address account) external view returns (uint) {
-        return tokenData.balanceOf(account);
+        return tokenStorage.balanceOf(account);
     }
 
-    function setTokenData(LnTokenStorage _tokenData) external optionalProxy_onlyOwner {
-        tokenData = _tokenData;
-        emitTokenDataUpdated(address(tokenData));
+    function setTokenStorage(LnTokenStorage _tokenStorage) external optionalProxy_onlyAdmin {
+        tokenStorage = _tokenStorage;
+        emitTokenStorageUpdated(address(tokenStorage));
     }
 
     function _internalTransfer(
@@ -57,8 +56,8 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         
         require(to != address(0) && to != address(this) && to != address(proxy), "Cannot transfer to this address");
 
-        tokenData.setBalanceOf(from, tokenData.balanceOf(from).sub(value));
-        tokenData.setBalanceOf(to, tokenData.balanceOf(to).add(value));
+        tokenStorage.setBalanceOf(from, tokenStorage.balanceOf(from).sub(value));
+        tokenStorage.setBalanceOf(to, tokenStorage.balanceOf(to).add(value));
 
         emitTransfer(from, to, value);
 
@@ -80,7 +79,7 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         uint value
     ) internal returns (bool) {
         
-        tokenData.setAllowance(from, sender, tokenData.allowance(from, sender).sub(value));
+        tokenStorage.setAllowance(from, sender, tokenStorage.allowance(from, sender).sub(value));
         return _internalTransfer(from, to, value);
     }
 
@@ -105,7 +104,7 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
     function approve(address spender, uint value) public optionalProxy returns (bool) {
         address sender = messageSender;
 
-        tokenData.setAllowance(sender, spender, value);
+        tokenStorage.setAllowance(sender, spender, value);
         emitApproval(sender, spender, value);
         return true;
     }
@@ -136,11 +135,11 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         proxy._emit(abi.encode(value), 3, APPROVAL_SIG, addressToBytes32(owner), addressToBytes32(spender), 0);
     }
 
-    event TokenDataUpdated(address newTokenData);
-    bytes32 internal constant TOKENDATA_UPDATED_SIG = keccak256("TokenDataUpdated(address)");
+    event TokenStorageUpdated(address newTokenStorage);
+    bytes32 internal constant TOKENSTORAGE_UPDATED_SIG = keccak256("TokenStorageUpdated(address)");
 
-    function emitTokenDataUpdated(address newTokenData) internal {
-        proxy._emit(abi.encode(newTokenData), 1, TOKENDATA_UPDATED_SIG, 0, 0, 0);
+    function emitTokenStorageUpdated(address newTokenStorage) internal {
+        proxy._emit(abi.encode(newTokenStorage), 1, TOKENSTORAGE_UPDATED_SIG, 0, 0, 0);
     }
 }
 

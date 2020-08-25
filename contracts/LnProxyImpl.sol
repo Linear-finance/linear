@@ -2,13 +2,10 @@ pragma solidity ^0.5.17;
 
 import "./LnAdmin.sol";
 
-import "./LnProxyBase.sol";
-
-
 contract LnProxyBase is LnAdmin {
     LnProxyImpl public target;
 
-    constructor(address _owner) public LnAdmin(_owner) {}
+    constructor(address _admin) public LnAdmin(_admin) {}
 
     function setTarget(LnProxyImpl _target) external onlyAdmin {
         target = _target;

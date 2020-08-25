@@ -6,17 +6,16 @@ contract LnOperatorModifier is LnAdmin {
     
     address public operator;
 
-    constructor(address _operator ) internal {
-        
-        require(owner != address(0), "admin must be set");
+    constructor(address _operator) internal {
+        require(admin != address(0), "admin must be set");
 
         operator = _operator;
         emit OperatorUpdated(_operator);
     }
 
-    function setOperator(address _opperator ) external onlyAdmin {
+    function setOperator(address _opperator) external onlyAdmin {
         operator = _opperator;
-        emit OperatorUpdated(_operator);
+        emit OperatorUpdated(_opperator);
     }
 
     modifier onlyOperator() {

@@ -1,10 +1,10 @@
 pragma solidity ^0.5.17;
 
-import "./LnProxyBase.sol";
+import "./LnProxyImpl.sol";
 import "./IERC20.sol";
 
 contract LnProxyERC20 is LnProxyBase, IERC20 {
-    constructor(address _owner) public LnProxyBase(_owner) {}
+    constructor(address _admin) public LnProxyBase(_admin) {}
 
     function name() public view returns (string memory) {
         

@@ -8,17 +8,13 @@ contract LnTokenStorage is LnAdmin, LnOperatorModifier {
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
 
-    constructor(address _owner, address _associatedContract) public LnAdmin(_owner) LnOperatorModifier(_associatedContract) {}
+    constructor(address _admin, address _operator) public LnAdmin(_admin) LnOperatorModifier(_operator) {}
 
-    function setAllowance(
-        address tokenOwner,
-        address spender,
-        uint value
-    ) external onlyAssociatedContract {
+    function setAllowance(address tokenOwner, address spender, uint value) external onlyOperator {
         allowance[tokenOwner][spender] = value;
     }
 
-    function setBalanceOf(address account, uint value) external onlyAssociatedContract {
+    function setBalanceOf(address account, uint value) external onlyOperator {
         balanceOf[account] = value;
     }
 }

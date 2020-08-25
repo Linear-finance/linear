@@ -5,37 +5,45 @@ import "./LnTokenStorage.sol";
 import "./LnErc20Handler.sol";
 
 contract LinearFinance is IERC20, LnErc20Handler {
-        
+    
     string public constant TOKEN_NAME = "Linear Finance Token";
     string public constant TOKEN_SYMBOL = "LINA";
     uint8 public constant DECIMALS = 18;
 
     constructor(
         address payable _proxy,
-        LnTokenStorage _tokenData,
-        address _owner,
+        LnTokenStorage _tokenStorage,
+        address _admin,
         uint _totalSupply
     )
         public
-        LnErc20Handler(_proxy, _tokenData, TOKEN_NAME, TOKEN_SYMBOL, _totalSupply, DECIMALS, _owner)
+        LnErc20Handler(_proxy, _tokenStorage, TOKEN_NAME, TOKEN_SYMBOL, _totalSupply, DECIMALS, _admin)
     {
     }
     
+    //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
         require(amount > 0, "Require amount > 0");
 
-        tokenData.setBalanceOf(account, tokenData.balanceOf(account).add(amount));
+        tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).add(amount));
         totalSupply = totalSupply.add(amount);
 
         emitTransfer(address(0), account, amount);
     }
 
-
     function mint(address account, uint256 amount) external onlyAdmin {
         _mint(account, amount);
     }
 
+   function _burn(address account, uint256 amount) internal {
+        require(account != address(0), "ERC20: burn from the zero address");
+        require(amount > 0, "Require amount > 0");
+
+        tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).sub(amount));
+        totalSupply = totalSupply.sub(amount);
+        emitTransfer(account, address(0), amount);
+    }
 
     ////////////////////////////////////////////////////// paused
     bool public paused = false;
@@ -43,7 +51,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
         require(!paused, "This action cannot be performed while the contract is paused");
         _;
     }
-    function setPaused(bool _paused) external onlyOwner {
+    function setPaused(bool _paused) external onlyAdmin {
         if (_paused == paused) {
             return;
         }
@@ -76,17 +84,17 @@ contract LinearFinance is IERC20, LnErc20Handler {
     function staking(uint256 amount) public notPaused returns (bool) {
         require(now < stakingEndTime, "Staking stage has end.");
         require(amount >= MIN_STAKING_AMOUNT, "Staking amount too small.");
-        require(stakesdata[_msgSender()].length < accountStakingListLimit, "Staking list out of limit.");
+        require(stakesdata[msg.sender].length < accountStakingListLimit, "Staking list out of limit.");
 
-        _burn(_msgSender(), amount);
+        _burn(msg.sender, amount);
      
         StakingData memory skaking = StakingData({
             amount: amount,
             staketime: now
         });
-        stakesdata[_msgSender()].push(skaking);
+        stakesdata[msg.sender].push(skaking);
 
-        emit Staking(_msgSender(), amount, now);
+        emit Staking(msg.sender, amount, now);
         return true;
     }
 
@@ -95,7 +103,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
         require(amount > 0, "Invalid amount.");
 
         uint256 returnToken = amount;
-        StakingData[] storage stakes = stakesdata[_msgSender()];
+        StakingData[] storage stakes = stakesdata[msg.sender];
         for (uint256 i = stakes.length; i >= 1 ; i--) {
             StakingData storage lastElement = stakes[i-1];
             if (amount >= lastElement.amount) {
@@ -109,9 +117,9 @@ contract LinearFinance is IERC20, LnErc20Handler {
         }
         require(amount == 0, "Cancel amount too big then staked.");
 
-        _mint(_msgSender(), returnToken);
+        _mint(msg.sender, returnToken);
 
-        emit CancelStaking(_msgSender(), returnToken);
+        emit CancelStaking(msg.sender, returnToken);
         return true;
     }
 
@@ -121,7 +129,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
         
         uint256 total = 0;
         uint256 rewardSum = 0;
-        StakingData[] memory stakes = stakesdata[_msgSender()];
+        StakingData[] memory stakes = stakesdata[msg.sender];
         require(stakes.length > 0, "Nothing to claim");
         for (uint256 i=0; i < stakes.length; i++) {
             uint256 amount = stakes[i].amount;
@@ -131,16 +139,16 @@ contract LinearFinance is IERC20, LnErc20Handler {
             uint256 reward = amount.mul(stakedays).mul(stakingRewardFactor).div(stakingRewardDenominator);
             rewardSum = rewardSum.add(reward);
         }
-        delete stakesdata[_msgSender()];
+        delete stakesdata[msg.sender];
 
         uint256 tomint = total.add(rewardSum);
-        _mint(_msgSender(), tomint);
+        _mint(msg.sender, tomint);
 
-        emit Claim(_msgSender(), total, rewardSum, tomint);
+        emit Claim(msg.sender, total, rewardSum, tomint);
         return true;
     }
 
-    function set_stakingRewardFactor(uint256 factor) external onlyOwner() {
+    function set_stakingRewardFactor(uint256 factor) external onlyAdmin() {
         stakingRewardFactor = factor;
     }
 
@@ -148,7 +156,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
         return (stakingRewardFactor, stakingRewardDenominator);
     }
 
-    function set_StakingPeriod(uint stakingendtime, uint claimstarttime) external onlyOwner() {
+    function set_StakingPeriod(uint stakingendtime, uint claimstarttime) external onlyAdmin() {
         stakingEndTime = stakingendtime;
         claimStartTime = claimstarttime;
     }
@@ -168,37 +176,3 @@ contract LinearFinance is IERC20, LnErc20Handler {
 
 }
 
-/*
-contract LinearFinanceEx is IERC20, LnErc20Handler {
-        
-    string public constant TOKEN_NAME = "Linear Finance Token";
-    string public constant TOKEN_SYMBOL = "LINA";
-    uint8 public constant DECIMALS = 18;
-
-    constructor(
-        address payable _proxy,
-        LnTokenStorage _tokenData,
-        address _owner,
-        uint _totalSupply
-    )
-        public
-        LnErc20Handler(_proxy, _tokenData, TOKEN_NAME, TOKEN_SYMBOL, _totalSupply, DECIMALS, _owner)
-    {
-    }
-    
-    function transfer(address to, uint value) external optionalProxy returns (bool) {
-        _transferByProxy(messageSender, to, value);
-
-        return true;
-    }
-    
-    function transferFrom(
-        address from,
-        address to,
-        uint value
-    ) external optionalProxy  returns (bool) {
-        return _transferFromByProxy(messageSender, from, to, value);
-    }
-    
-}
-*/
