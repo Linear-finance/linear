@@ -135,7 +135,6 @@ contract LinearFinance is IERC20, LnErc20Handler {
             total = total.add(amount); // principal
 
             uint256 stakedays = (claimStartTime.sub(stakes[i].staketime)) / timesDelta;
-            stakedays = 1;
             uint256 reward = amount.mul(stakedays).mul(stakingRewardFactor).div(stakingRewardDenominator);
             rewardSum = rewardSum.add(reward);
         }
