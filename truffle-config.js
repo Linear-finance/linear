@@ -26,7 +26,7 @@ const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const etherscanKey = "E4QQJUZQMDUD4IWK3CCFMRWRMGR2M1EPPI";
 
-const ropten_mnemonic = "vicious tackle cheap brave purpose voice father repeat suggest hockey outside saddle";
+const ropten_mnemonic = "";
 const ganache_mnmonic = "surge nothing shove gentle soccer boost panther lady idle wrong satoshi pass";
 
 function CreateHDWallet(mnemonic, providerUrl) {
