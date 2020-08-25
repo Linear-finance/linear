@@ -6,10 +6,8 @@ import "./SafeDecimalMath.sol";
 import "./LnAdmin.sol";
 import "./LnProxyImpl.sol";
 import "./LnTokenStorage.sol";
-import "./LnLogger.sol";
 
-
-contract LnErc20Handler is LnAdmin, LnProxyImpl, LnLogger {
+contract LnErc20Handler is LnAdmin, LnProxyImpl {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
@@ -123,7 +121,7 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl, LnLogger {
         address to,
         uint value
     ) internal {
-        Log3( abi.encode(value),  TRANSFER_SIG, addressToBytes32(from), addressToBytes32(to), 0 );
+        proxy.Log3( abi.encode(value),  TRANSFER_SIG, addressToBytes32(from), addressToBytes32(to) );
     }
 
     event Approval(address indexed owner, address indexed spender, uint value);
@@ -134,14 +132,14 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl, LnLogger {
         address spender,
         uint value
     ) internal {
-        Log3( abi.encode(value),  APPROVAL_SIG, addressToBytes32(owner), addressToBytes32(spender), 0 );
+        proxy.Log3( abi.encode(value),  APPROVAL_SIG, addressToBytes32(owner), addressToBytes32(spender) );
     }
 
     event TokenStorageUpdated(address newTokenStorage);
     bytes32 internal constant TOKENSTORAGE_UPDATED_SIG = keccak256("TokenStorageUpdated(address)");
 
     function emitTokenStorageUpdated(address newTokenStorage) internal {
-        Log1( abi.encode(newTokenStorage), TOKENSTORAGE_UPDATED_SIG, 0, 0, 0 );
+        proxy.Log1( abi.encode(newTokenStorage), TOKENSTORAGE_UPDATED_SIG );
     }
 }
 

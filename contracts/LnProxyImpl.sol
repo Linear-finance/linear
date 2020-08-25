@@ -12,6 +12,45 @@ contract LnProxyBase is LnAdmin {
         emit TargetUpdated(_target);
     }
 
+    function Log0( bytes calldata callData ) external onlyTarget {
+        uint size = callData.length;
+        bytes memory _callData = callData;
+        assembly {
+            log0(add(_callData, 32), size)
+        }
+    }
+
+    function Log1( bytes calldata callData, bytes32 topic1 ) external onlyTarget {
+        uint size = callData.length;
+        bytes memory _callData = callData;
+        assembly {
+            log1(add(_callData, 32), size, topic1 )
+        }
+    }
+
+    function Log2( bytes calldata callData, bytes32 topic1, bytes32 topic2 ) external onlyTarget {
+        uint size = callData.length;
+        bytes memory _callData = callData;
+        assembly {
+            log2(add(_callData, 32), size, topic1, topic2 )
+        }
+    }
+
+    function Log3( bytes calldata callData, bytes32 topic1, bytes32 topic2, bytes32 topic3 ) external onlyTarget {
+        uint size = callData.length;
+        bytes memory _callData = callData;
+        assembly {
+            log3(add(_callData, 32), size, topic1, topic2, topic3 )
+        }
+    }
+
+    function Log4( bytes calldata callData, bytes32 topic1, bytes32 topic2, bytes32 topic3, bytes32 topic4 ) external onlyTarget {
+        uint size = callData.length;
+        bytes memory _callData = callData;
+        assembly {
+            log4(add(_callData, 32), size, topic1, topic2, topic3, topic4 )
+        }
+    }
 
     function() external payable {
         
