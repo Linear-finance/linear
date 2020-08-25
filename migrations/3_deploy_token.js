@@ -1,10 +1,10 @@
-const DeployIfNotExist = require("../utility");
+const {DeployIfNotExist} = require("../utility/truffle-tool");
 
 const SafeMath = artifacts.require("SafeMath");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 
+const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
-
 const LinearFinance = artifacts.require("LinearFinance");
 
 module.exports = function (deployer, network, accounts) {

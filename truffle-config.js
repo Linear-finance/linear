@@ -26,9 +26,10 @@ const HDWalletProvider = require("truffle-hdwallet-provider");
 
 const etherscanKey = "E4QQJUZQMDUD4IWK3CCFMRWRMGR2M1EPPI";
 
-const mnemonic = "vicious tackle cheap brave purpose voice father repeat suggest hockey outside saddle";
+const ropten_mnemonic = "vicious tackle cheap brave purpose voice father repeat suggest hockey outside saddle";
+const ganache_mnmonic = "surge nothing shove gentle soccer boost panther lady idle wrong satoshi pass";
 
-function CreateHDWallet(providerUrl) {
+function CreateHDWallet(mnemonic, providerUrl) {
   return new HDWalletProvider(mnemonic, providerUrl, 0, 1);
 }
 
@@ -49,12 +50,12 @@ module.exports = {
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
-    //
-    // development: {
-    //  host: "127.0.0.1",     // Localhost (default: none)
-    //  port: 8545,            // Standard Ethereum port (default: none)
-    //  network_id: "*",       // Any network (default: none)
-    // },
+    development: {
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 7545,            // Standard Ethereum port (default: none)
+      network_id: "*",       // Any network (default: none)
+      gasPrice: 1
+     },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port
@@ -81,7 +82,7 @@ module.exports = {
     // production: true    // Treats this network as if it was a public net. (default: false)
     // }
     ropsten: {
-      provider: () => CreateHDWallet("https://ropsten.infura.io/v3/fb2fd32c3b0f444c8f25d9076ca8a8a7"), // free infura can not reuse by more than two connnection? yes...
+      provider: () => CreateHDWallet(ropten_mnemonic, "https://ropsten.infura.io/v3/fb2fd32c3b0f444c8f25d9076ca8a8a7"), // free infura can not reuse by more than two connnection? yes...
         network_id: "*",       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
@@ -89,7 +90,7 @@ module.exports = {
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
     my_quorum: {
-      provider: () => CreateHDWallet( "http://18.138.189.62:22000"),
+      provider: () => CreateHDWallet(ropten_mnemonic, "http://18.138.189.62:22000"),
       network_id: "*",
       gas: 7000000,
       gasPrice: 0
