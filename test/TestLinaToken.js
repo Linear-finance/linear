@@ -1,11 +1,5 @@
 const LinearFinance = artifacts.require("LinearFinance");
 
-function sleep(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }   
-
 contract('test LinearFinance', async (accounts)=> {
 
     const admin = accounts[0];
@@ -47,26 +41,26 @@ contract('test LinearFinance', async (accounts)=> {
         initbalance = initbalance.valueOf();
 
         //set time
-        let starttime = Math.floor(Date.now()/1000) + 8*3600; // 8hours 
-        await lina.set_StakingPeriod(starttime-10, starttime + 60);
+        let starttime = Math.floor(Date.now()/1000);
+        await lina.set_StakingPeriod(starttime + 10, starttime + 30);
         let stakingperiod = await lina.stakingPeriod();
         //console.log(stakingperiod);
 
-        const stakingAmount = "2000000000000000000";
-        let ret = await lina.staking(stakingAmount, { from: admin });
-        //assert.equal(ret.valueOf(), true);
+        const stakingAmount = "1000000000000000000";
+        await lina.staking(stakingAmount, { from: admin });
+        await lina.staking(stakingAmount, { from: admin });
 
         let balance = await lina.balanceOf(admin);
-        assert.equal(balance.valueOf(), initbalance-stakingAmount);
+        assert.equal(balance.valueOf(), initbalance-stakingAmount*2);
 
         let stakingbalance = await lina.stakingBalanceOf(admin);
-        assert.equal(stakingbalance, stakingAmount);
+        assert.equal(stakingbalance, stakingAmount*2);
         
         let stakingb2 = await lina.stakingBalanceOf(ac1);
         assert.equal(stakingb2.valueOf(), 0);
 
-        ret = await lina.cancelStaking(stakingAmount);
-        //assert.equal(ret.valueOf(), true);
+        await lina.cancelStaking(stakingAmount);
+        await lina.cancelStaking(stakingAmount);
 
         stakingbalance = await lina.stakingBalanceOf(admin);
         assert.equal(stakingbalance, 0);
@@ -78,7 +72,12 @@ contract('test LinearFinance', async (accounts)=> {
         await lina.staking(stakingAmount, { from: admin });
         //let _2days = 3600*24*2;
         //await lina.set_StakingPeriod(starttime - 10, starttime + 60-_2days);// 这样设置时间有问题
-        await sleep(62000);
+        await new Promise(resolve => setTimeout(resolve, 30*1000));
+
+//        let blocktime = await lina.blocktime();
+//        blocktime = blocktime.toNumber();
+//        console.log("tttttttttttttttttttttt", blocktime, starttime);
+
         await lina.claim();
 
         stakingbalance = await lina.stakingBalanceOf(admin);
@@ -86,11 +85,10 @@ contract('test LinearFinance', async (accounts)=> {
 
         balance = await lina.balanceOf(admin);
         assert.equal(balance.valueOf()-initbalance, 0);
-
     });
 
-    it('new token logic', async ()=> {
-
+    it('new logic', async ()=> {
+        
     });
 });
 

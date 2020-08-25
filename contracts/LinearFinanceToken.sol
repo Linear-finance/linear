@@ -174,6 +174,5 @@ contract LinearFinance is IERC20, LnErc20Handler {
         }
         return total;
     }
-
 }
 
