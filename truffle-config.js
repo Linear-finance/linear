@@ -29,7 +29,7 @@ const etherscanKey = "E4QQJUZQMDUD4IWK3CCFMRWRMGR2M1EPPI";
 const mnemonic = "vicious tackle cheap brave purpose voice father repeat suggest hockey outside saddle";
 
 function CreateHDWallet(providerUrl) {
-  return new HDWalletProvider(mnemonic, providerUrl, 0, 3);
+  return new HDWalletProvider(mnemonic, providerUrl, 0, 1);
 }
 
 module.exports = {
