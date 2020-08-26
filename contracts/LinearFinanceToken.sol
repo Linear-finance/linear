@@ -24,6 +24,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
     //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
+        _beforeTokenTransfer(address(0), account, amount);
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).add(amount));
         totalSupply = totalSupply.add(amount);
@@ -37,10 +38,17 @@ contract LinearFinance is IERC20, LnErc20Handler {
 
    function _burn(address account, uint256 amount) private {
         require(account != address(0), "ERC20: burn from the zero address");
+        _beforeTokenTransfer(account, address(0), amount);
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).sub(amount));
         totalSupply = totalSupply.sub(amount);
         emitTransfer(account, address(0), amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
+        super._beforeTokenTransfer(from, to, amount);
+
+        require(!paused, "ERC20Pausable: token transfer while paused");
     }
 
     ////////////////////////////////////////////////////// paused
@@ -175,4 +183,3 @@ contract LinearFinance is IERC20, LnErc20Handler {
         return total;
     }
 }
-

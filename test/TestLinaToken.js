@@ -26,6 +26,11 @@ contract('test LinearFinance', async (accounts)=> {
         balance1 = await lina.balanceOf(ac1);
         assert.equal(balance.valueOf(), mintAmount - sendamount);
         assert.equal(balance1.valueOf(), sendamount);
+
+        // TODO: 
+        //lina.setPaused(true, { from: admin });
+        //await lina.transfer(ac1, sendamount, { from: admin });
+        //lina.setPaused(false, { from: admin });
     });
 
     //todo: test fail case

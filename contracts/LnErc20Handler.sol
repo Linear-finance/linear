@@ -55,6 +55,7 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
     ) internal returns (bool) {
         
         require(to != address(0) && to != address(this) && to != address(proxy), "Cannot transfer to this address");
+        _beforeTokenTransfer(from, to, value);
 
         tokenStorage.setBalanceOf(from, tokenStorage.balanceOf(from).sub(value));
         tokenStorage.setBalanceOf(to, tokenStorage.balanceOf(to).add(value));
@@ -83,6 +84,7 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         return _internalTransfer(from, to, value);
     }
 
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal { }
 
     // default transfer
     function transfer(address to, uint value) external optionalProxy returns (bool) {
