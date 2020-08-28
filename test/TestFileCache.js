@@ -29,6 +29,17 @@ contract('test LinearFinance', async (accounts)=> {
         
         assert.equal( addr1.valueOf(), addrStorage.address );
         assert.equal( addr2.valueOf(), addrStorage.address );
+
+
+        await addrStorage.updateAll( [toBytes32("a"), toBytes32("b")], [admin, ac1 ] );
+        //const testCache = await testAddressCache.deployed();
+        await testCache.updateAddressCache( addrStorage.address );
+        let addr3 = await testCache.addr1();
+        let addr4 = await testCache.addr2();
+        assert.equal( addr3.valueOf(), admin );
+        assert.equal( addr4.valueOf(), ac1 );
+
+
     });
   
    
