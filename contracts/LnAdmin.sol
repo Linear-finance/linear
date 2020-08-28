@@ -2,34 +2,33 @@ pragma solidity ^0.5.17;
 
 contract LnAdmin {
     address public admin;
-    address public superAdmin;
+    address public candidate;
 
     constructor(address _admin) public {
         require(_admin != address(0), "admin address cannot be 0");
         admin = _admin;
-        superAdmin = _admin;
         emit AdminChanged(address(0), _admin);
     }
 
-    function changeAdmin(address _admin) external onlyAdmin {
-        address old = admin;
-        admin = _admin;
-        emit AdminChanged( old, _admin);
+    function setCandidate(address _candidate) external onlyAdmin {
+        address old = candidate;
+        candidate = _candidate;
+        emit candidateChanged( old, candidate);
     }
 
-    function changeSuperAdmin( address _super ) external {
-        require( msg.sender == superAdmin, "Only the contract super admin may perform this action");
-        address old = superAdmin;
-        superAdmin = _super;
-        emit SuperAdminChanged( old, superAdmin ); 
+    function becomeAdmin( ) external {
+        require( msg.sender == candidate, "Only candidate can become admin");
+        address old = admin;
+        admin = candidate;
+        emit AdminChanged( old, admin ); 
     }
 
     modifier onlyAdmin {
-        require( (msg.sender == admin) || (msg.sender == superAdmin), "Only the contract admin or super admin may perform this action");
+        require( (msg.sender == admin), "Only the contract admin can perform this action");
         _;
     }
 
-    event SuperAdminChanged(address oldSuper, address newSuper );
+    event candidateChanged(address oldCandidate, address newCandidate );
     event AdminChanged(address oldAdmin, address newAdmin);
 }
 
