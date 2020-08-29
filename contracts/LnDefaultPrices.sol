@@ -55,7 +55,7 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
     function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view
-        returns (uint value, uint sourceRate, uint destinationRate )
+        returns (uint value, uint sourcePrice, uint destPrice )
     {
         return _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
@@ -145,17 +145,17 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
     function _exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) internal view 
-        returns ( uint value, uint sourceRate, uint destinationRate )
+        returns ( uint value, uint sourcePrice, uint destPrice )
     {
-        sourceRate = _getPrice(sourceName);
+        sourcePrice = _getPrice(sourceName);
         // If there's no change in the currency, then just return the amount they gave us
         if (sourceName == destName) {
-            destinationRate = sourceRate;
+            destPrice = sourcePrice;
             value = sourceAmount;
         } else {
             // Calculate the effective value by going from source -> USD -> destination
-            destinationRate = _getPrice(destName);
-            value = sourceAmount.multiplyDecimalRound(sourceRate).divideDecimalRound(destinationRate);
+            destPrice = _getPrice(destName);
+            value = sourceAmount.multiplyDecimalRound(sourcePrice).divideDecimalRound(destPrice);
         }
     }
 

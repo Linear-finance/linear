@@ -41,8 +41,8 @@ contract('LnDefaultPrices', async (accounts)=> {
 
             let cnyPrice = await defaultPrices.getPrice( toBytes32("CNY") );    
             assert.equal( cnyPrice.valueOf(), 2 );
-
         });
+
     }); 
     
     describe('updateAll', () => {
@@ -81,7 +81,23 @@ contract('LnDefaultPrices', async (accounts)=> {
             // should ignore updates not from oracle
             assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: admin} ) );
         });
-        
+        it('not lusd', async ()=> {
+            // new instance of LnDefaultPrices
+            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+
+            let timeSent = await currentTime();
+
+            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("lUsd")], [ 3,4 ], timeSent, { from: oracle} ) );
+        });
+        it('not 0', async ()=> {
+            // new instance of LnDefaultPrices
+            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+
+            let timeSent = await currentTime();
+
+            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,0 ], timeSent, { from: oracle} ) );
+        });
+
         it('get price and update time', async () => {
             // new instance of LnDefaultPrices
             const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
@@ -105,6 +121,100 @@ contract('LnDefaultPrices', async (accounts)=> {
 
         });
     });    
+    //getCurrentRoundId
+    describe('Round Id', () => {
+        it('first round', async ()=> {
+            // new instance of LnDefaultPrices
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            let roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
+            //console.log( roundLina);
+            assert.equal( roundLina.valueOf(), 1 );
+
+            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            //console.log( roundLusd );
+            assert.equal( roundLusd.valueOf(), 1 );
+        });
+
+        it('add round', async ()=> {
+            // new instance of LnDefaultPrices
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            let roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
+            assert.equal( roundLina.valueOf(), 1 );
+
+            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            assert.equal( roundLusd.valueOf(), 1 );
+
+            // should update all prices normally
+            let timeSent = await currentTime();
+            await defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: oracle} );
+            roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
+            assert.equal( roundLina.valueOf(), 2 );
+
+            roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            assert.equal( roundLusd.valueOf(), 1 );
+            
+        });
+
+
+    });
+    describe('exchange', () => {
+        it('exchange', async ()=> {
+            // new instance of LnDefaultPrices
+            const usdPrice = web3.utils.toWei('1.0', 'ether');
+            const cnyPrice = web3.utils.toWei('8.0', 'ether');
+            const sourceAmount = web3.utils.toWei('100.0', 'ether');
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY"),toBytes32("USD")], [ 1,cnyPrice, usdPrice ] );
+            let amount = await defaultPrices.exchange(  toBytes32("USD"), sourceAmount, toBytes32("CNY") );  
+            console.log( amount );
+            let destAmount =  web3.utils.fromWei( amount.valueOf() );
+            console.log( destAmount );
+            assert.equal( destAmount, 800 );
+        });
+
+        it('exchange and price', async ()=> {
+          });
+
+
+    });
+    describe('stale', () => {
+        it('isStale', async ()=> {
+            
+            // new instance of LnDefaultPrices
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+
+            let timeSent = await currentTime();
+            
+            // should update all prices normally
+            await defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: oracle} );
+            
+            // is stale
+            let isStale = await defaultPrices.isStale(toBytes32("LINA"));
+            assert.equal( isStale.valueOf(), false );
+
+            // 
+            await defaultPrices.setStalePeriod(1 , { from: admin} );
+
+            // wait for blocks
+            let block1 = await web3.eth.getBlockNumber();
+            while( true ){
+                await new Promise(resolve => setTimeout(resolve, 400));
+                let block2 = await web3.eth.getBlockNumber();
+                // add new transaction
+                // add new transaction in case of test enviroment, add transaction will make ganache generate new block.
+                await defaultPrices.setOracle( admin, {from:admin});
+                if( block2 - block1 > 2 )
+                {
+                    break;
+                }
+            }
+
+            let timeSent2 = await currentTime();
+            //console.log(timeSent, timeSent2 );
+            assert.notEqual( timeSent2, timeSent );
+            isStale = await defaultPrices.isStale(toBytes32("LINA"));
+            assert.equal( isStale.valueOf(), true );
+        });
+    });   
 
     describe('deletePrice', () => {
         it('deletePrice', async ()=> {
@@ -145,12 +255,10 @@ contract('LnDefaultPrices', async (accounts)=> {
 
             let cnyPrice = await defaultPrices.getPrice( toBytes32("CNY") );    
             assert.equal( cnyPrice.valueOf(), 4 );
-
         });
         it('only admin', async ()=> {
             // new instance of LnDefaultPrices
             const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
-
             // should revert, wrong admin
             assertRevert( defaultPrices.setOracle( admin, {from:oracle}) );
 
@@ -162,28 +270,6 @@ contract('LnDefaultPrices', async (accounts)=> {
 
     });
 
-    describe('stale', () => {
-        it('setStalePeriod', async ()=> {
-            
-            // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
-
-            // let timeSent = await currentTime();
-            
-            // // should update all prices normally
-            // await defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: oracle} );
-            
-            // // is stale
-            // let isStale = await defaultPrices.isStale(toBytes32("LINA"));
-            // assert.equal( isStale.valueOf(), false );
-
-            // // 
-            // await defaultPrices.setStalePeriod(1 , { from: admin} );
-
-            // isStale = await defaultPrices.isStale(toBytes32("LINA"));
-            // assert.equal( isStale.valueOf(), true );
-        });
-    });   
 
 });
 
