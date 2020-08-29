@@ -10,6 +10,8 @@ const LinearFinance = artifacts.require("LinearFinance");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const testAddressCache = artifacts.require("testAddressCache");
 
+const LnDefaultPrices = artifacts.require("LnDefaultPrices");
+
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
@@ -27,5 +29,7 @@ module.exports = function (deployer, network, accounts) {
     let addrStorage = await deployer.deploy(LnAddressStorage, admin);
     let testAddrCache = await deployer.deploy( testAddressCache, admin );
 
+    await deployer.link( SafeDecimalMath, LnDefaultPrices );
+    
   });
 };

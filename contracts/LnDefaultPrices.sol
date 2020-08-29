@@ -41,11 +41,11 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
     /* interface */
-    function currentPrice(bytes32 currencyName) external view returns (uint) {
+    function getPrice(bytes32 currencyName) external view returns (uint) {
         return _getPrice(currencyName);
     }
 
-    function priceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time) {
+    function getPriceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time) {
         PriceData memory priceAndTime = _getPriceData(currencyName);
         return (priceAndTime.mPrice, priceAndTime.mTime);
     }
@@ -107,7 +107,7 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
 
-    function _updateAll( bytes32[] memory currencyNames, uint[] memory newPrices, uint timeSent ) internal onlyOracle returns (bool) {
+    function _updateAll( bytes32[] memory currencyNames, uint[] memory newPrices, uint timeSent ) internal returns (bool) {
         require(currencyNames.length == newPrices.length, "array length error, not match.");
         require(timeSent < (now + ORACLE_TIME_LIMIT), "Time error");
 

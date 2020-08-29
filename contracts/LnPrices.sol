@@ -5,10 +5,10 @@ pragma solidity >=0.4.24;
 interface LnPrices {
 
     // get price for a currency
-    function currentPrice(bytes32 currencyName) external view returns (uint);
+    function getPrice(bytes32 currencyName) external view returns (uint);
 
     // get price and updated time for a currency
-    function priceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time);
+    function getPriceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time);
 
 
     // is the price is stale
