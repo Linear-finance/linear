@@ -22,7 +22,7 @@ interface LnPrices {
 
     // exchange amount of source currenty for some dest currency
     function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view
-        returns ( uint value, uint sourceRate, uint destinationRate );
+        returns ( uint value, uint sourcePrice, uint destPrice );
 }
 
 

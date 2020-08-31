@@ -10,6 +10,10 @@ const currentTime = async () => {
     return timestamp;
 };
 
+const { toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
+const fromUnit = amount => fromWei(amount, 'ether');
+
 
 const assertRevert = async (blockOrPromise, reason) => {
     let errorCaught = false;
@@ -25,6 +29,10 @@ const assertRevert = async (blockOrPromise, reason) => {
     }
 
     assert.strictEqual(errorCaught, true, 'Operation did not revert as expected');
+};
+
+const assertBNEqual = (actualBN, expectedBN, context) => {
+    assert.strictEqual(actualBN.toString(), expectedBN.toString(), context);
 };
 
 contract('LnDefaultPrices', async (accounts)=> {
@@ -160,19 +168,26 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('exchange', () => {
         it('exchange', async ()=> {
             // new instance of LnDefaultPrices
-            const usdPrice = web3.utils.toWei('1.0', 'ether');
-            const cnyPrice = web3.utils.toWei('8.0', 'ether');
-            const sourceAmount = web3.utils.toWei('100.0', 'ether');
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY"),toBytes32("USD")], [ 1,cnyPrice, usdPrice ] );
+            const sourceAmount = toUnit('100.0');
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY"),toBytes32("USD")], [ '1.0','0.125', '1.0' ].map(toUnit) );
             let amount = await defaultPrices.exchange(  toBytes32("USD"), sourceAmount, toBytes32("CNY") );  
-            console.log( amount );
-            let destAmount =  web3.utils.fromWei( amount.valueOf() );
-            console.log( destAmount );
-            assert.equal( destAmount, 800 );
+            //console.log( fromUnit(amount) );
+            let destAmount =  toUnit('800.0');
+            //console.log( fromUnit(destAmount) );
+            assertBNEqual( destAmount, amount );
         });
 
         it('exchange and price', async ()=> {
-          });
+            let defaultPrices = await LnDefaultPrices.new( admin, oracle, ["LINA", "CNY","USD"].map(toBytes32), [ '1.0','0.125', '1.0' ].map(toUnit) );
+            const sourceAmount = toUnit('100.0');
+            let result = await defaultPrices.exchangeAndPrices(  toBytes32("USD"), sourceAmount, toBytes32("CNY") );  
+            //console.log( fromUnit(amount) );
+            let destAmount =  toUnit('800.0');
+            //console.log( fromUnit(destAmount) );
+            assertBNEqual( destAmount, result.value );
+            assertBNEqual( result.sourcePrice, toUnit("1.0"));
+            assertBNEqual( result.destPrice, toUnit("0.125"));
+        });
 
 
     });
