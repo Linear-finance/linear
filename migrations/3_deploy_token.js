@@ -12,6 +12,8 @@ const testAddressCache = artifacts.require("testAddressCache");
 
 const LnDefaultPrices = artifacts.require("LnDefaultPrices");
 
+const LnChainLinkPrices = artifacts.require("LnChainLinkPrices");
+
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
@@ -30,6 +32,7 @@ module.exports = function (deployer, network, accounts) {
     let testAddrCache = await deployer.deploy( testAddressCache, admin );
 
     await deployer.link( SafeDecimalMath, LnDefaultPrices );
+    await deployer.link( SafeDecimalMath, LnChainLinkPrices );
     
   });
 };

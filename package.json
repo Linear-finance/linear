@@ -11,14 +11,13 @@
   "repository": {
     "type": "git",
     "url": ""
-  },  
-  "dependencies": {
   },
+  "dependencies": {},
   "devDependencies": {
     "ethers": "^5.0.8",
     "fs": "0.0.1-security",
     "solc": "^0.5.17",
     "string-format": "^2.0.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.5"
+    "truffle-hdwallet-provider": "^1.0.17"
   }
 }

@@ -3,6 +3,10 @@ const LnDefaultPrices = artifacts.require("LnDefaultPrices");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 
 const w3utils = require('web3-utils');
+
+const { toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
+const fromUnit = amount => fromWei(amount, 'ether');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 const currentTime = async () => {
@@ -10,9 +14,6 @@ const currentTime = async () => {
     return timestamp;
 };
 
-const { toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
-const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
-const fromUnit = amount => fromWei(amount, 'ether');
 
 
 const assertRevert = async (blockOrPromise, reason) => {
@@ -31,9 +32,11 @@ const assertRevert = async (blockOrPromise, reason) => {
     assert.strictEqual(errorCaught, true, 'Operation did not revert as expected');
 };
 
+
 const assertBNEqual = (actualBN, expectedBN, context) => {
     assert.strictEqual(actualBN.toString(), expectedBN.toString(), context);
 };
+
 
 contract('LnDefaultPrices', async (accounts)=> {
 
