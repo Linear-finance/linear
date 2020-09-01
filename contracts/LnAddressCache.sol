@@ -11,14 +11,21 @@ contract LnAddressStorage is LnAdmin {
     constructor(address _admin ) public LnAdmin(_admin ) {}
 
 
-    function update(bytes32[] calldata names, address[] calldata destinations) external onlyAdmin {
+    function updateAll(bytes32[] calldata names, address[] calldata destinations) external onlyAdmin {
         require(names.length == destinations.length, "Input lengths must match");
 
         for (uint i = 0; i < names.length; i++) {
             mStorage[names[i]] = destinations[i];
+            emit updateStorageAddress( names[i], destinations[i] );
         }
     }
 
+    function update(bytes32 name, address dest ) external onlyAdmin {
+        require( name != "", "name can not be empty");
+        require( dest != address(0), "address cannot be 0");
+        mStorage[name] = dest;
+        emit updateStorageAddress( name, dest );
+    }
 
     function getAddress(bytes32 name) external view returns (address) {
         return mStorage[name];
@@ -29,24 +36,29 @@ contract LnAddressStorage is LnAdmin {
         require(_foundAddress != address(0), reason);
         return _foundAddress;
     }
+    event updateStorageAddress( bytes32 name, address addr );
 }
 
 
 interface LnAddressCache  {
     function updateAddressCache( address _addressStorage )  external ;
 
+    event   updateCachedAddress( bytes32 name, address addr );
 }
 
-contract testCache  is LnAddressCache, LnAdmin {
-    address addr1;
-    address addr2;
+contract testAddressCache  is LnAddressCache, LnAdmin {
+    address public addr1;
+    address public addr2;
     
+    constructor(address _admin ) public LnAdmin(_admin ) {}
+
+
     function updateAddressCache( address _addressStorage ) onlyAdmin public
     {
         addr1 = LnAddressStorage(_addressStorage).getAddressWithRequire("a", "");
         addr2 = LnAddressStorage(_addressStorage).getAddressWithRequire("b", "" );
-        
+        emit updateCachedAddress( "a", addr1 );
+        emit updateCachedAddress( "b", addr2 );
     }
-
 
 }

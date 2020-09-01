@@ -7,6 +7,11 @@ const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
 const LinearFinance = artifacts.require("LinearFinance");
 
+const LnAddressStorage = artifacts.require("LnAddressStorage");
+const testAddressCache = artifacts.require("testAddressCache");
+
+const LnDefaultPrices = artifacts.require("LnDefaultPrices");
+
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
@@ -20,5 +25,11 @@ module.exports = function (deployer, network, accounts) {
     await tokenstorage.setOperator(lina.address);
     await proxyErc20.setTarget(lina.address);
     await lina.setProxy(proxyErc20.address);
+
+    let addrStorage = await deployer.deploy(LnAddressStorage, admin);
+    let testAddrCache = await deployer.deploy( testAddressCache, admin );
+
+    await deployer.link( SafeDecimalMath, LnDefaultPrices );
+    
   });
 };

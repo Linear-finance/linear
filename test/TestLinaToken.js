@@ -1,4 +1,9 @@
 const LinearFinance = artifacts.require("LinearFinance");
+const LnAddressStorage = artifacts.require("LnAddressStorage");
+const testAddressCache = artifacts.require("testAddressCache");
+
+const w3utils = require('web3-utils');
+const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 contract('test LinearFinance', async (accounts)=> {
 
@@ -7,6 +12,7 @@ contract('test LinearFinance', async (accounts)=> {
 
     const mintAmount = "1000000000000000000000";
     const sendamount = "1000000000000000000";
+
     it('mint and transfer', async ()=> {
         const lina = await LinearFinance.deployed();
         let balance = await lina.balanceOf(admin);
@@ -32,7 +38,7 @@ contract('test LinearFinance', async (accounts)=> {
         //await lina.transfer(ac1, sendamount, { from: admin });
         //lina.setPaused(false, { from: admin });
     });
-
+   
     //todo: test fail case
     // it("mint fail by other account" , async ()=> {
     //     const lina = await LinearFinance.deployed();
@@ -91,7 +97,6 @@ contract('test LinearFinance', async (accounts)=> {
         balance = await lina.balanceOf(admin);
         assert.equal(balance.valueOf()-initbalance, 0);
     });
-
     it('new logic', async ()=> {
         
     });
