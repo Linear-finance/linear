@@ -1,5 +1,5 @@
-
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
 
 import "./LnAdmin.sol";
 import "./LnPrices.sol";
@@ -12,7 +12,7 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
 
     address public oracle;
 
-    uint public stalePeriod = 12 hours;
+    uint public override stalePeriod = 12 hours;
 
     mapping(bytes32 => uint) public mPricesLastRound;
 
@@ -41,26 +41,26 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
     /* interface */
-    function getPrice(bytes32 currencyName) external view returns (uint) {
+    function getPrice(bytes32 currencyName) external view override returns (uint) {
         return _getPrice(currencyName);
     }
 
-    function getPriceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time) {
+    function getPriceAndUpdatedTime(bytes32 currencyName) external view override returns (uint price, uint time) {
         PriceData memory priceAndTime = _getPriceData(currencyName);
         return (priceAndTime.mPrice, priceAndTime.mTime);
     }
 
-    function exchange( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view returns (uint value) {
+    function exchange( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view override returns (uint value) {
         (value, , ) = _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
 
-    function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view
+    function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view override
         returns (uint value, uint sourcePrice, uint destPrice )
     {
         return _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
 
-    function isStale(bytes32 currencyName) external view returns (bool) {
+    function isStale(bytes32 currencyName) external view override returns (bool) {
         if (currencyName == LUSD ) return false;
         return _getUpdatedTime(currencyName).add(stalePeriod) < now;
     }
@@ -130,7 +130,7 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
 
-    function _getPriceData(bytes32 currencyName) internal view returns (PriceData memory) {
+    function _getPriceData(bytes32 currencyName) internal view virtual returns (PriceData memory) {
         return mPricesStorage[currencyName][mPricesLastRound[currencyName]];
     }
 

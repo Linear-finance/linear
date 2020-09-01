@@ -13,12 +13,15 @@
     "url": ""
   },
   "dependencies": {
+    "@openzeppelin/upgrades": "^2.8.0",
     "web3-utils": "^1.2.11"
   },
   "devDependencies": {
+    "@openzeppelin/cli": "^2.8.2",
+    "@openzeppelin/contracts": "^3.1.0",
     "ethers": "^5.0.8",
     "fs": "0.0.1-security",
-    "solc": "^0.5.17",
+    "solc": "^0.6.12",
     "string-format": "^2.0.0",
     "truffle-hdwallet-provider": "^1.0.0-web3one.5"
   }

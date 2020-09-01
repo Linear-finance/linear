@@ -1,5 +1,5 @@
-
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
 import "./LnDefaultPrices.sol";
 
@@ -50,7 +50,7 @@ contract LnChainLinkPrices is LnDefaultPrices {
         }
     }
 
-    function _getPriceData(bytes32 currencyName) internal view returns (PriceData memory) {
+    function _getPriceData(bytes32 currencyName) internal view override returns (PriceData memory) {
         if (address(mOracles[currencyName]) != address(0)) {
             OracleInterface Oracle = mOracles[currencyName];
             PriceData memory priceAndTime;
@@ -67,7 +67,7 @@ contract LnChainLinkPrices is LnDefaultPrices {
             if (array[i] == entry) {
                 delete array[i];
                 array[i] = array[array.length - 1];
-                array.length--;
+                array.pop();
                 return true;
             }
         }
@@ -98,23 +98,23 @@ contract TestOracle is OracleInterface {
         entries[roundId] = Entry({answer: answer, timestamp: timestamp});
     }
 
-    function latestAnswer() external view returns (int256) {
+    function latestAnswer() external view override returns (int256) {
         return getAnswer(latestRound());
     }
 
-    function latestTimestamp() external view returns (uint256) {
+    function latestTimestamp() external view override returns (uint256) {
         return getTimestamp(latestRound());
     }
 
-    function latestRound() public view returns (uint256) {
+    function latestRound() public view override returns (uint256) {
         return roundId;
     }
 
-    function getAnswer(uint256 _roundId) public view returns (int256) {
+    function getAnswer(uint256 _roundId) public view override returns (int256) {
         return entries[_roundId].answer;
     }
 
-    function getTimestamp(uint256 _roundId) public view returns (uint256) {
+    function getTimestamp(uint256 _roundId) public view override returns (uint256) {
         return entries[_roundId].timestamp;
     }
 }

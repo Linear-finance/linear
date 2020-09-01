@@ -1,8 +1,9 @@
-pragma solidity ^0.5.17;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
 import "./LnAdmin.sol";
 
-contract LnOperatorModifier is LnAdmin {
+abstract contract LnOperatorModifier is LnAdmin {
     
     address public operator;
 

@@ -1,10 +1,10 @@
-pragma solidity ^0.5.17;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
-import "./IERC20.sol";
 import "./LnTokenStorage.sol";
 import "./LnErc20Handler.sol";
 
-contract LinearFinance is IERC20, LnErc20Handler {
+contract LinearFinance is LnErc20Handler {
     
     string public constant TOKEN_NAME = "Linear Finance Token";
     string public constant TOKEN_SYMBOL = "LINA";
@@ -45,7 +45,7 @@ contract LinearFinance is IERC20, LnErc20Handler {
         emitTransfer(account, address(0), amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
         super._beforeTokenTransfer(from, to, amount);
 
         require(!paused, "ERC20Pausable: token transfer while paused");

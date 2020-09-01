@@ -9,7 +9,6 @@ contract('test Admin', async (accounts)=> {
     const admin = accounts[0];
     const ac1 = accounts[1];
 
-  
     it('Admin', async ()=> {
         const testCache = await testAddressCache.deployed();
         await testCache.setCandidate( ac1 );

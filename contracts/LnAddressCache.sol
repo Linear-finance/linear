@@ -1,5 +1,5 @@
-
-pragma solidity ^0.5.17;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
 
 import "./LnAdmin.sol";
@@ -53,7 +53,7 @@ contract testAddressCache  is LnAddressCache, LnAdmin {
     constructor(address _admin ) public LnAdmin(_admin ) {}
 
 
-    function updateAddressCache( address _addressStorage ) onlyAdmin public
+    function updateAddressCache( address _addressStorage ) onlyAdmin public override
     {
         addr1 = LnAddressStorage(_addressStorage).getAddressWithRequire("a", "");
         addr2 = LnAddressStorage(_addressStorage).getAddressWithRequire("b", "" );

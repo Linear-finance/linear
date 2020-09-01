@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.24;
 
 
@@ -26,7 +27,7 @@ interface LnPrices {
 }
 
 
-contract LnBasePrices is LnPrices{
+abstract contract LnBasePrices is LnPrices{
     // const name
     bytes32 public constant LINA = "LINA";
     bytes32 public constant LUSD = "lUsd";

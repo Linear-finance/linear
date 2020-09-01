@@ -1,22 +1,24 @@
-pragma solidity ^0.5.17;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
-import "./SafeMath.sol";
+import "./IERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
 
 import "./LnAdmin.sol";
 import "./LnProxyImpl.sol";
 import "./LnTokenStorage.sol";
 
-contract LnErc20Handler is LnAdmin, LnProxyImpl {
+contract LnErc20Handler is IERC20, LnAdmin, LnProxyImpl {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
     LnTokenStorage public tokenStorage;
 
-    string public name;
-    string public symbol;
-    uint public totalSupply;
-    uint8 public decimals;
+    string public override name;
+    string public override symbol;
+    uint public override totalSupply;
+    uint8 public override decimals;
 
     constructor(
         address payable _proxy,
@@ -35,11 +37,11 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         decimals = _decimals;
     }
 
-    function allowance(address owner, address spender) public view returns (uint) {
+    function allowance(address owner, address spender) public view virtual override returns (uint) {
         return tokenStorage.allowance(owner, spender);
     }
 
-    function balanceOf(address account) external view returns (uint) {
+    function balanceOf(address account) external view override returns (uint) {
         return tokenStorage.balanceOf(account);
     }
 
@@ -84,10 +86,10 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         return _internalTransfer(from, to, value);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal { }
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 
     // default transfer
-    function transfer(address to, uint value) external optionalProxy returns (bool) {
+    function transfer(address to, uint value) external virtual override optionalProxy returns (bool) {
         _transferByProxy(messageSender, to, value);
 
         return true;
@@ -98,12 +100,12 @@ contract LnErc20Handler is LnAdmin, LnProxyImpl {
         address from,
         address to,
         uint value
-    ) external optionalProxy  returns (bool) {
+    ) external virtual override optionalProxy returns (bool) {
         return _transferFromByProxy(messageSender, from, to, value);
     }
 
 
-    function approve(address spender, uint value) public optionalProxy returns (bool) {
+    function approve(address spender, uint value) public virtual override optionalProxy returns (bool) {
         address sender = messageSender;
 
         tokenStorage.setAllowance(sender, spender, value);

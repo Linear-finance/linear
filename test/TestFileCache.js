@@ -1,11 +1,10 @@
-const LinearFinance = artifacts.require("LinearFinance");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const testAddressCache = artifacts.require("testAddressCache");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
-contract('test LinearFinance', async (accounts)=> {
+contract('test LnAddressStorage', async (accounts)=> {
 
     const admin = accounts[0];
     const ac1 = accounts[1];

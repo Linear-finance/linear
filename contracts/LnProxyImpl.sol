@@ -1,4 +1,5 @@
-pragma solidity ^0.5.17;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
 import "./LnAdmin.sol";
 
@@ -52,21 +53,22 @@ contract LnProxyBase is LnAdmin {
         }
     }
 
-    function() external payable {
-        
+    //receive: It is executed on a call to the contract with empty calldata. This is the function that is executed on plain Ether transfers (e.g. via .send() or .transfer()).
+    //fallback: can only rely on 2300 gas being available,
+    receive() external payable {
         target.setMessageSender(msg.sender);
 
         assembly {
             let free_ptr := mload(0x40)
-            calldatacopy(free_ptr, 0, calldatasize)
+            calldatacopy(free_ptr, 0, calldatasize())
 
-            let result := call(gas, sload(target_slot), callvalue, free_ptr, calldatasize, 0, 0)
-            returndatacopy(free_ptr, 0, returndatasize)
+            let result := call(gas(), sload(target_slot), callvalue(), free_ptr, calldatasize(), 0, 0)
+            returndatacopy(free_ptr, 0, returndatasize())
 
             if iszero(result) {
-                revert(free_ptr, returndatasize)
+                revert(free_ptr, returndatasize())
             }
-            return(free_ptr, returndatasize)
+            return(free_ptr, returndatasize())
         }
     }
 
@@ -79,7 +81,7 @@ contract LnProxyBase is LnAdmin {
 }
 
 
-contract LnProxyImpl is LnAdmin {
+abstract contract LnProxyImpl is LnAdmin {
     
     LnProxyBase public proxy;
     LnProxyBase public integrationProxy;

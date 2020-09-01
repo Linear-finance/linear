@@ -53,7 +53,7 @@ contract('test LinearFinance', async (accounts)=> {
 
         //set time
         let starttime = Math.floor(Date.now()/1000);
-        await lina.set_StakingPeriod(starttime + 10, starttime + 30);
+        await lina.set_StakingPeriod(starttime + 10, starttime + 20);
         let stakingperiod = await lina.stakingPeriod();
         //console.log(stakingperiod);
 
@@ -83,7 +83,7 @@ contract('test LinearFinance', async (accounts)=> {
         await lina.staking(stakingAmount, { from: admin });
         //let _2days = 3600*24*2;
         //await lina.set_StakingPeriod(starttime - 10, starttime + 60-_2days);// 这样设置时间有问题
-        await new Promise(resolve => setTimeout(resolve, 30*1000));
+        await new Promise(resolve => setTimeout(resolve, 20*1000));
 
 //        let blocktime = await lina.blocktime();
 //        blocktime = blocktime.toNumber();
