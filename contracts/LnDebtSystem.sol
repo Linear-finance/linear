@@ -61,7 +61,7 @@ contract LnDebtSystem is LnAdmin, Pausable {
     // -----------------------------------------------
     modifier OnlyDebtSystemRole(address _address) {
         LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
-        require(accessCtrl.HasDebtSystemRole(_address), "Need debt system access role");
+        require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
         _;
     }
 

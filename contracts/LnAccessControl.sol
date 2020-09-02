@@ -4,6 +4,10 @@ pragma solidity ^0.6.12;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
+// example:
+//LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
+//require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
+
 // contract access control
 contract LnAccessControl is AccessControl {
     using Address for address;
@@ -43,6 +47,10 @@ contract LnAccessControl is AccessControl {
         }
     }
 
+    // function SetRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) public {
+    //     _setRoles(roleType, addresses, setTo);
+    // }
+
     // Issue burn
     function SetIssueLusdRole(address[] calldata issuer, bool[] calldata setTo) public {
         //require(IsAdmin(msg.sender), "Only admin"); //TODO grantRole has check admin role require, but need test to make it sure
@@ -53,21 +61,9 @@ contract LnAccessControl is AccessControl {
     function SetBurnLusdRole(address[] calldata burner, bool[] calldata setTo) public {
         _setRoles(BURN_LUSD_ROLE, burner, setTo);
     }
-
-    function HasIssueLusdRole(address _address) public view returns (bool) {
-        return hasRole(ISSUE_LUSD_ROLE, _address);
-    } 
-
-    function HasBurnLusdRole(address _address) public view returns (bool) {
-        return hasRole(BURN_LUSD_ROLE, _address);
-    }
     
     //
     function SetDebtSystemRole(address[] calldata _address, bool[] calldata _setTo) public {
         _setRoles(DEBT_SYSTEM, _address, _setTo);
-    }
-
-    function HasDebtSystemRole(address _address) public view returns (bool) {
-        return hasRole(DEBT_SYSTEM, _address);
     }
 }
