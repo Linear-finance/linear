@@ -97,8 +97,6 @@ contract('test LinearFinance', async (accounts)=> {
         balance = await lina.balanceOf(admin);
         assert.equal(balance.valueOf()-initbalance, 0);
     });
-    it('new logic', async ()=> {
-        
-    });
+
 });
 
