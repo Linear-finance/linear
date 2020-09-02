@@ -9,7 +9,7 @@ truffle migrate --network development
 
 
 
-truffle test test/TestAccessControl.js  --network jhdev
+truffle test test/TestAccessControl.js  --network local
 
 
 
