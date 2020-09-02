@@ -20,17 +20,11 @@ contract LnErc20Handler is IERC20, LnAdmin, LnProxyImpl {
     uint public override totalSupply;
     uint8 public override decimals;
 
-    constructor(
-        address payable _proxy,
-        LnTokenStorage _tokenStorage,
-        string memory _name,
-        string memory _symbol,
-        uint _totalSupply,
-        uint8 _decimals,
-        address _admin
-    ) public LnAdmin(_admin) LnProxyImpl(_proxy) {
+    constructor( address payable _proxy, LnTokenStorage _tokenStorage, string memory _name, 
+        string memory _symbol, uint _totalSupply, uint8 _decimals, address _admin ) 
+        public LnAdmin(_admin) LnProxyImpl(_proxy) {
+        
         tokenStorage = _tokenStorage;
-
         name = _name;
         symbol = _symbol;
         totalSupply = _totalSupply;
@@ -50,11 +44,7 @@ contract LnErc20Handler is IERC20, LnAdmin, LnProxyImpl {
         emitTokenStorageUpdated(address(tokenStorage));
     }
 
-    function _internalTransfer(
-        address from,
-        address to,
-        uint value
-    ) internal returns (bool) {
+    function _internalTransfer( address from, address to, uint value ) internal returns (bool) {
         
         require(to != address(0) && to != address(this) && to != address(proxy), "Cannot transfer to this address");
         _beforeTokenTransfer(from, to, value);

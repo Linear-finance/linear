@@ -6,7 +6,7 @@ import "./LnAdmin.sol";
 
 contract LnAddressStorage is LnAdmin {
 
-    mapping(bytes32 => address) public mStorage;
+    mapping(bytes32 => address) public mAddrs;
 
     constructor(address _admin ) public LnAdmin(_admin ) {}
 
@@ -15,7 +15,7 @@ contract LnAddressStorage is LnAdmin {
         require(names.length == destinations.length, "Input lengths must match");
 
         for (uint i = 0; i < names.length; i++) {
-            mStorage[names[i]] = destinations[i];
+            mAddrs[names[i]] = destinations[i];
             emit updateStorageAddress( names[i], destinations[i] );
         }
     }
@@ -23,16 +23,16 @@ contract LnAddressStorage is LnAdmin {
     function update(bytes32 name, address dest ) external onlyAdmin {
         require( name != "", "name can not be empty");
         require( dest != address(0), "address cannot be 0");
-        mStorage[name] = dest;
+        mAddrs[name] = dest;
         emit updateStorageAddress( name, dest );
     }
 
     function getAddress(bytes32 name) external view returns (address) {
-        return mStorage[name];
+        return mAddrs[name];
     }
 
     function getAddressWithRequire(bytes32 name, string calldata reason) external view returns (address) {
-        address _foundAddress = mStorage[name];
+        address _foundAddress = mAddrs[name];
         require(_foundAddress != address(0), reason);
         return _foundAddress;
     }
