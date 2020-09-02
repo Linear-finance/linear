@@ -4,7 +4,7 @@ pragma solidity ^0.6.12;
 import "./LnAddressCache.sol";
 import "./IAsset.sol";
 
-contract IAssetSystem is LnAddressStorage{
+contract LnAssetSystem is LnAddressStorage{
     IAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
 
@@ -44,6 +44,11 @@ contract IAssetSystem is LnAddressStorage{
 
         emit AssetRemoved(name, assetToRemove);
     }
+
+    function assetNumber() external view returns (uint) {
+        return mAssetList.length;
+    }
+
 
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
