@@ -12,7 +12,7 @@ contract('test LnAccessControl', async (accounts)=> {
     it('access roles', async ()=> {
         let accessControl = await LnAccessControl.new();
         let debtsystemkey = await accessControl.DEBT_SYSTEM();
-        let issueusdkey = await accessControl.ISSUE_LUSD_ROLE();
+        let issueassetkey = await accessControl.ISSUE_ASSET_ROLE();
 
         let v = await accessControl.IsAdmin(ac0);
         assert.equal(v, true);
@@ -41,7 +41,7 @@ contract('test LnAccessControl', async (accounts)=> {
         assert.equal(v, false);
         v = await accessControl.hasRole(debtsystemkey,ac2);
         assert.equal(v, false);
-        v = await accessControl.hasRole(issueusdkey,ac2);
+        v = await accessControl.hasRole(issueassetkey,ac2);
         assert.equal(v, false);
 
         // set to 
@@ -50,7 +50,7 @@ contract('test LnAccessControl', async (accounts)=> {
         assert.equal(v, true);
         v = await accessControl.hasRole(debtsystemkey,ac2);
         assert.equal(v, true);
-        v = await accessControl.hasRole(issueusdkey,ac2);
+        v = await accessControl.hasRole(issueassetkey,ac2);
         assert.equal(v, false);
 
         // reset
@@ -60,7 +60,7 @@ contract('test LnAccessControl', async (accounts)=> {
         assert.equal(v, false);
         v = await accessControl.hasRole(debtsystemkey,ac2);
         assert.equal(v, false);
-        v = await accessControl.hasRole(issueusdkey,ac2);
+        v = await accessControl.hasRole(issueassetkey,ac2);
         assert.equal(v, false);
 
         v = await accessControl.hasRole(debtsystemkey,ac0);
