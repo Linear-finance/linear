@@ -28,14 +28,62 @@ contract('LnAssetSystem', async (accounts)=> {
     describe('add assets', () => {
         it('add assets', async ()=> {
             const assets = await LnAssetSystem.new( admin );
+            let count0 = await assets.assetNumber();
+            assert.equal( count0.valueOf(), 0 );
+            //console.log( count0 );
+
             const linaData = await LnTokenStorage.new( admin, op );
             const linaProxy = await LnProxyERC20.new( admin );
             const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin );
-            assets.addAsset( lina );
+            await assets.addAsset( lina.address );
+
+            let count1 = await assets.assetNumber();
+            //console.log( count1 );
+            assert.equal( count1.valueOf(), 1 );
+
+            const cnyData = await LnTokenStorage.new( admin, op );
+            const cnyProxy = await LnProxyERC20.new( admin );
+            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin );
+            await assets.addAsset( cny.address );
+            
+            let count2 = await assets.assetNumber();
+            //console.log( count2 );
+            assert.equal( count2, 2 );
         });
 
     }); 
     
+    describe('remove assets', () => {
+        it('remove assets', async ()=> {
+            const assets = await LnAssetSystem.new( admin );
+            let count0 = await assets.assetNumber();
+            assert.equal( count0.valueOf(), 0 );
+            //console.log( count0 );
+
+            const linaData = await LnTokenStorage.new( admin, op );
+            const linaProxy = await LnProxyERC20.new( admin );
+            const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin );
+            await assets.addAsset( lina.address );
+
+            let count1 = await assets.assetNumber();
+            //console.log( count1 );
+            assert.equal( count1.valueOf(), 1 );
+
+            const cnyData = await LnTokenStorage.new( admin, op );
+            const cnyProxy = await LnProxyERC20.new( admin );
+            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin );
+            await assets.addAsset( cny.address );
+            
+            let count2 = await assets.assetNumber();
+            //console.log( count2 );
+            assert.equal( count2, 2 );
+
+            await assets.removeAsset( toBytes32("CNY") );
+            count = await assets.assetNumber();
+            assert.equal( count, 1 );
+        });
+
+    }); 
 
 
 
