@@ -14,8 +14,8 @@ contract LnAccessControl is AccessControl {
 
     // -------------------------------------------------------
     // role type
-    bytes32 public constant ISSUE_LUSD_ROLE = keccak256("ISSUE_LUSD"); // issue lusd
-    bytes32 public constant BURN_LUSD_ROLE = keccak256("BURN_LUSD"); // burn lusd
+    bytes32 public constant ISSUE_ASSET_ROLE = keccak256("ISSUE_ASSET");
+    bytes32 public constant BURN_ASSET_ROLE = keccak256("BURN_ASSET");
 
     bytes32 public constant DEBT_SYSTEM = keccak256("LnDebtSystem");
     // -------------------------------------------------------
@@ -52,14 +52,14 @@ contract LnAccessControl is AccessControl {
     // }
 
     // Issue burn
-    function SetIssueLusdRole(address[] calldata issuer, bool[] calldata setTo) public {
+    function SetIssueAssetRole(address[] calldata issuer, bool[] calldata setTo) public {
         //require(IsAdmin(msg.sender), "Only admin"); //TODO grantRole has check admin role require, but need test to make it sure
         
-        _setRoles(ISSUE_LUSD_ROLE, issuer, setTo);
+        _setRoles(ISSUE_ASSET_ROLE, issuer, setTo);
     }
 
-    function SetBurnLusdRole(address[] calldata burner, bool[] calldata setTo) public {
-        _setRoles(BURN_LUSD_ROLE, burner, setTo);
+    function SetBurnAssetRole(address[] calldata burner, bool[] calldata setTo) public {
+        _setRoles(BURN_ASSET_ROLE, burner, setTo);
     }
     
     //
