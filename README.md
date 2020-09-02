@@ -7,6 +7,12 @@ truffle migrate --network ropsten -f
 use ganache network
 truffle migrate --network development 
 
+
+
+truffle test test/TestAccessControl.js  --network jhdev
+
+
+
 **如果上面找不到truffle command, 用**
 
 npx truffle xxxx
