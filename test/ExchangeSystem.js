@@ -36,12 +36,8 @@ contract('LnExchangeSystem', async (accounts)=> {
     const trader = accounts[2];
 
 
-    describe('constructor', () => {
-        it('constructor', async ()=> {
-        });
-
-    }); 
     describe('exchange', () => {
+
         it('exchange protottype', async ()=> {
             // add assets
             const assets = await LnAssetSystem.new( admin );
@@ -90,7 +86,6 @@ contract('LnExchangeSystem', async (accounts)=> {
             await cny.mint( trader, toUnit(10) );
             await Btc.burn( trader, toUnit(1));
             await cny.burn( trader, toUnit(1));
-         //function exchange( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) 
 
             // exchange 
             let txExchange = await exchangeSys.exchange( toBytes32("BTC"), toUnit(1), trader, toBytes32("CNY"), {from:trader});
