@@ -40,12 +40,12 @@ contract LnAsset is LnErc20Handler, IAsset {
     // -----------------------------------------------
     modifier OnlyIssueAssetRole(address _address) {
         LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
-        require(accessCtrl.hasRole(accessCtrl.ISSUE_ASSET_ROLE(), _address), "Need debt system access role");
+        require(accessCtrl.hasRole(accessCtrl.ISSUE_ASSET_ROLE(), _address), "Need issue access role");
         _;
     }
     modifier OnlyBurnAssetRole(address _address) {
         LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
-        require(accessCtrl.hasRole(accessCtrl.BURN_ASSET_ROLE(), _address), "Need debt system access role");
+        require(accessCtrl.hasRole(accessCtrl.BURN_ASSET_ROLE(), _address), "Need burn access role");
         _;
     }
 
