@@ -7,8 +7,8 @@ import "./LnAssetSystem.sol";
 import "./LnPrices.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
-    bytes32 public constant ASSETS_KEY = ("ASSET_SYSTEM");
-    bytes32 public constant PRICES_KEY = ("PRICES");
+    bytes32 public constant ASSETS_KEY = ("LnAssetSystem");
+    bytes32 public constant PRICES_KEY = ("LnPrices");
 
     LnAssetSystem mAssets;
     LnPrices mPrices;
@@ -27,12 +27,15 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     }
 
-    function exchange( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) 
-        external returns (uint destAmount ) {
+    function exchange( bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) external {
+        return _exchange( msg.sender, sourceKey, sourceAmount, destAddr, destKey );
+    }
+
+    function _exchange( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) internal {
         
         LnAsset source = LnAsset( mAssets.getAddressWithRequire( sourceKey, ""));
         LnAsset dest = LnAsset( mAssets.getAddressWithRequire( destKey, ""));
-        destAmount=  mPrices.exchange( sourceKey, sourceAmount, destKey );
+        uint destAmount=  mPrices.exchange( sourceKey, sourceAmount, destKey );
         require( destAmount > 0, "dest amount must > 0" );
 
         // 先不考虑手续费和预言机套利的问题
