@@ -34,7 +34,7 @@ contract('LnAssetSystem', async (accounts)=> {
 
             const linaData = await LnTokenStorage.new( admin, op );
             const linaProxy = await LnProxyERC20.new( admin );
-            const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin );
+            const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin, assets.address );
             await assets.addAsset( lina.address );
 
             let count1 = await assets.assetNumber();
@@ -43,7 +43,7 @@ contract('LnAssetSystem', async (accounts)=> {
 
             const cnyData = await LnTokenStorage.new( admin, op );
             const cnyProxy = await LnProxyERC20.new( admin );
-            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin );
+            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin, assets.address );
             await assets.addAsset( cny.address );
             
             let count2 = await assets.assetNumber();
@@ -62,7 +62,7 @@ contract('LnAssetSystem', async (accounts)=> {
 
             const linaData = await LnTokenStorage.new( admin, op );
             const linaProxy = await LnProxyERC20.new( admin );
-            const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin );
+            const lina = await LnAsset.new( toBytes32("LINA"), linaProxy.address, linaData.address, "LINA", "LINA SYMBOL", 0, 10, admin, assets.address );
             await assets.addAsset( lina.address );
 
             let count1 = await assets.assetNumber();
@@ -71,7 +71,7 @@ contract('LnAssetSystem', async (accounts)=> {
 
             const cnyData = await LnTokenStorage.new( admin, op );
             const cnyProxy = await LnProxyERC20.new( admin );
-            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin );
+            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 10, admin, assets.address );
             await assets.addAsset( cny.address );
             
             let count2 = await assets.assetNumber();

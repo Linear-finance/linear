@@ -24,12 +24,16 @@ interface LnPrices {
     // exchange amount of source currenty for some dest currency
     function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view
         returns ( uint value, uint sourcePrice, uint destPrice );
+
+    // price names    
+    function LUSD() external view returns (bytes32 ); 
+    function LINA() external view returns (bytes32 ); 
 }
 
 
 abstract contract LnBasePrices is LnPrices{
     // const name
-    bytes32 public constant LINA = "LINA";
-    bytes32 public constant LUSD = "lUsd";
+    bytes32 public override constant LINA = "LINA";
+    bytes32 public override constant LUSD = "lUsd";
 
 }

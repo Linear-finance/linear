@@ -41,7 +41,7 @@ contract LnAddressStorage is LnAdmin {
 
 
 interface LnAddressCache  {
-    function updateAddressCache( address _addressStorage )  external ;
+    function updateAddressCache( LnAddressStorage _addressStorage )  external ;
 
     event   updateCachedAddress( bytes32 name, address addr );
 }
@@ -53,7 +53,7 @@ contract testAddressCache  is LnAddressCache, LnAdmin {
     constructor(address _admin ) public LnAdmin(_admin ) {}
 
 
-    function updateAddressCache( address _addressStorage ) onlyAdmin public override
+    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
         addr1 = LnAddressStorage(_addressStorage).getAddressWithRequire("a", "");
         addr2 = LnAddressStorage(_addressStorage).getAddressWithRequire("b", "" );
