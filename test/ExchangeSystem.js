@@ -8,6 +8,7 @@ const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnAccessControl = artifacts.require("LnAccessControl");
 const LnChainLinkPrices = artifacts.require("LnChainLinkPrices");
 const TestOracle = artifacts.require("TestOracle");
+const LnConfig = artifacts.require("LnConfig");
 
 const w3utils = require('web3-utils');
 
@@ -71,15 +72,23 @@ contract('LnExchangeSystem', async (accounts)=> {
             await CnyOracle.setLatestAnswer(  convertToOraclePrice("0.125"), timeSent );
             await clPrices.addOracle( toBytes32("CNY"), CnyOracle.address );
 
+            // config 
+            const config = await LnConfig.new( admin );
+            await config.batchSet( ["BTC","CNY"].map(toBytes32), [0.01, 0.01].map(toUnit));
+
+            
             //access control
             const accessCtrl = await LnAccessControl.new();
 
-            await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl"].map(toBytes32),[ assets.address, clPrices.address, accessCtrl.address]);
+            await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig"].map(toBytes32),
+                [ assets.address, clPrices.address, accessCtrl.address, config.address ]);
 
             const exchangeSys = await LnExchangeSystem.new( admin, assets.address );
 
             await accessCtrl.SetBurnAssetRole( [admin, exchangeSys.address], [true,true]);
             await accessCtrl.SetIssueAssetRole( [admin, exchangeSys.address], [true,true]);
+
+            
 
             // build
             await Btc.mint( trader, toUnit(10) );
@@ -91,7 +100,7 @@ contract('LnExchangeSystem', async (accounts)=> {
             let txExchange = await exchangeSys.exchange( toBytes32("BTC"), toUnit(1), trader, toBytes32("CNY"), {from:trader});
             let cnyAmount = await cnyProxy.balanceOf( trader );
             let btcAmount = await BtcProxy.balanceOf( trader );
-            assertBNEqual( cnyAmount, toUnit(80009));   // 80000+9 
+            assertBNEqual( cnyAmount, toUnit(79209));   // 80000+9 -800(手续费)
             assertBNEqual( btcAmount, toUnit(8));    
         });
 

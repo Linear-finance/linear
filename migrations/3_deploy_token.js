@@ -14,6 +14,9 @@ const LnDefaultPrices = artifacts.require("LnDefaultPrices");
 
 const LnChainLinkPrices = artifacts.require("LnChainLinkPrices");
 
+const LnExchangeSystem = artifacts.require("LnExchangeSystem");
+
+
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
@@ -33,6 +36,9 @@ module.exports = function (deployer, network, accounts) {
 
     await deployer.link( SafeDecimalMath, LnDefaultPrices );
     await deployer.link( SafeDecimalMath, LnChainLinkPrices );
-    
+
+    await deployer.link(SafeMath, LnExchangeSystem);
+    await deployer.link(SafeDecimalMath, LnExchangeSystem);
+
   });
 };
