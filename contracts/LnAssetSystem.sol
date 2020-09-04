@@ -3,8 +3,15 @@ pragma solidity ^0.6.12;
 
 import "./LnAddressCache.sol";
 import "./IAsset.sol";
+import "./LnAsset.sol";
+import "./LnDefaultPrices.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./SafeDecimalMath.sol";
 
 contract LnAssetSystem is LnAddressStorage{
+    using SafeMath for uint;
+    using SafeDecimalMath for uint;
+
     IAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
 
@@ -49,6 +56,15 @@ contract LnAssetSystem is LnAddressStorage{
         return mAssetList.length;
     }
 
+    // check exchange rate invalid condition ? invalid just fail.
+    function totalAssetsInUsd() public view returns (uint256) {
+        uint256 total = 0;
+        LnDefaultPrices priceGetter = LnDefaultPrices( mAddrs["LnDefaultPrices"] );
+        for (uint256 i=0; i< mAssetList.length; i++) {
+            uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
+            total = total.add( LnAsset(address(mAssetList[i])).totalSupply().mul(exchangeRate) );
+        }
+    }
 
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);

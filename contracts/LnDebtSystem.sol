@@ -3,14 +3,13 @@ pragma solidity ^0.6.12;
 
 import "./LnAdmin.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
 import "./LnAddressCache.sol";
 import "./LnAccessControl.sol";
+import "./LnAssetSystem.sol";
 
-// TODO Pausable maybe useless
-contract LnDebtSystem is LnAdmin, Pausable {
+contract LnDebtSystem is LnAdmin {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
@@ -24,10 +23,10 @@ contract LnDebtSystem is LnAdmin, Pausable {
         uint256 debtProportion;
         uint256 debtFactor;
     }
-    mapping(address => DebtData) public debtDataState;
+    mapping(address => DebtData) public userDebtState;
 
     //use mapping to store array data
-    mapping (uint256=>uint256) public lastDebtFactors; // TODO: 能直接记 factor 的记 factor, 不能记的就用index查
+    mapping (uint256=>uint256) public lastDebtFactors; // Note: 能直接记 factor 的记 factor, 不能记的就用index查
     uint256 public debtCurrentIndex; // length
     uint256 public maxDebtArraySize = 1000; // TODO: should base time? 一个周期内的记录 or 添加一个接口，close 一个周期时，把这个周期前不需要的delete
 
@@ -36,20 +35,16 @@ contract LnDebtSystem is LnAdmin, Pausable {
         addressStorage = LnAddressStorage(_addrStorage);
     }
 
+    event UpdateAddressStorage(address oldAddr, address newAddr);
+    event UpdateUserDebtLog(address addr, uint256 debtProportion, uint256 debtFactor);
+    event PushDebtLog(uint256 index, uint256 newFactor);
+
     // ------------------ system config ----------------------
     function SetAddressStorage(address _address) public onlyAdmin {
         emit UpdateAddressStorage(address(addressStorage), _address);
         addressStorage = LnAddressStorage(_address);
     }
     
-    function SetPause(bool pause) external onlyAdmin {
-        if (pause) {
-            _pause();
-        } else {
-            _unpause();
-        }
-    }
-
     function SetMaxDebtArraySize(uint256 _size) external onlyAdmin {
         // TODO need clear outof size data? never mind, keeping is no need more pay
         //if (_size < maxDebtArraySize) {
@@ -72,8 +67,9 @@ contract LnDebtSystem is LnAdmin, Pausable {
         } else {
             lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex-1].multiplyDecimalRoundPrecise(_factor);
         }
+        emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex]);
 
-        debtCurrentIndex++;
+        debtCurrentIndex = debtCurrentIndex.add(1);
 
         // delete no need
         if (debtCurrentIndex > maxDebtArraySize) {
@@ -82,10 +78,48 @@ contract LnDebtSystem is LnAdmin, Pausable {
     }
 
     // need update lastDebtFactors first
-    function UpdateUserDebt(address _address, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
-        debtDataState[_address].debtProportion = _debtProportion;
-        debtDataState[_address].debtFactor = lastDebtFactors[debtCurrentIndex];
+    function UpdateUserDebt(address _user, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
+        userDebtState[_user].debtProportion = _debtProportion;
+        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex];
+        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
     }
 
-    event UpdateAddressStorage(address oldAddr, address newAddr);
+    function GetUserDebtData(address _user) external view returns (uint256 debtProportion, uint256 debtFactor) {
+        debtProportion = userDebtState[_user].debtProportion;
+        debtFactor = userDebtState[_user].debtFactor;
+    }
+
+    function _lastSystemDebtFactor() private view returns (uint256) {
+        if (debtCurrentIndex == 0) {
+            return SafeDecimalMath.preciseUnit();
+        }
+        return lastDebtFactors[debtCurrentIndex];
+    }
+
+    function LastSystemDebtFactor() external view returns (uint256) {
+        return _lastSystemDebtFactor();
+    }
+
+    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256) {
+        LnAssetSystem assetSys = LnAssetSystem(addressStorage.getAddress("LnAssetSystem"));
+
+        uint256 totalAssetSupplyInUsd = assetSys.totalAssetsInUsd();
+
+        uint256 debtProportion = userDebtState[_user].debtProportion;
+        uint256 debtFactor = userDebtState[_user].debtFactor;
+
+        if (debtProportion == 0) {
+            return 0;
+        }
+
+        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
+                .divideDecimalRoundPrecise(debtFactor)
+                .multiplyDecimalRoundPrecise(debtProportion);
+        uint256 debtBalance = totalAssetSupplyInUsd
+                .decimalToPreciseDecimal()
+                .multiplyDecimalRoundPrecise(currentUserDebtProportion)
+                .preciseDecimalToDecimal();
+
+        return debtBalance;
+    }
 }

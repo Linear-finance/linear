@@ -34,6 +34,7 @@ contract LnAccessControl is AccessControl {
     }
 
     // -------------------------------------------------------
+    // this func need admin role. grantRole and revokeRole need admin role
     function _setRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) private {
         require(addresses.length == setTo.length, "parameter address length not eq");
 
@@ -53,8 +54,6 @@ contract LnAccessControl is AccessControl {
 
     // Issue burn
     function SetIssueAssetRole(address[] calldata issuer, bool[] calldata setTo) public {
-        //require(IsAdmin(msg.sender), "Only admin"); //TODO grantRole has check admin role require, but need test to make it sure
-        
         _setRoles(ISSUE_ASSET_ROLE, issuer, setTo);
     }
 
