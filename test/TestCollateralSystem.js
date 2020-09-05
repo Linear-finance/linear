@@ -21,7 +21,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
     it('#collateral', async ()=> {
         
         let InitContracts = await InitComment(ac0);
-        console.log("InitContracts", InitContracts);
+        //console.log("InitContracts", InitContracts);
 
         const lina = await CreateLina(ac0);
 
@@ -58,13 +58,30 @@ contract('test LnCollateralSystem', async (accounts)=> {
         // before 
         await lina.approve(kLnCollateralSystem.address, (1000e18).toLocaleString('fullwide',{useGrouping:false}), {from:ac1});
         await kLnCollateralSystem.AddCollateral( linaBytes32, (1000e18).toLocaleString('fullwide',{useGrouping:false}), {from:ac1});
-        // setup price
+        
+        // setup price, chainlink price is price*10e8
+        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [1], Math.floor(Date.now()/1000).toString() );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
         assert.equal(v.valueOf(), 1000e18);
+        v = await kLnCollateralSystem.GetUserTotalCollateralInUsd(ac1);
+        assert.equal(v.valueOf(), 1000e18);
 
-        //v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
-        //assert.equal(v.valueOf(), 1);
+        // setup price
+        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [2], Math.floor(Date.now()/1000).toString() );
+
+        v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
+        assert.equal(v.valueOf(), 1000e18);
+        v = await kLnCollateralSystem.GetUserTotalCollateralInUsd(ac1);
+        assert.equal(v.valueOf(), 2*1000e18);
+        v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
+        assert.equal(v.valueOf(), 2*1000e18);
+
+        // debt is 0
+        try  {
+        //    v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1); // TODO :
+        //    assert.equal(v.valueOf(), 2*1000e18);
+        } catch (e) { console.log(e); }
 
     });
 

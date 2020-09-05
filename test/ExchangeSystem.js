@@ -45,7 +45,7 @@ contract('LnExchangeSystem', async (accounts)=> {
     
             const BtcData = await LnTokenStorage.new( admin, op );
             const BtcProxy = await LnProxyERC20.new( admin );
-            const Btc = await LnAsset.new( toBytes32("BTC"), BtcProxy.address, BtcData.address, "BTC", "BTC SYMBOL", 0, 18, admin, assets.address );
+            const Btc = await LnAsset.new( toBytes32("BTC"), BtcProxy.address, BtcData.address, "BTC", "BTC SYMBOL", 0, 18, admin );
             await BtcProxy.setTarget( Btc.address );    
             await BtcData.setOperator( Btc.address );
  
@@ -53,7 +53,7 @@ contract('LnExchangeSystem', async (accounts)=> {
 
             const cnyData = await LnTokenStorage.new( admin, op );
             const cnyProxy = await LnProxyERC20.new( admin );
-            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 18, admin, assets.address );
+            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 18, admin );
             await cnyProxy.setTarget( cny.address );    
             await cnyData.setOperator( cny.address );
 
@@ -78,7 +78,7 @@ contract('LnExchangeSystem', async (accounts)=> {
 
             
             //access control
-            const accessCtrl = await LnAccessControl.new();
+            const accessCtrl = await LnAccessControl.new(admin);
 
             await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig"].map(toBytes32),
                 [ assets.address, clPrices.address, accessCtrl.address, config.address ]);
@@ -88,7 +88,8 @@ contract('LnExchangeSystem', async (accounts)=> {
             await accessCtrl.SetBurnAssetRole( [admin, exchangeSys.address], [true,true]);
             await accessCtrl.SetIssueAssetRole( [admin, exchangeSys.address], [true,true]);
 
-            
+            await Btc.updateAddressCache(assets.address);
+            await cny.updateAddressCache(assets.address);
 
             // build
             await Btc.mint( trader, toUnit(10) );

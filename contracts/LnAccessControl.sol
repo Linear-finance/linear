@@ -19,8 +19,8 @@ contract LnAccessControl is AccessControl {
 
     bytes32 public constant DEBT_SYSTEM = keccak256("LnDebtSystem");
     // -------------------------------------------------------
-    constructor() public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    constructor(address admin) public {
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     function IsAdmin(address _address) public view returns (bool) {

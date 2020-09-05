@@ -6,12 +6,12 @@ import "./IAsset.sol";
 import "./LnAccessControl.sol";
 import "./LnAddressCache.sol";
 
-contract LnAsset is LnErc20Handler, IAsset {
+contract LnAsset is LnErc20Handler, IAsset, LnAddressCache {
     bytes32  mKeyName;
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnAddressStorage private addressStorage;
+    LnAccessControl accessCtrl;
 
     function keyName() override external view returns (bytes32)
     {
@@ -19,7 +19,7 @@ contract LnAsset is LnErc20Handler, IAsset {
     }
 
     constructor( bytes32 _key, address payable _proxy, LnTokenStorage _tokenStorage, string memory _name, string memory _symbol,
-        uint _totalSupply, uint8 _decimals, address _admin, address _addrStorage) public 
+        uint _totalSupply, uint8 _decimals, address _admin) public 
         LnErc20Handler(_proxy, _tokenStorage,_name,_symbol, _totalSupply, _decimals, _admin ) {
         
         mKeyName = _key;
@@ -28,23 +28,21 @@ contract LnAsset is LnErc20Handler, IAsset {
         symbol = _symbol;
         totalSupply = _totalSupply;
         decimals = _decimals;
-        addressStorage = LnAddressStorage(_addrStorage);
     }
 
     // ------------------ system config ----------------------
-    function SetAddressStorage(address _address) public onlyAdmin {
-        emit UpdateAddressStorage(address(addressStorage), _address);
-        addressStorage = LnAddressStorage(_address);
-    }
+    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    {
+        accessCtrl = LnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
 
+        emit updateCachedAddress( "LnAccessControl", address(accessCtrl) );
+    }
     // -----------------------------------------------
     modifier OnlyIssueAssetRole(address _address) {
-        LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
         require(accessCtrl.hasRole(accessCtrl.ISSUE_ASSET_ROLE(), _address), "Need issue access role");
         _;
     }
     modifier OnlyBurnAssetRole(address _address) {
-        LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
         require(accessCtrl.hasRole(accessCtrl.BURN_ASSET_ROLE(), _address), "Need burn access role");
         _;
     }
@@ -75,7 +73,5 @@ contract LnAsset is LnErc20Handler, IAsset {
         totalSupply = totalSupply.sub(amount);
         emitTransfer(account, address(0), amount);
     }
-
-    event UpdateAddressStorage(address oldAddr, address newAddr);
 }
 

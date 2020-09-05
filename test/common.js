@@ -10,16 +10,25 @@ const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
 const LnCollateralSystem = artifacts.require("LnCollateralSystem");
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
+const LnDebtSystem = artifacts.require("LnDebtSystem");
 
 const LinearFinance = artifacts.require("LinearFinance");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
-async function newAssetToken(keyname, kLnAddressStorage, name, symbol, admin, kLnAssetSystem) {
+let contractName = [];
+let contractAddr = [];
+
+function registContract(name, contractObj) {
+    contractName.push(toBytes32(name));
+    contractAddr.push(contractObj.address);
+}
+
+async function newAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
     let kLnProxyERC20 = await LnProxyERC20.new(admin);
     let kLnTokenStorage = await LnTokenStorage.new(admin, admin);
-    let kAsset = await LnAsset.new(keyname, kLnProxyERC20.address, kLnAddressStorage.address, name, symbol, 0, 18, admin, kLnTokenStorage.address);
+    let kAsset = await LnAsset.new(keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
     await kLnTokenStorage.setOperator(kAsset.address);
     await kLnProxyERC20.setTarget(kAsset.address);
     await kAsset.setProxy(kLnProxyERC20.address);
@@ -30,50 +39,59 @@ async function newAssetToken(keyname, kLnAddressStorage, name, symbol, admin, kL
 }
 
 async function InitComment(admin) {
-    console.log("InitComment start");
+    //console.log("InitComment start");
     //let kSafeMath = await SafeMath.new();
     let kSafeDecimalMath = await SafeDecimalMath.new();
     
-    let kLnAddressStorage = await LnAddressStorage.new(admin);
-
+    let kLnAssetSystem = await LnAssetSystem.new(admin);
+    
     // regist contract address
-    let kLnAccessControl = await LnAccessControl.new();
-    await kLnAddressStorage.update( toBytes32("LnAccessControl"), kLnAccessControl.address);
-
-    let oracleAddress = "0x0000000000000000000000000000000000000000";
-    let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
-    await kLnAddressStorage.update( toBytes32("LnDefaultPrices"), kLnDefaultPrices.address);
+    let kLnAccessControl = await LnAccessControl.new(admin);
+  
+    let oracleAddress = admin;//"0x0000000000000000000000000000000000000000";
+    //let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
 
     let kLnChainLinkPrices = await LnChainLinkPrices.new(admin, oracleAddress, [], []);
-    await kLnAddressStorage.update( toBytes32("LnChainLinkPrices"), kLnChainLinkPrices.address);
-
-    let kLnAssetSystem = await LnAssetSystem.new(admin);
-    await kLnAddressStorage.update( toBytes32("LnAssetSystem"), kLnAssetSystem.address);
-
-    let kLnCollateralSystem = await LnCollateralSystem.new(kLnAddressStorage.address);
-    await kLnAddressStorage.update( toBytes32("LnCollateralSystem"), kLnCollateralSystem.address);
-
-    let lUSD = await newAssetToken(toBytes32("lUSD"), kLnAddressStorage, "lUSD", "lUSD", admin, kLnAssetSystem);
+  
+    await LnDebtSystem.link(SafeDecimalMath);
+    let kLnDebtSystem = await LnDebtSystem.new(admin);
+   
+    let kLnCollateralSystem = await LnCollateralSystem.new(admin);
+ 
+    let lUSD = await newAssetToken(toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
 
     await LnBuildBurnSystem.link(SafeDecimalMath);
-    let kLnBuildBurnSystem = await LnBuildBurnSystem.new(kLnAddressStorage.address, lUSD.address);
-    await kLnAddressStorage.update( toBytes32("LnBuildBurnSystem"), kLnBuildBurnSystem.address);
+    let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, lUSD.address);
 
     // access role setting
 
     await kLnAccessControl.SetIssueAssetRole([kLnBuildBurnSystem.address],[true]);
     await kLnAccessControl.SetBurnAssetRole([kLnBuildBurnSystem.address],[true]);
 
-    await kLnAccessControl.SetDebtSystemRole([kLnBuildBurnSystem.address],[true]);
-    console.log("InitComment finish");
+    await kLnAccessControl.SetDebtSystemRole([kLnBuildBurnSystem.address, admin], [true, true]);
+
+    registContract("LnAssetSystem", kLnAssetSystem); // regist self
+    registContract("LnAccessControl", kLnAccessControl);
+    //registContract("LnDefaultPrices", kLnDefaultPrices);
+    registContract("LnPrices", kLnChainLinkPrices); // Note: LnPrices
+    registContract("LnDebtSystem", kLnDebtSystem);
+    registContract("LnCollateralSystem", kLnCollateralSystem);
+    registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
+  
+    await kLnAssetSystem.updateAll(contractName, contractAddr);
+
+    await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
+    await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);
+
+    //console.log("InitComment finish");
     return {
-        kLnAddressStorage:kLnAddressStorage,
         kLnAccessControl:kLnAccessControl,
-        kLnDefaultPrices:kLnDefaultPrices,
+        //kLnDefaultPrices:kLnDefaultPrices,
         kLnChainLinkPrices:kLnChainLinkPrices,
         kLnAssetSystem:kLnAssetSystem,
         kLnCollateralSystem:kLnCollateralSystem,
-        kLnBuildBurnSystem:kLnBuildBurnSystem
+        kLnBuildBurnSystem:kLnBuildBurnSystem,
+        kLnDebtSystem:kLnDebtSystem
     }
 }
 

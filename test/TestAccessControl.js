@@ -10,7 +10,7 @@ contract('test LnAccessControl', async (accounts)=> {
     const ac2 = accounts[1];
 
     it('access roles', async ()=> {
-        let accessControl = await LnAccessControl.new();
+        let accessControl = await LnAccessControl.new(ac0);
         let debtsystemkey = await accessControl.DEBT_SYSTEM();
         let issueassetkey = await accessControl.ISSUE_ASSET_ROLE();
 

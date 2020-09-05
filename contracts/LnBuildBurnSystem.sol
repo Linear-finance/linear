@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
-import "./LnDefaultPrices.sol";
+import "./LnPrices.sol";
 import "./LnAddressCache.sol";
 import "./LnAsset.sol";
 import "./LnAssetSystem.sol";
@@ -21,20 +21,12 @@ contract LnBuildBurnSystem is LnAdmin, Pausable {
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnAddressStorage private addressStorage;
     LnAsset private lUSDToken; // this contract need 
     uint256 public BuildRatio = 2e17; // build proportion base on SafeDecimalMath.unit(), default 0.2, and collater_ratio = 1/BuildRatio
 
     // -------------------------------------------------------
-    constructor(address _addrStorage, address _lUSDTokenAddr) public LnAdmin(msg.sender) {
-        addressStorage = LnAddressStorage(_addrStorage);
+    constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
         lUSDToken = LnAsset(_lUSDTokenAddr);
-    }
-
-    // ------------------ system config ----------------------
-    function SetAddressStorage(address _address) public onlyAdmin {
-        emit UpdateAddressStorage(address(addressStorage), _address);
-        addressStorage = LnAddressStorage(_address);
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
@@ -48,7 +40,6 @@ contract LnBuildBurnSystem is LnAdmin, Pausable {
         emit UpdateBuildRadio(_ratio);
     }
 
-    event UpdateAddressStorage(address oldAddr, address newAddr);
     event UpdateLusdToken(address oldAddr, address newAddr);
     event UpdateBuildRadio(uint256 newRatio);
 

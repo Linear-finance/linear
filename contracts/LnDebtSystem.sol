@@ -9,15 +9,15 @@ import "./LnAddressCache.sol";
 import "./LnAccessControl.sol";
 import "./LnAssetSystem.sol";
 
-contract LnDebtSystem is LnAdmin {
+contract LnDebtSystem is LnAdmin, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnAddressStorage private addressStorage;
-
+    LnAccessControl private accessCtrl;
+    LnAssetSystem private assetSys;
     // -------------------------------------------------------
     struct DebtData {
         uint256 debtProportion;
@@ -31,8 +31,7 @@ contract LnDebtSystem is LnAdmin {
     uint256 public maxDebtArraySize = 1000; // TODO: should base time? 一个周期内的记录 or 添加一个接口，close 一个周期时，把这个周期前不需要的delete
 
     // -------------------------------------------------------
-    constructor(address _addrStorage) public LnAdmin(msg.sender) {
-        addressStorage = LnAddressStorage(_addrStorage);
+    constructor(address admin) public LnAdmin(admin) {
     }
 
     event UpdateAddressStorage(address oldAddr, address newAddr);
@@ -40,9 +39,13 @@ contract LnDebtSystem is LnAdmin {
     event PushDebtLog(uint256 index, uint256 newFactor);
 
     // ------------------ system config ----------------------
-    function SetAddressStorage(address _address) public onlyAdmin {
-        emit UpdateAddressStorage(address(addressStorage), _address);
-        addressStorage = LnAddressStorage(_address);
+    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    {
+        accessCtrl = LnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
+        assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
+
+        emit updateCachedAddress( "LnAccessControl", address(accessCtrl) );
+        emit updateCachedAddress( "LnAssetSystem",   address(assetSys) );
     }
     
     function SetMaxDebtArraySize(uint256 _size) external onlyAdmin {
@@ -55,11 +58,11 @@ contract LnDebtSystem is LnAdmin {
 
     // -----------------------------------------------
     modifier OnlyDebtSystemRole(address _address) {
-        LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
         require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
         _;
     }
 
+    // TODO: can we merge PushDebtFactor and UpdateUserDebt
     // ------------------ public ----------------------
     function PushDebtFactor(uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
         if (debtCurrentIndex == 0) {
@@ -101,8 +104,6 @@ contract LnDebtSystem is LnAdmin {
     }
 
     function GetUserDebtBalanceInUsd(address _user) external view returns (uint256) {
-        LnAssetSystem assetSys = LnAssetSystem(addressStorage.getAddress("LnAssetSystem"));
-
         uint256 totalAssetSupplyInUsd = assetSys.totalAssetsInUsd();
 
         uint256 debtProportion = userDebtState[_user].debtProportion;

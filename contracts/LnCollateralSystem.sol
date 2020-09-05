@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
-import "./LnDefaultPrices.sol";
+import "./LnPrices.sol";
 import "./LnAddressCache.sol";
 import "./LnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
@@ -15,14 +15,17 @@ import "./LnBuildBurnSystem.sol";
 // TODO 价格比例
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
-contract LnCollateralSystem is LnAdmin, Pausable {
+contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnAddressStorage private addressStorage;
+    LnPrices private priceGetter;
+    LnDebtSystem private debtSystem;
+    LnBuildBurnSystem private buildBurnSystem;
+
     bytes32 constant Currency_ETH = "ETH";
     
     // -------------------------------------------------------
@@ -46,14 +49,19 @@ contract LnCollateralSystem is LnAdmin, Pausable {
     mapping (address => mapping(bytes32 => CollateralData)) public userCollateralData;
 
     // -------------------------------------------------------
-    constructor(address _addrStorage) public LnAdmin(msg.sender) {
-        addressStorage = LnAddressStorage(_addrStorage);
+    constructor(address admin) public LnAdmin(admin) {
     }
 
     // ------------------ system config ----------------------
-    function SetAddressStorage(address _address) public onlyAdmin {
-        emit UpdateAddressStorage(address(addressStorage), _address);
-        addressStorage = LnAddressStorage(_address);
+    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    {
+        priceGetter =     LnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
+        debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
+        buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
+
+        emit updateCachedAddress( "LnPrices",          address(priceGetter) );
+        emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
+        emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
     }
 
     function SetPause(bool pause) external onlyAdmin {
@@ -100,7 +108,6 @@ contract LnCollateralSystem is LnAdmin, Pausable {
 
     // ------------------------------------------------------------------------
     function GetSystemTotalCollateralInUsd() public view returns (uint256 rTotal) {
-        LnDefaultPrices priceGetter = LnDefaultPrices(addressStorage.getAddress("LnDefaultPrices"));
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (tokenInfos[currency].totalCollateral > 0) { // this check for avoid calling getPrice when collateral is zero
@@ -114,7 +121,6 @@ contract LnCollateralSystem is LnAdmin, Pausable {
     }
 
     function GetUserTotalCollateralInUsd(address _user) public view returns (uint256 rTotal) {
-        LnDefaultPrices priceGetter = LnDefaultPrices(addressStorage.getAddress("LnDefaultPrices"));
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (userCollateralData[_user][currency].collateral > 0) {
@@ -153,15 +159,12 @@ contract LnCollateralSystem is LnAdmin, Pausable {
     function MaxRedeemableInUsd(address _user) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
         
-        LnDebtSystem debtSystem = LnDebtSystem(addressStorage.getAddress("LnDebtSystem"));
-        LnBuildBurnSystem bbSys = LnBuildBurnSystem(addressStorage.getAddress("LnBuildBurnSystem"));
-
         uint256 debtBalance = debtSystem.GetUserDebtBalanceInUsd(_user);
         if (debtBalance == 0) {
             return totalCollateralInUsd;
         }
 
-        uint256 minCollateral = debtBalance.divideDecimal(bbSys.BuildRatio());
+        uint256 minCollateral = debtBalance.divideDecimal(buildBurnSystem.BuildRatio());
         if (totalCollateralInUsd < minCollateral) {
             return 0;
         }
@@ -178,7 +181,6 @@ contract LnCollateralSystem is LnAdmin, Pausable {
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
         
-        LnDefaultPrices priceGetter = LnDefaultPrices(addressStorage.getAddress("LnDefaultPrices"));
         uint256 maxRedeem = maxRedeemableInUsd.div(priceGetter.getPrice(_currency));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
@@ -212,7 +214,6 @@ contract LnCollateralSystem is LnAdmin, Pausable {
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
         
-        LnDefaultPrices priceGetter = LnDefaultPrices(addressStorage.getAddress("LnDefaultPrices"));
         uint256 maxRedeem = maxRedeemableInUsd.div(priceGetter.getPrice(Currency_ETH));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
@@ -223,7 +224,6 @@ contract LnCollateralSystem is LnAdmin, Pausable {
         return true;
     }
 
-    event UpdateAddressStorage(address oldAddr, address newAddr);
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event AddCollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
