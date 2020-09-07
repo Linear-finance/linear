@@ -42,7 +42,7 @@ async function mint() {
 
 async function setTimePeriod() {
     try {
-        //let ret = await contractLina.connect(wallet).set_StakingPeriod((1599177600).toString(), (1599177600+24*3600).toString());
+        //let ret = await contractLina.connect(wallet).set_StakingPeriod((1599468705).toString(), (1599468705+24*3600).toString());
         //console.log("set_StakingPeriod ret :"+ ret)
     }
     catch(err) {

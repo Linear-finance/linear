@@ -14,10 +14,10 @@ contract LnAccessControl is AccessControl {
 
     // -------------------------------------------------------
     // role type
-    bytes32 public constant ISSUE_ASSET_ROLE = keccak256("ISSUE_ASSET");
-    bytes32 public constant BURN_ASSET_ROLE = keccak256("BURN_ASSET");
+    bytes32 public constant ISSUE_ASSET_ROLE = ("ISSUE_ASSET"); //keccak256
+    bytes32 public constant BURN_ASSET_ROLE = ("BURN_ASSET");
 
-    bytes32 public constant DEBT_SYSTEM = keccak256("LnDebtSystem");
+    bytes32 public constant DEBT_SYSTEM = ("LnDebtSystem");
     // -------------------------------------------------------
     constructor(address admin) public {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);

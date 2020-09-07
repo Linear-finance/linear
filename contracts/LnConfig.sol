@@ -10,6 +10,8 @@ contract LnConfig is LnAdmin {
 
     constructor(address _admin ) public LnAdmin(_admin ) {}
 
+    //some configue keys
+    bytes32 public constant BUILD_RATIO = "BuildRatio"; // percent, base 10e18
 
     function getUint(bytes32 key ) external view returns (uint) {
         return mUintConfig[key];

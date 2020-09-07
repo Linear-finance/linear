@@ -11,6 +11,7 @@ import "./LnPrices.sol";
 import "./LnAddressCache.sol";
 import "./LnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
+import "./LnConfig.sol";
 
 // TODO 价格比例
 // 单纯抵押进来
@@ -25,6 +26,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     LnPrices private priceGetter;
     LnDebtSystem private debtSystem;
     LnBuildBurnSystem private buildBurnSystem;
+    LnConfig private mConfig;
 
     bytes32 constant Currency_ETH = "ETH";
     
@@ -35,7 +37,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         address tokenAddr;
         uint256 minCollateral; // min collateral amount.
         uint256 totalCollateral;
-        bool bClose;
+        bool bClose; // TODO : 为了防止价格波动，另外再加个折扣价?
     }
 
     mapping (bytes32 => TokenInfo) public tokenInfos;
@@ -58,10 +60,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         priceGetter =     LnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
         debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
         buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
+        mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
 
         emit updateCachedAddress( "LnPrices",          address(priceGetter) );
         emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
         emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
+        emit updateCachedAddress( "LnConfig",          address(mConfig) );
     }
 
     function SetPause(bool pause) external onlyAdmin {
@@ -159,12 +163,13 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     function MaxRedeemableInUsd(address _user) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
         
-        uint256 debtBalance = debtSystem.GetUserDebtBalanceInUsd(_user);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
         if (debtBalance == 0) {
             return totalCollateralInUsd;
         }
 
-        uint256 minCollateral = debtBalance.divideDecimal(buildBurnSystem.BuildRatio());
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
         if (totalCollateralInUsd < minCollateral) {
             return 0;
         }
