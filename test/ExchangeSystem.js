@@ -9,6 +9,8 @@ const LnAccessControl = artifacts.require("LnAccessControl");
 const LnChainLinkPrices = artifacts.require("LnChainLinkPrices");
 const TestOracle = artifacts.require("TestOracle");
 const LnConfig = artifacts.require("LnConfig");
+const LnFeeSystem = artifacts.require("LnFeeSystem");
+
 
 const w3utils = require('web3-utils');
 
@@ -58,7 +60,15 @@ contract('LnExchangeSystem', async (accounts)=> {
             await cnyData.setOperator( cny.address );
 
             await assets.addAsset( cny.address );
-            
+
+            const lusdData = await LnTokenStorage.new( admin, op );
+            const lusdProxy = await LnProxyERC20.new( admin );
+            const lusd = await LnAsset.new( toBytes32("lUsd"), lusdProxy.address, lusdData.address, "lUsd", "LUSD SYMBOL", 0, 18, admin );
+            await lusdProxy.setTarget( lusd.address );    
+            await lusdData.setOperator( lusd.address );
+
+            await assets.addAsset( lusd.address );
+
     
             // set prices 
             const clPrices = await LnChainLinkPrices.new( admin, op, ["BTC","CNY"].map(toBytes32), [ 10000, 0.125 ].map( toUnit) );
@@ -80,8 +90,12 @@ contract('LnExchangeSystem', async (accounts)=> {
             //access control
             const accessCtrl = await LnAccessControl.new(admin);
 
-            await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig"].map(toBytes32),
-                [ assets.address, clPrices.address, accessCtrl.address, config.address ]);
+            // fee system
+            const feeSys = await LnFeeSystem.new( admin );
+
+
+            await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig","LnFeeSystem"].map(toBytes32),
+                [ assets.address, clPrices.address, accessCtrl.address, config.address, feeSys.address ]);
 
             const exchangeSys = await LnExchangeSystem.new( admin, assets.address );
 
@@ -90,6 +104,7 @@ contract('LnExchangeSystem', async (accounts)=> {
 
             await Btc.updateAddressCache(assets.address);
             await cny.updateAddressCache(assets.address);
+            await lusd.updateAddressCache(assets.address);
 
             // build
             await Btc.mint( trader, toUnit(10) );

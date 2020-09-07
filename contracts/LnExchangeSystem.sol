@@ -6,6 +6,7 @@ import "./LnAsset.sol";
 import "./LnAssetSystem.sol";
 import "./LnPrices.sol";
 import "./LnConfig.sol";
+import "./LnFeeSystem.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
     using SafeMath for uint;
@@ -14,11 +15,13 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     bytes32 public constant ASSETS_KEY = ("LnAssetSystem");
     bytes32 public constant PRICES_KEY = ("LnPrices");
     bytes32 public constant CONFIG_KEY = ("LnConfig");
+    bytes32 public constant FEE_SYS_KEY = ("LnFeeSystem");
 
 
     LnAssetSystem mAssets;
     LnPrices mPrices;
     LnConfig mConfig;
+    LnFeeSystem mFeeSys;
 
     constructor(address _admin, LnAddressStorage _addressStorage ) public LnAdmin(_admin ) {
         updateAddressCache( _addressStorage );
@@ -30,11 +33,13 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
         mPrices = LnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
         mConfig = LnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
+        mFeeSys = LnFeeSystem(_addressStorage.getAddressWithRequire( FEE_SYS_KEY,"" ));
 
 
         emit updateCachedAddress( ASSETS_KEY, address(mAssets) );
         emit updateCachedAddress( PRICES_KEY, address(mPrices) );
         emit updateCachedAddress( CONFIG_KEY, address(mConfig) );
+        emit updateCachedAddress( FEE_SYS_KEY, address(mFeeSys) );
     }
 
 
@@ -59,9 +64,9 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         // 把手续费转成USD
         uint feeUsd = mPrices.exchange( destKey, fee, mPrices.LUSD() );
         // 这里接下来要把手续费放入资金池
-                
+        _addExchangeFee( feeUsd );        
 
-        // 先不考虑手续费和预言机套利的问题
+        // 先不考虑预言机套利的问题
         source.burn( fromAddr, sourceAmount );
 
         dest.mint( destAddr, destRecived );
@@ -69,7 +74,13 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         emit exchangeAsset( fromAddr, sourceKey, sourceAmount, destAddr, destKey, destRecived, feeUsd );
     }
 
+    function _addExchangeFee( uint feeUsd ) internal
+    {
+        LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
+        lusd.mint( mFeeSys.FEE_DUMMY_ADDRESS(), feeUsd );
+        mFeeSys.addExchangeFee( feeUsd );
+    }
+    
     event exchangeAsset( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey,  uint destRecived, uint fee );
-
 }
 
