@@ -17,6 +17,8 @@ const LinearFinance = artifacts.require("LinearFinance");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
+const { BN, toBN, toWei, fromWei, hexToAscii } = w3utils;
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 let contractNames = [];
 let contractAddrs = [];
@@ -46,7 +48,8 @@ async function InitComment(admin) {
     
     let kLnAssetSystem = await LnAssetSystem.new(admin);
     let kLnConfig = await LnConfig.new(admin);
-    await kLnConfig.setUint(kLnConfig.BUILD_RATIO(), 2e17);
+    let buildRatio = await kLnConfig.BUILD_RATIO();
+    await kLnConfig.setUint(buildRatio.valueOf(), toUnit("0.2"));
     
     // regist contract address
     let kLnAccessControl = await LnAccessControl.new(admin);
@@ -75,7 +78,7 @@ async function InitComment(admin) {
 
     registContract("LnAssetSystem", kLnAssetSystem); // regist self
     registContract("LnAccessControl", kLnAccessControl);
-    //registContract("LnDefaultPrices", kLnDefaultPrices);
+    registContract("LnConfig", kLnConfig);
     registContract("LnPrices", kLnChainLinkPrices); // Note: LnPrices
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
