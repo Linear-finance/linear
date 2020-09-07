@@ -8,6 +8,7 @@ import "./SafeDecimalMath.sol";
 import "./LnAddressCache.sol";
 import "./LnAccessControl.sol";
 import "./LnAssetSystem.sol";
+import "./LnConfig.sol";
 
 contract LnDebtSystem is LnAdmin, LnAddressCache {
     using SafeMath for uint;
@@ -27,8 +28,12 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
 
     //use mapping to store array data
     mapping (uint256=>uint256) public lastDebtFactors; // Note: 能直接记 factor 的记 factor, 不能记的就用index查
-    uint256 public debtCurrentIndex; // length
-    uint256 public maxDebtArraySize = 1000; // TODO: should base time? 一个周期内的记录 or 添加一个接口，close 一个周期时，把这个周期前不需要的delete
+    uint256 public debtCurrentIndex; // length of array. this index of array no value
+    // follow var use to manage array size.
+    uint256 public lastCloseAt; // close at array index
+    uint256 public lastDeletTo; // delete to array index, lastDeletTo < lastCloseAt
+    uint256 public constant MAX_DEL_PER_TIME = 50;
+    // 
 
     // -------------------------------------------------------
     constructor(address admin) public LnAdmin(admin) {
@@ -48,23 +53,19 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
         emit updateCachedAddress( "LnAssetSystem",   address(assetSys) );
     }
     
-    function SetMaxDebtArraySize(uint256 _size) external onlyAdmin {
-        // TODO need clear outof size data? never mind, keeping is no need more pay
-        //if (_size < maxDebtArraySize) {
-        //}
-        require(_size > 0, "Must larger than zero");
-        maxDebtArraySize = _size;
-    }
-
     // -----------------------------------------------
     modifier OnlyDebtSystemRole(address _address) {
         require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
         _;
     }
 
-    // TODO: can we merge PushDebtFactor and UpdateUserDebt
-    // ------------------ public ----------------------
-    function PushDebtFactor(uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
+    function SetLastCloseFeePeriodAt(uint256 index) external OnlyDebtSystemRole(msg.sender) {
+        require(index >= lastCloseAt, "Close index can not return to pass");
+        require(index <= debtCurrentIndex, "Can not close at future index");
+        lastCloseAt = index;
+    }
+
+    function _pushDebtFactor(uint256 _factor) private {
         if (debtCurrentIndex == 0) {
             lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
         } else {
@@ -74,17 +75,35 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
 
         debtCurrentIndex = debtCurrentIndex.add(1);
 
-        // delete no need
-        if (debtCurrentIndex > maxDebtArraySize) {
-            delete lastDebtFactors[ debtCurrentIndex - maxDebtArraySize ];
+        // delete out of date data
+        if (lastDeletTo < lastCloseAt) { // safe check 
+            uint256 delNum = lastCloseAt - lastDeletTo;
+            delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
+            for (uint256 i=lastDeletTo; i<delNum; i++) {
+                delete lastDebtFactors[i];
+            }
+            lastDeletTo = lastDeletTo.add(delNum);
         }
+    }
+
+    function PushDebtFactor(uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
+        _pushDebtFactor(_factor);
+    }
+
+    function _updateUserDebt(address _user, uint256 _debtProportion) private {
+        userDebtState[_user].debtProportion = _debtProportion;
+        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex];
+        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
     }
 
     // need update lastDebtFactors first
     function UpdateUserDebt(address _user, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
-        userDebtState[_user].debtProportion = _debtProportion;
-        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex];
-        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
+        _updateUserDebt(_user, _debtProportion);
+    }
+
+    function UpdateDebt(address _user, uint256 _debtProportion, uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
+        _pushDebtFactor(_factor);
+        _updateUserDebt(_user, _debtProportion);
     }
 
     function GetUserDebtData(address _user) external view returns (uint256 debtProportion, uint256 debtFactor) {
@@ -103,24 +122,28 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
         return _lastSystemDebtFactor();
     }
 
-    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256) {
+    /**
+     *
+     *@return [0] the debt balance of user. [1] system total asset in usd.
+     */
+    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256, uint256) {
         uint256 totalAssetSupplyInUsd = assetSys.totalAssetsInUsd();
 
         uint256 debtProportion = userDebtState[_user].debtProportion;
         uint256 debtFactor = userDebtState[_user].debtFactor;
 
         if (debtProportion == 0) {
-            return 0;
+            return (0, totalAssetSupplyInUsd);
         }
 
         uint256 currentUserDebtProportion = _lastSystemDebtFactor()
                 .divideDecimalRoundPrecise(debtFactor)
                 .multiplyDecimalRoundPrecise(debtProportion);
-        uint256 debtBalance = totalAssetSupplyInUsd
+        uint256 userDebtBalance = totalAssetSupplyInUsd
                 .decimalToPreciseDecimal()
                 .multiplyDecimalRoundPrecise(currentUserDebtProportion)
                 .preciseDecimalToDecimal();
 
-        return debtBalance;
+        return (userDebtBalance, totalAssetSupplyInUsd);
     }
 }

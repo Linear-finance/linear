@@ -57,13 +57,12 @@ contract LnAssetSystem is LnAddressStorage {
     }
 
     // check exchange rate invalid condition ? invalid just fail.
-    function totalAssetsInUsd() public view returns (uint256) {
-        uint256 total = 0;
+    function totalAssetsInUsd() public view returns (uint256 rTotal) {
         require(mAddrs["LnPrices"] != address(0), "LnPrices address cannot access");
         LnPrices priceGetter = LnPrices( mAddrs["LnPrices"] ); //getAddress
         for (uint256 i=0; i< mAssetList.length; i++) {
             uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            total = total.add( LnAsset(address(mAssetList[i])).totalSupply().mul(exchangeRate) );
+            rTotal = rTotal.add( LnAsset(address(mAssetList[i])).totalSupply().mul(exchangeRate) );
         }
     }
 

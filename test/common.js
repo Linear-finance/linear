@@ -2,6 +2,7 @@ const SafeMath = artifacts.require("SafeMath");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const LnAccessControl = artifacts.require("LnAccessControl");
+const LnConfig = artifacts.require("LnConfig");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const LnAsset = artifacts.require("LnAsset");
 const LnDefaultPrices = artifacts.require("LnDefaultPrices");
@@ -16,13 +17,15 @@ const LinearFinance = artifacts.require("LinearFinance");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
+const { BN, toBN, toWei, fromWei, hexToAscii } = w3utils;
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
-let contractName = [];
-let contractAddr = [];
+let contractNames = [];
+let contractAddrs = [];
 
 function registContract(name, contractObj) {
-    contractName.push(toBytes32(name));
-    contractAddr.push(contractObj.address);
+    contractNames.push(toBytes32(name));
+    contractAddrs.push(contractObj.address);
 }
 
 async function newAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
@@ -44,6 +47,9 @@ async function InitComment(admin) {
     let kSafeDecimalMath = await SafeDecimalMath.new();
     
     let kLnAssetSystem = await LnAssetSystem.new(admin);
+    let kLnConfig = await LnConfig.new(admin);
+    let buildRatio = await kLnConfig.BUILD_RATIO();
+    await kLnConfig.setUint(buildRatio.valueOf(), toUnit("0.2"));
     
     // regist contract address
     let kLnAccessControl = await LnAccessControl.new(admin);
@@ -72,16 +78,17 @@ async function InitComment(admin) {
 
     registContract("LnAssetSystem", kLnAssetSystem); // regist self
     registContract("LnAccessControl", kLnAccessControl);
-    //registContract("LnDefaultPrices", kLnDefaultPrices);
+    registContract("LnConfig", kLnConfig);
     registContract("LnPrices", kLnChainLinkPrices); // Note: LnPrices
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
   
-    await kLnAssetSystem.updateAll(contractName, contractAddr);
+    await kLnAssetSystem.updateAll(contractNames, contractAddrs);
 
     await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);
+    await kLnBuildBurnSystem.updateAddressCache(kLnAssetSystem.address);
 
     //console.log("InitComment finish");
     return {

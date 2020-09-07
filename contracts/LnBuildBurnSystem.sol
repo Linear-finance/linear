@@ -12,9 +12,11 @@ import "./LnAddressCache.sol";
 import "./LnAsset.sol";
 import "./LnAssetSystem.sol";
 import "./LnDebtSystem.sol";
+import "./LnCollateralSystem.sol";
+import "./LnConfig.sol";
 
 // 根据 LnCollateralSystem 的抵押资产计算相关抵押率，buildable lusd
-contract LnBuildBurnSystem is LnAdmin, Pausable {
+contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
@@ -22,11 +24,30 @@ contract LnBuildBurnSystem is LnAdmin, Pausable {
     // -------------------------------------------------------
     // need set before system running value.
     LnAsset private lUSDToken; // this contract need 
-    uint256 public BuildRatio = 2e17; // build proportion base on SafeDecimalMath.unit(), default 0.2, and collater_ratio = 1/BuildRatio
 
+    LnDebtSystem private debtSystem;
+    LnAssetSystem private assetSys;
+    LnPrices private priceGetter;
+    LnCollateralSystem private collaterSys;
+    LnConfig private mConfig;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
         lUSDToken = LnAsset(_lUSDTokenAddr);
+    }
+
+    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    {
+        priceGetter =    LnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
+        debtSystem = LnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
+        assetSys =  LnAssetSystem( _addressStorage.getAddressWithRequire( "LnAssetSystem","LnAssetSystem address not valid" ) );
+        collaterSys = LnCollateralSystem( _addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ) );
+        mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
+
+        emit updateCachedAddress( "LnPrices",           address(priceGetter) );
+        emit updateCachedAddress( "LnDebtSystem",       address(debtSystem) );
+        emit updateCachedAddress( "LnAssetSystem",      address(assetSys) );
+        emit updateCachedAddress( "LnCollateralSystem", address(collaterSys) );
+        emit updateCachedAddress( "LnConfig",           address(mConfig) );
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
@@ -34,61 +55,68 @@ contract LnBuildBurnSystem is LnAdmin, Pausable {
         lUSDToken = LnAsset(_address);
     }
 
-    function SetBuildRadio(uint256 _ratio) external onlyAdmin returns (bool) {
-        require(_ratio <= SafeDecimalMath.unit(), "ratio need small than 1 unit");
-        BuildRatio = _ratio;
-        emit UpdateBuildRadio(_ratio);
-    }
-
     event UpdateLusdToken(address oldAddr, address newAddr);
-    event UpdateBuildRadio(uint256 newRatio);
 
-/*
+    // build lusd
+    function BuildAsset(uint256 amount) external returns(bool) {
+        address user = msg.sender;
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).mul(buildRatio).div(SafeDecimalMath.unit());
+        require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
 
-    function () {
-                //
-        uint256 tokenValueUSD = _collateral * priceGetter.getPrice(_currency); // TODO: becarefor calc unit
-        borrowAmount = tokenValueUSD * tokenInfos[_currency].mortgageRatio / MORTGAGE_BASE;
+        // calc debt
+        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user);
 
-        uint256 newTotalAssetSupply = totalAssetSupplyInUsd.add(borrowAmount);
-
-        // loan : exchange collateral to loan
-        IERC20(tokenInfos[_currency].tokenAddr).transferFrom(user, address(this), _collateral);
-        lUSDToken.mint(user, borrowAmount);
-
+        uint256 newTotalAssetSupply = totalAssetSupplyInUsd.add(amount);
         // update debt data
-        uint256 borrowDebtProportion = borrowAmount.divideDecimalRoundPrecise(newTotalAssetSupply);// debtPercentage
-        uint oldTotalProportion = SafeDecimalMath.preciseUnit().sub(borrowDebtProportion);// delta
+        uint256 buildDebtProportion = amount.divideDecimalRoundPrecise(newTotalAssetSupply);// debtPercentage
+        uint oldTotalProportion = SafeDecimalMath.preciseUnit().sub(buildDebtProportion);// 
 
-        uint256 newDebtProportion = borrowDebtProportion;
+        uint256 newUserDebtProportion = buildDebtProportion;
         if (oldUserDebtBalance > 0) {
-            newDebtProportion = oldUserDebtBalance.add(borrowAmount).divideDecimalRoundPrecise(newTotalAssetSupply);
+            newUserDebtProportion = oldUserDebtBalance.add(amount).divideDecimalRoundPrecise(newTotalAssetSupply);
         }
 
-        debtSystem.PushDebtFactor(oldTotalProportion);
-        debtSystem.UpdateUserDebt(user, newDebtProportion);
+        // update debt
+        debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
 
-        return _addLoanRecord(user, _currency, collateral, borrowAmount);
+        // mint asset
+        lUSDToken.mint(user, amount);
+
+        return true;
     }
 
-    // record loan data
-    function _addLoanRecord(address user, bytes32 _currency, uint256 collateral, uint256 borrowAmount) private 
-        returns (uint256 rloanId,
-                 uint256 rcollateral,
-                 uint256 rborrowAmount,
-                 uint256 rloanTime) {
-        CollateralData memory collateralData = CollateralData({
-            collateral: collateral,
-            borrowAmount: borrowAmount
-        });
+    // burn
+    function BurnAsset(uint256 amount) external returns(bool) {
+        address user = msg.sender;
+        //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
 
-        userCollateralData[user][_currency].collateral += collateral;
-        userCollateralData[user][_currency].borrowAmount += borrowAmount;
+        // calc debt
+        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user);
 
-        uniqueId++;
-        emit AddLoan(_currency, user, uniqueId, collateral, borrowAmount, block.timestamp);
-        return (uniqueId, collateralData.collateral, collateralData.borrowAmount, block.timestamp);
+        uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
+
+        uint newTotalDebtIssued = totalAssetSupplyInUsd.sub(burnAmount);
+
+        uint oldTotalProportion = 0;
+        if (newTotalDebtIssued > 0) {
+            uint debtPercentage = burnAmount.divideDecimalRoundPrecise(newTotalDebtIssued);
+            oldTotalProportion = SafeDecimalMath.preciseUnit().add(debtPercentage);
+        }
+
+        uint256 newUserDebtProportion = 0;
+        if (oldUserDebtBalance > burnAmount) {
+            uint newDebt = oldUserDebtBalance.sub(burnAmount);
+            newUserDebtProportion = newDebt.divideDecimalRoundPrecise(newTotalDebtIssued);
+        }
+
+        // update debt
+        debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
+
+        // burn asset
+        lUSDToken.mint(user, burnAmount);
+
+        return true;
     }
-*/
 
 }
