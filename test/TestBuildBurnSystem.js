@@ -10,6 +10,28 @@ const {InitComment, newAssetToken, CreateLina} = require ("./common.js");
 
 const PRECISE_UNIT = toUnit(1e9); // 1e27
 
+let kLnBuildBurnSystem
+let kLnDebtSystem
+let kLnCollateralSystem
+let kLnChainLinkPrices
+let lUSD
+
+async function checkPropDebtTotalRedeemLusd(_account, _proportion, _debtbalance, _totalAssetSupplyInUsd, _redeemable, _lusdBalance, _msg) {
+    let v = await kLnDebtSystem.GetUserCurrentDebtProportion(_account);
+    assert.equal(v, _proportion.toString(), _msg);
+
+    let ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(_account);
+    let debtbalance = ret[0];
+    let totalAssetSupplyInUsd = ret[1];
+    let redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(_account);
+    assert.equal(debtbalance, _debtbalance.toString(), _msg);
+    assert.equal(totalAssetSupplyInUsd, _totalAssetSupplyInUsd.toString(), _msg);
+    assert.equal(redeemable,_redeemable.toString(), _msg);
+
+    v = await lUSD.balanceOf(_account);
+    assert.equal(v, _lusdBalance.toString(), _msg);
+}
+
 contract('test LnBuildBurnSystem', async (accounts)=> {
 
     const ac0 = accounts[0];
@@ -30,11 +52,11 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         let InitContracts = await InitComment(ac0);
 
-        let kLnBuildBurnSystem = InitContracts.kLnBuildBurnSystem;
-        let kLnDebtSystem = InitContracts.kLnDebtSystem;
-        let kLnCollateralSystem = InitContracts.kLnCollateralSystem;
-        let kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
-        let lUSD = InitContracts.lUSD;
+        kLnBuildBurnSystem = InitContracts.kLnBuildBurnSystem;
+        kLnDebtSystem = InitContracts.kLnDebtSystem;
+        kLnCollateralSystem = InitContracts.kLnCollateralSystem;
+        kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
+        lUSD = InitContracts.lUSD;
 
         const lina = await CreateLina(ac0);
 
@@ -138,108 +160,43 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac2});
 
-        // ac1 debt data not change
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac1); // check
-        //console.log("debtbalance, totalAssetSupplyInUsd, redeemable", debtbalance.toString(), totalAssetSupplyInUsd.toString(), redeemable.toString());
-        assert.equal(debtbalance, toUnit(100).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(200).toString()); // total plus 100
-        assert.equal(redeemable, toUnit(1500).toString()); // 2000 collateral - 100/0.2 debtBalance = 1500
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(5e8), toUnit(100), toUnit(200), toUnit(1500), toUnit(100), "ac1 after ac2 build 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(5e8), toUnit(100), toUnit(200), toUnit(1500), toUnit(100), "ac2 after ac2 build 100");
 
-        // ac2 debt data
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac2);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac2); // check
-        //console.log("debtbalance, totalAssetSupplyInUsd, redeemable", debtbalance.toString(), totalAssetSupplyInUsd.toString(), redeemable.toString());
-        assert.equal(debtbalance, toUnit(100).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(200).toString());
-        assert.equal(redeemable, toUnit(1500).toString()); // 2000 collateral - 100/0.2 debtBalance = 1500
-
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac1);
-        assert.equal(v, toUnit(5e8).toString()); // 0.5
-
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac2);
-        assert.equal(v, toUnit(5e8).toString()); // 0.5
-
-        v = await lUSD.balanceOf(ac2);
-        assert.equal(v, toUnit(100).toString());
         //-------------------ac1 build 200
-
         await kLnBuildBurnSystem.BuildAsset( toUnit(200), {from:ac1} );
 
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac1);
-        assert.equal(v, toUnit(7.5e8).toString());
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(7.5e8), toUnit(300), toUnit(400), toUnit(500), toUnit(300), "ac1 after ac1 build 200");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(2.5e8), toUnit(100), toUnit(400), toUnit(1500),toUnit(100), "ac2 after ac1 build 200");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(0e8),   toUnit(0),   toUnit(400), toUnit(0),   toUnit(0),   "ac3 after ac1 build 200");
 
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac2);
-        assert.equal(v, toUnit(2.5e8).toString());
-
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
-        assert.equal(debtbalance, toUnit(300).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(400).toString());
-        assert.equal(redeemable, toUnit(500).toString());
-
-        //
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac2);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
-        assert.equal(debtbalance, toUnit(100).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(400).toString());
-        assert.equal(redeemable, toUnit(1500).toString());
-
-        //-------------------ac3 build
+        //-------------------ac3 build 100
         await kLnCollateralSystem.CollateralEth( {from:ac3, value:toUnit(5)} );
         v = await kLnCollateralSystem.GetUserCollateral( ac3, ETHBytes32 );
         assert.equal(v, toUnit(5).toString());
 
         await kLnBuildBurnSystem.BuildAsset( toUnit(100), {from:ac3} );
 
-        // ac1 ac2 ac3 debt data
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
-        assert.equal(debtbalance, toUnit(300).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(500).toString());
-        assert.equal(redeemable, toUnit(500).toString());
-
-        //
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac2);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
-        assert.equal(debtbalance, toUnit(100).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(500).toString());
-        assert.equal(redeemable, toUnit(1500).toString());
-
-        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac3);
-        debtbalance = ret[0];
-        totalAssetSupplyInUsd = ret[1];
-        redeemable = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
-        assert.equal(debtbalance, toUnit(100).toString());
-        assert.equal(totalAssetSupplyInUsd, toUnit(500).toString());
-        assert.equal(redeemable, toUnit(500).toString());
-
-        //
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac1);
-        assert.equal(v, toUnit(6e8).toString());
-
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac2);
-        assert.equal(v, toUnit(2e8).toString());
-
-        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac3);
-        assert.equal(v, toUnit(2e8).toString());
-
-        // price change
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(6e8), toUnit(300), toUnit(500), toUnit(500), toUnit(300), "ac1 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(2e8), toUnit(100), toUnit(500), toUnit(1500),toUnit(100), "ac2 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(2e8), toUnit(100), toUnit(500), toUnit(500), toUnit(100), "ac3 after ac3 build 100");
 
         // burn
+        //-------------------ac1 burn 100
+        await kLnBuildBurnSystem.BurnAsset(toUnit(100), {from:ac1});
 
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(5e8),   toUnit(200), toUnit(400), toUnit(1000), toUnit(200), "ac1 after ac1 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(2.5e8), toUnit(100), toUnit(400), toUnit(1500), toUnit(100), "ac2 after ac1 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(2.5e8), toUnit(100), toUnit(400), toUnit(500),  toUnit(100), "ac3 after ac1 burn 100");
+
+        //-------------------ac1 burn 200
+        await kLnBuildBurnSystem.BurnAsset(toUnit(200), {from:ac1});
+
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0),   "ac1 after ac1 burn 200");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(5e8), toUnit(100), toUnit(200), toUnit(1500), toUnit(100), "ac2 after ac1 burn 200");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(5e8), toUnit(100), toUnit(200), toUnit(500),  toUnit(100), "ac3 after ac1 burn 200");
+
+        // price change
     });
 
 });

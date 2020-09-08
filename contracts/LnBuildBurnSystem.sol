@@ -120,7 +120,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
 
         // burn asset
-        lUSDToken.mint(user, burnAmount);
+        lUSDToken.burn(user, burnAmount);
 
         return true;
     }
