@@ -47,21 +47,21 @@ contract('test LnCollateralSystem', async (accounts)=> {
         // fail test
         let exception = "";
         try {
-            await kLnCollateralSystem.AddCollateral( toBytes32("notExist"), toUnit(10) );
+            await kLnCollateralSystem.Collateral( toBytes32("notExist"), toUnit(10) );
         } catch (e) { exception = e.reason; }
         assert.equal(exception, "Invalid token symbol"); exception = "";
         try  {
-            await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(0.1));
+            await kLnCollateralSystem.Collateral( linaBytes32, toUnit(0.1));
         } catch (e) { exception = e.reason; }
         assert.equal(exception, "Collateral amount too small"); exception = "";
         try { // collateral more than balance and approve balance
-            await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(1001), {from:ac1});
+            await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1001), {from:ac1});
         } catch (e) { exception = e.reason; }
         assert.equal(exception, "SafeMath: subtraction overflow"); exception = "";
 
         // before 
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
-        await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac1});
         
         // setup price, chainlink price is price*10e8
         await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(1)], Math.floor(Date.now()/1000).toString() );
@@ -160,7 +160,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         // many people
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
-        await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac1});
 
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
         assert.equal(v.valueOf(), 2*1000e18);

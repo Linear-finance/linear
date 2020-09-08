@@ -103,7 +103,9 @@ async function InitComment(admin) {
         kLnAssetSystem:kLnAssetSystem,
         kLnCollateralSystem:kLnCollateralSystem,
         kLnBuildBurnSystem:kLnBuildBurnSystem,
-        kLnDebtSystem:kLnDebtSystem
+        kLnDebtSystem:kLnDebtSystem, 
+        // asset tokens
+        lUSD:lUSD
     }
 }
 

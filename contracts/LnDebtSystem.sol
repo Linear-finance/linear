@@ -92,7 +92,7 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
 
     function _updateUserDebt(address _user, uint256 _debtProportion) private {
         userDebtState[_user].debtProportion = _debtProportion;
-        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex-1];
+        userDebtState[_user].debtFactor = _lastSystemDebtFactor();
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
     }
 
@@ -115,11 +115,25 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
         if (debtCurrentIndex == 0) {
             return SafeDecimalMath.preciseUnit();
         }
-        return lastDebtFactors[debtCurrentIndex];
+        return lastDebtFactors[debtCurrentIndex-1];
     }
 
     function LastSystemDebtFactor() external view returns (uint256) {
         return _lastSystemDebtFactor();
+    }
+
+    function GetUserCurrentDebtProportion(address _user) public view returns(uint256) {
+        uint256 debtProportion = userDebtState[_user].debtProportion;
+        uint256 debtFactor = userDebtState[_user].debtFactor;
+
+        if (debtProportion == 0) {
+            return 0;
+        }
+
+        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
+                .divideDecimalRoundPrecise(debtFactor)
+                .multiplyDecimalRoundPrecise(debtProportion);
+        return currentUserDebtProportion;
     }
 
     /**

@@ -142,7 +142,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // need approve
-    function AddCollateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
+    function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
         TokenInfo storage tokeninfo = tokenInfos[_currency];
         require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
@@ -150,12 +150,16 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
         address user = msg.sender;
 
-        IERC20(tokenInfos[_currency].tokenAddr).transferFrom(user, address(this), _amount);
+        IERC20 erc20 = IERC20(tokenInfos[_currency].tokenAddr);
+        require(erc20.balanceOf(user) >= _amount, "insufficient balance");
+        require(erc20.allowance(user, address(this)) >= _amount, "insufficient allowance, need approve more amount");
+
+        erc20.transferFrom(user, address(this), _amount);
 
         userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(_amount);
         tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(_amount);
 
-        emit AddCollateralLog(user, _currency, _amount, userCollateralData[user][_currency].collateral);
+        emit CollateralLog(user, _currency, _amount, userCollateralData[user][_currency].collateral);
         return true;
     }
 
@@ -208,7 +212,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         
         userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.add(ethAmount);
 
-        emit AddCollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
+        emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
         return true;
     }
 
@@ -230,6 +234,6 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
-    event AddCollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
+    event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
 }
