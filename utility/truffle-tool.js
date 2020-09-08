@@ -20,8 +20,8 @@ async function DeployIfNotExist(deployer, contract) {
     return deployed;
 }
 
-
-//console.log(toBytes32(""));
+//console.log(toBytes32("ETH"));
+//console.log(toBytes32("BTC"));
 
 exports.GetDeployed = GetDeployed
 exports.DeployIfNotExist = DeployIfNotExist

@@ -32,6 +32,8 @@ async function mint() {
     console.log("balance " + balance);
     
     try {
+        //let estimateGas = await contractLina.connect(wallet).estimateGas.mint(testaddress, "1000000000000000000000");
+        //console.log("estimateGas", estimateGas.toNumber());
         //let ret = await contractLina.connect(wallet).mint(testaddress, "1000000000000000000000");
         //console.log("mint ret :"+ ret)
     }
@@ -42,8 +44,8 @@ async function mint() {
 
 async function setTimePeriod() {
     try {
-        //let ret = await contractLina.connect(wallet).set_StakingPeriod((1599468705).toString(), (1599468705+24*3600).toString());
-        //console.log("set_StakingPeriod ret :"+ ret)
+        let ret = await contractLina.connect(wallet).set_StakingPeriod((1599955200).toString(), (1599955200+24*3600).toString());
+        console.log("set_StakingPeriod ret :"+ ret)
     }
     catch(err) {
         console.log("set_StakingPeriod err :"+ err)
@@ -57,6 +59,8 @@ async function setTimePeriod() {
 //});
 
 // run only one async func 
+
+
 
 mint();
 setTimePeriod();

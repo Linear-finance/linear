@@ -115,12 +115,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (tokenInfos[currency].totalCollateral > 0) { // this check for avoid calling getPrice when collateral is zero
-                rTotal = rTotal.add( tokenInfos[currency].totalCollateral.mul(priceGetter.getPrice(currency)) );
+                rTotal = rTotal.add( tokenInfos[currency].totalCollateral.multiplyDecimal(priceGetter.getPrice(currency)) );
             }
         }
 
         if (address(this).balance > 0) {
-            rTotal = rTotal.add(address(this).balance.mul(priceGetter.getPrice(Currency_ETH)));
+            rTotal = rTotal.add(address(this).balance.multiplyDecimal(priceGetter.getPrice(Currency_ETH)));
         }
     }
 
@@ -128,12 +128,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (userCollateralData[_user][currency].collateral > 0) {
-                rTotal = rTotal.add( userCollateralData[_user][currency].collateral.mul(priceGetter.getPrice(currency)) );
+                rTotal = rTotal.add( userCollateralData[_user][currency].collateral.multiplyDecimal(priceGetter.getPrice(currency)) );
             }
         }
 
         if (userCollateralData[_user][Currency_ETH].collateral > 0) {
-            rTotal = rTotal.add( userCollateralData[_user][Currency_ETH].collateral.mul(priceGetter.getPrice(Currency_ETH)) );
+            rTotal = rTotal.add( userCollateralData[_user][Currency_ETH].collateral.multiplyDecimal(priceGetter.getPrice(Currency_ETH)) );
         }
     }
 
@@ -186,7 +186,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
         
-        uint256 maxRedeem = maxRedeemableInUsd.div(priceGetter.getPrice(_currency));
+        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(_currency));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
         userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.sub(_amount);
@@ -219,7 +219,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
         
-        uint256 maxRedeem = maxRedeemableInUsd.div(priceGetter.getPrice(Currency_ETH));
+        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
         userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.sub(_amount);

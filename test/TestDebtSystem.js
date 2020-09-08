@@ -1,8 +1,9 @@
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 
 const w3utils = require('web3-utils');
+const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
-//ethers.utils.parseEther("0.1")
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 const {InitComment, newAssetToken, CreateLina} = require ("./common.js");
 
@@ -30,7 +31,7 @@ contract('test LnDebtSystem', async (accounts)=> {
         
         let i = 0;
         for (;i < 101; i++) {
-            await kLnDebtSystem.UpdateDebt(ac0, 1, 1);
+            await kLnDebtSystem.UpdateDebt(ac0, toUnit(1e9), toUnit(1e9)); // test data
         }
 
         let v = await kLnDebtSystem.debtCurrentIndex();
@@ -46,7 +47,7 @@ contract('test LnDebtSystem', async (accounts)=> {
 
         let deletTo = maxDeltetePerTime.toNumber();
         // delete
-        await kLnDebtSystem.UpdateDebt(ac0, 1, 1); 
+        await kLnDebtSystem.UpdateDebt(ac0, toUnit(1e9), toUnit(1e9)); 
         v = await kLnDebtSystem.lastCloseAt();
         assert.equal(v.valueOf(), i);
         v = await kLnDebtSystem.lastDeletTo();
@@ -54,7 +55,7 @@ contract('test LnDebtSystem', async (accounts)=> {
 
         // delete
         deletTo = 2*maxDeltetePerTime;
-        await kLnDebtSystem.UpdateDebt(ac0, 1, 1); 
+        await kLnDebtSystem.UpdateDebt(ac0, toUnit(1e9), toUnit(1e9)); 
         v = await kLnDebtSystem.lastCloseAt();
         assert.equal(v.valueOf(), i);
         v = await kLnDebtSystem.lastDeletTo();
@@ -62,12 +63,23 @@ contract('test LnDebtSystem', async (accounts)=> {
 
         // delete
         deletTo += 1;
-        await kLnDebtSystem.UpdateDebt(ac0, 1, 1); 
+        await kLnDebtSystem.UpdateDebt(ac0, toUnit(1e9), toUnit(1e9)); 
         v = await kLnDebtSystem.lastCloseAt();
         assert.equal(v.valueOf(), i);
         v = await kLnDebtSystem.lastDeletTo();
         assert.equal(v.valueOf(), deletTo);
 
+        ///////
+        let lastfactor = await kLnDebtSystem.LastSystemDebtFactor();
+        assert.equal(lastfactor.cmp(0), 1); // v > 0
+        v = await kLnDebtSystem.debtCurrentIndex();
+        assert.equal(v.valueOf(), 104);
+
+        let ret = await kLnDebtSystem.GetUserDebtData(ac0);
+        let debtbalance = ret[0];
+        let totalAssetSupplyInUsd = ret[1];
+
+        console.log(lastfactor.toString(), debtbalance.toString(), totalAssetSupplyInUsd.toString());
     });
 
 });

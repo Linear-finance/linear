@@ -22,12 +22,12 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
     // -------------------------------------------------------
     struct DebtData {
         uint256 debtProportion;
-        uint256 debtFactor;
+        uint256 debtFactor; // PRECISE_UNIT
     }
     mapping(address => DebtData) public userDebtState;
 
     //use mapping to store array data
-    mapping (uint256=>uint256) public lastDebtFactors; // Note: 能直接记 factor 的记 factor, 不能记的就用index查
+    mapping (uint256=>uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
     uint256 public debtCurrentIndex; // length of array. this index of array no value
     // follow var use to manage array size.
     uint256 public lastCloseAt; // close at array index
@@ -92,7 +92,7 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
 
     function _updateUserDebt(address _user, uint256 _debtProportion) private {
         userDebtState[_user].debtProportion = _debtProportion;
-        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex];
+        userDebtState[_user].debtFactor = lastDebtFactors[debtCurrentIndex-1];
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
     }
 

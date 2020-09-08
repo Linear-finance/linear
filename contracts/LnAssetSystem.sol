@@ -62,7 +62,7 @@ contract LnAssetSystem is LnAddressStorage {
         LnPrices priceGetter = LnPrices( mAddrs["LnPrices"] ); //getAddress
         for (uint256 i=0; i< mAssetList.length; i++) {
             uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            rTotal = rTotal.add( LnAsset(address(mAssetList[i])).totalSupply().mul(exchangeRate) );
+            rTotal = rTotal.add( LnAsset(address(mAssetList[i])).totalSupply().multiplyDecimal(exchangeRate) );
         }
     }
 

@@ -57,11 +57,17 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     event UpdateLusdToken(address oldAddr, address newAddr);
 
+    function MaxCanBuildAsset(address user) external view returns(uint256) {
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).mul(buildRatio).div(SafeDecimalMath.unit());
+        return maxCanBuild;
+    }
+
     // build lusd
     function BuildAsset(uint256 amount) external returns(bool) {
         address user = msg.sender;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
-        uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).mul(buildRatio).div(SafeDecimalMath.unit());
+        uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
 
         // calc debt

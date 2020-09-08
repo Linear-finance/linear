@@ -35,11 +35,14 @@ async function newAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
     await kLnTokenStorage.setOperator(kAsset.address);
     await kLnProxyERC20.setTarget(kAsset.address);
     await kAsset.setProxy(kLnProxyERC20.address);
+    await kAsset.updateAddressCache(kLnAssetSystem.address);
 
     await kLnAssetSystem.addAsset(kAsset.address);
 
     return kAsset;
 }
+
+const BUILD_RATIO = toUnit("0.2");
 
 async function InitComment(admin) {
     //console.log("InitComment start");
@@ -49,11 +52,12 @@ async function InitComment(admin) {
     let kLnAssetSystem = await LnAssetSystem.new(admin);
     let kLnConfig = await LnConfig.new(admin);
     let buildRatio = await kLnConfig.BUILD_RATIO();
-    await kLnConfig.setUint(buildRatio.valueOf(), toUnit("0.2"));
+    await kLnConfig.setUint(buildRatio.valueOf(), BUILD_RATIO);
     
     // regist contract address
     let kLnAccessControl = await LnAccessControl.new(admin);
   
+    let emptyAddr = "0x0000000000000000000000000000000000000000";
     let oracleAddress = admin;//"0x0000000000000000000000000000000000000000";
     //let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
 
@@ -64,17 +68,15 @@ async function InitComment(admin) {
    
     let kLnCollateralSystem = await LnCollateralSystem.new(admin);
  
-    let lUSD = await newAssetToken(toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
-
     await LnBuildBurnSystem.link(SafeDecimalMath);
-    let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, lUSD.address);
+    let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, emptyAddr);
 
     // access role setting
 
     await kLnAccessControl.SetIssueAssetRole([kLnBuildBurnSystem.address],[true]);
     await kLnAccessControl.SetBurnAssetRole([kLnBuildBurnSystem.address],[true]);
 
-    await kLnAccessControl.SetDebtSystemRole([kLnBuildBurnSystem.address, admin], [true, true]);
+    await kLnAccessControl.SetDebtSystemRole([kLnBuildBurnSystem.address, admin], [true, true]); // admin to test
 
     registContract("LnAssetSystem", kLnAssetSystem); // regist self
     registContract("LnAccessControl", kLnAccessControl);
@@ -85,6 +87,9 @@ async function InitComment(admin) {
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
   
     await kLnAssetSystem.updateAll(contractNames, contractAddrs);
+
+    let lUSD = await newAssetToken(toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
+    await kLnBuildBurnSystem.SetLusdTokenAddress(lUSD.address);
 
     await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);

@@ -13,7 +13,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
     const ac0 = accounts[0];
     const ac1 = accounts[1];
-    const ac2 = accounts[1];
+    const ac2 = accounts[2];
     
     // don't call any await async funtions here
 
@@ -64,7 +64,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(1000), {from:ac1});
         
         // setup price, chainlink price is price*10e8
-        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [1], Math.floor(Date.now()/1000).toString() );
+        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(1)], Math.floor(Date.now()/1000).toString() );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
         assert.equal(v.valueOf(), 1000e18);
@@ -72,7 +72,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         assert.equal(v.valueOf(), 1000e18);
 
         // setup price
-        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [2], Math.floor(Date.now()/1000).toString() );
+        await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(2)], Math.floor(Date.now()/1000).toString() );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
         assert.equal(v.valueOf(), 1000e18);
@@ -127,7 +127,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await web3.eth.getBalance(kLnCollateralSystem.address);
         assert.equal(v.valueOf(), 1e18);
 
-        await InitContracts.kLnChainLinkPrices.updateAll([ETHBytes32], [200], Math.floor(Date.now()/1000).toString() );
+        await InitContracts.kLnChainLinkPrices.updateAll([ETHBytes32], [toUnit(200)], Math.floor(Date.now()/1000).toString() );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, ETHBytes32);
         assert.equal(v.valueOf(), 1e18);
@@ -157,6 +157,27 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
         assert.equal(v.valueOf(), 0*1e18);
+
+        // many people
+        await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.AddCollateral( linaBytes32, toUnit(1000), {from:ac1});
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v.valueOf(), 2*1000e18);
+
+        // ac2 join in with ETH
+        await kLnCollateralSystem.CollateralEth({from:ac2, value:toUnit(1)});
+
+        v = await kLnCollateralSystem.GetUserCollateral(ac1, ETHBytes32);
+        assert.equal(v.valueOf(), 0);
+        v = await kLnCollateralSystem.GetUserCollateral(ac2, ETHBytes32);
+        assert.equal(v.valueOf(), toUnit(1).toString());
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v.valueOf(), 2*1000e18);
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v.valueOf(), 200*1e18);
+
     });
 
     // describe('#redeem', function () {
