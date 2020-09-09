@@ -19,7 +19,7 @@ contract('test LnDebtSystem', async (accounts)=> {
         // before exec each test case
     });
 
-    it('#delete array to close FeePeriod', async ()=> {
+    it('delete array to close FeePeriod', async ()=> {
         
         let InitContracts = await InitComment(ac0);
         //console.log("InitContracts", InitContracts);
@@ -79,7 +79,7 @@ contract('test LnDebtSystem', async (accounts)=> {
         let debtbalance = ret[0];
         let totalAssetSupplyInUsd = ret[1];
 
-        console.log(lastfactor.toString(), debtbalance.toString(), totalAssetSupplyInUsd.toString());
+        //console.log(lastfactor.toString(), debtbalance.toString(), totalAssetSupplyInUsd.toString());
     });
 
 });

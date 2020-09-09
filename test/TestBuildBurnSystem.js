@@ -1,4 +1,5 @@
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
+const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 
 const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
@@ -45,7 +46,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         // before exec each test case
     });
 
-    it('#BuildBurn test', async ()=> {
+    it('BuildBurn test', async ()=> {
         const linaBytes32 = toBytes32("lina");
         const ETHBytes32 = toBytes32("ETH");
         const lusdBytes32 = toBytes32("lUSD");
@@ -370,5 +371,35 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         assert.equal(v, toUnit(0).toString());
     });
 
+    it('Pausable', async function () {
+        let exception = "";
+        let emptyAddr = "0x0000000000000000000000000000000000000000";
+        await LnBuildBurnSystem.link(SafeDecimalMath);
+        let kLnBuildBurnSystem = await LnBuildBurnSystem.new(ac0, emptyAddr);
+
+        await kLnBuildBurnSystem.setPaused(true);
+
+        try {
+            await kLnBuildBurnSystem.BuildAsset(toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnBuildBurnSystem.BurnAsset(toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        await kLnBuildBurnSystem.setPaused(false);
+
+        try {
+            await kLnBuildBurnSystem.BuildAsset(toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnBuildBurnSystem.BurnAsset(toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+    });
 });
 

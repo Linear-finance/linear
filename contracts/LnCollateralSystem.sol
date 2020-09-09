@@ -54,6 +54,13 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     constructor(address admin) public LnAdmin(admin) {
     }
 
+    function setPaused(bool _paused) external onlyAdmin {
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
     // ------------------ system config ----------------------
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {

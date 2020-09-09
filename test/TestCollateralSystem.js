@@ -21,7 +21,10 @@ contract('test LnCollateralSystem', async (accounts)=> {
         // before exec each test case
     });
 
-    it('#collateral', async ()=> {
+    const linaBytes32 = toBytes32("lina");
+    const ETHBytes32 = toBytes32("ETH");
+
+    it('collateral and redeem', async ()=> {
         
         let InitContracts = await InitComment(ac0);
         //console.log("InitContracts", InitContracts);
@@ -29,9 +32,6 @@ contract('test LnCollateralSystem', async (accounts)=> {
         const lina = await CreateLina(ac0);
 
         let kLnCollateralSystem = InitContracts.kLnCollateralSystem;
-
-        const linaBytes32 = toBytes32("lina");
-        const ETHBytes32 = toBytes32("ETH");
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
 
@@ -57,7 +57,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         try { // collateral more than balance and approve balance
             await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1001), {from:ac1});
         } catch (e) { exception = e.reason; }
-        assert.equal(exception, "SafeMath: subtraction overflow"); exception = "";
+        assert.equal(exception, "insufficient balance"); exception = "";
 
         // before 
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
@@ -180,10 +180,53 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
     });
 
-    // describe('#redeem', function () {
-    //     it('responds with matching records', async function () {
-            
-    //     });
-    // });
+    it('Pausable', async function () {
+        let exception = "";
+        
+        let kLnCollateralSystem = await LnCollateralSystem.new(ac0);
+        await kLnCollateralSystem.setPaused(true);
+
+        try {
+            await kLnCollateralSystem.Collateral(linaBytes32, toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Pausable: paused"); exception = "";
+
+        await kLnCollateralSystem.setPaused(false);
+
+        try {
+            await kLnCollateralSystem.Collateral(linaBytes32, toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(1));
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)});
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+
+        try {
+            await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
+        } catch (e) { exception = e.reason; }
+        assert.notEqual(exception, "Pausable: paused"); exception = "";
+    });
 });
 

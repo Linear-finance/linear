@@ -35,6 +35,14 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         lUSDToken = LnAsset(_lUSDTokenAddr);
     }
 
+    function setPaused(bool _paused) external onlyAdmin {
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
         priceGetter =    LnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
@@ -64,7 +72,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // build lusd
-    function BuildAsset(uint256 amount) external returns(bool) {
+    function BuildAsset(uint256 amount) external whenNotPaused returns(bool) {
         address user = msg.sender;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
@@ -93,7 +101,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // burn
-    function BurnAsset(uint256 amount) external returns(bool) {
+    function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
         address user = msg.sender;
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
 
