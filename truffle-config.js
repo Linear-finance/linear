@@ -18,16 +18,15 @@
  *
  */
 
+const privatekey = process.env.WALLET_PRIVATE_KEY;
+const providerURL = "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID;
+const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR : "./build";
+
 const HDWalletProvider = require("truffle-hdwallet-provider");
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
-
-const etherscanKey = "E4QQJUZQMDUD4IWK3CCFMRWRMGR2M1EPPI";
-
-const ropten_mnemonic = "";
-const ganache_mnmonic = "surge nothing shove gentle soccer boost panther lady idle wrong satoshi pass";
 
 function CreateHDWallet(mnemonic, providerUrl) {
   return new HDWalletProvider(mnemonic, providerUrl, 0, 1);
@@ -43,7 +42,7 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
-
+  contracts_build_directory: contracts_build_directory,
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
@@ -88,18 +87,12 @@ module.exports = {
     // production: true    // Treats this network as if it was a public net. (default: false)
     // }
     ropsten: {
-      provider: () => CreateHDWallet(ropten_mnemonic, "https://ropsten.infura.io/v3/fb2fd32c3b0f444c8f25d9076ca8a8a7"), // free infura can not reuse by more than two connnection? yes...
+      provider: () => CreateHDWallet(privatekey, providerURL), // free infura can not reuse by more than two connnection? yes...
         network_id: "*",       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
-    },
-    my_quorum: {
-      provider: () => CreateHDWallet(ropten_mnemonic, "http://18.138.189.62:22000"),
-      network_id: "*",
-      gas: 7000000,
-      gasPrice: 0
     }
   },
 
