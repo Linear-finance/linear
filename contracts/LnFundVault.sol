@@ -32,12 +32,12 @@ contract LnFundVault is LnAdmin {
 
         receiveOf[ msg.sender ] = msg.value;
         mCurInvest = mCurInvest + 1;
-        emit ReceiveFund( msg.sender, msg.value );
+        //emit ReceiveFund( msg.sender, msg.value );
     }
 
     function claim( uint iReceive ) public {
         mFundReceive.transfer( iReceive);
-        emit Claimed( mFundReceive, iReceive );
+        //emit Claimed( mFundReceive, iReceive );
     }
 
     event ReceiveFund( address, uint );
