@@ -99,9 +99,9 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
         // calc debt
         (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user);
-
+        require(oldUserDebtBalance > 0, "no debt, no burn");
         uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
-
+        
         uint newTotalDebtIssued = totalAssetSupplyInUsd.sub(burnAmount);
 
         uint oldTotalProportion = 0;

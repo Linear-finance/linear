@@ -196,7 +196,178 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         await checkPropDebtTotalRedeemLusd(ac2, toUnit(5e8), toUnit(100), toUnit(200), toUnit(1500), toUnit(100), "ac2 after ac1 burn 200");
         await checkPropDebtTotalRedeemLusd(ac3, toUnit(5e8), toUnit(100), toUnit(200), toUnit(500),  toUnit(100), "ac3 after ac1 burn 200");
 
-        // price change
+        //-------------------ac1 burn 1 fail
+        try {
+            await kLnBuildBurnSystem.BurnAsset(toUnit(1), {from:ac1});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "no debt, no burn"); exception = "";
+        
+        //-------------------ac2 burn 100
+        await kLnBuildBurnSystem.BurnAsset(toUnit(100), {from:ac2});
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0),   toUnit(100), toUnit(2000), toUnit(0),  "ac1 after ac2 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(0e8), toUnit(0),   toUnit(100), toUnit(2000), toUnit(0),  "ac2 after ac2 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(10e8), toUnit(100), toUnit(100), toUnit(500), toUnit(100),"ac3 after ac2 burn 100");
+
+        //-------------------ac3 build 100
+        await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac3});
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0),  "ac1 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0),  "ac2 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(10e8), toUnit(200), toUnit(200), toUnit(0), toUnit(200),"ac3 after ac3 build 100");
+
+        //-------------------ac3 burn 100 , all user burn all asset, debt clear
+        await kLnBuildBurnSystem.BurnAsset(toUnit(200), {from:ac3});
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0), toUnit(0), toUnit(2000), toUnit(0), "ac1 after ac3 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(0e8), toUnit(0), toUnit(0), toUnit(2000), toUnit(0), "ac2 after ac3 burn 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(0e8), toUnit(0), toUnit(0), toUnit(1000), toUnit(0), "ac3 after ac3 burn 100");
+
+        // summary
+        // ac1 collateral 1000 lina, value 2000 usd
+        // ac2 collateral 1 eth + 900 lina, value 2000 usd
+        // ac3 collateral 5 eth, value 1000 usd
+
+        // rebuild test
+        await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
+        await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac2});
+
+        await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac1});
+        await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac2});
+        await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac3});
+
+        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac1);
+        assert.equal(v, "333333333333333333333333334"); // print log first, and get these values, as expect
+        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac2);
+        assert.equal(v, "333333333333333333333333334");
+        v = await kLnDebtSystem.GetUserCurrentDebtProportion(ac3);
+        assert.equal(v, "333333333333333333333333333");
+
+        await checkPropDebtTotalRedeemLusd(ac1, "333333333333333333333333334", toUnit(100), toUnit(300), toUnit(1500), toUnit(100), "ac1 after rebuild 100");
+        await checkPropDebtTotalRedeemLusd(ac2, "333333333333333333333333334", toUnit(100), toUnit(300), toUnit(1500), toUnit(100), "ac2 after rebuild 100");
+        await checkPropDebtTotalRedeemLusd(ac3, "333333333333333333333333333", toUnit(100), toUnit(300), toUnit(500),  toUnit(100), "ac3 after rebuild 100");
+
+        ret = await kLnCollateralSystem.GetUserCollaterals(ac2);
+        //console.log("ac2 collaterals", ret[0].toString(), ret[1].toString());
+        assert.equal(ret[0].toString(), "0x6c696e6100000000000000000000000000000000000000000000000000000000,0x4554480000000000000000000000000000000000000000000000000000000000");
+        assert.equal(ret[1].toString(), "900000000000000000000,1000000000000000000");
+
+        // -----------------------------
+        // redeem test
+        // ac1 redeem 250 lina = 500 usd
+        await kLnCollateralSystem.Redeem(linaBytes32, toUnit(250), {from:ac1});
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(1000).toString());
+
+        // ac2 redeem 1 eth = 200 usd
+        await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac2});
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(1300).toString());
+
+        // price change, debt change, redeem change
+        // collateral price down
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(100), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        // ac1 collateral 750 lina, value 750 usd
+        // ac2 collateral 900 lina, value 900 usd
+        // ac3 collateral 5 eth, value 500 usd
+
+        await checkPropDebtTotalRedeemLusd(ac1, "333333333333333333333333334", toUnit(100), toUnit(300), toUnit(250), toUnit(100), "ac1 after price down");
+        await checkPropDebtTotalRedeemLusd(ac2, "333333333333333333333333334", toUnit(100), toUnit(300), toUnit(400), toUnit(100), "ac2 after price down");
+        await checkPropDebtTotalRedeemLusd(ac3, "333333333333333333333333333", toUnit(100), toUnit(300), toUnit(0),  toUnit(100), "ac3 after price down");
+        
+        try {
+            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(250.00001), {from:ac1});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+
+        await kLnCollateralSystem.Redeem(linaBytes32, toUnit(250), {from:ac1});
+        await kLnCollateralSystem.Redeem(linaBytes32, toUnit(400), {from:ac2});
+
+        try {
+            await kLnCollateralSystem.RedeemETH(toUnit(0.000001), {from:ac3});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+        
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v, toUnit(0).toString());
+
+        // collateral price down down
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(0.1), toUnit(10), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+
+        // ac1 collateral 500 lina, value 50 usd
+        // ac2 collateral 500 lina, value 50 usd
+        // ac3 collateral 5 eth, value 50 usd
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v, toUnit(0).toString());
+
+        try {
+            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(0.00001), {from:ac1});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+
+        try {
+            await kLnBuildBurnSystem.BuildAsset( toUnit(0.00001), {from:ac1} );
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
+        try {
+            await kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac2});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
+        try {
+            await kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac3});
+        } catch (e) { exception = e.reason; }
+        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
+
+        // collateral price up
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(10), toUnit(1000), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+
+        // ac1 collateral 500 lina, value 5000 usd
+        // ac2 collateral 500 lina, value 5000 usd
+        // ac3 collateral 5 eth, value 5000 usd
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(4500).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(4500).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v, toUnit(4500).toString());
+
+        // can build asset, can redeem again.
+        await kLnBuildBurnSystem.BuildAsset( toUnit(100), {from:ac1} );
+        await kLnBuildBurnSystem.BuildAsset( toUnit(100), {from:ac2} );
+        await kLnBuildBurnSystem.BuildAsset( toUnit(100), {from:ac3} );
+
+        // the 33333... has some change.
+        await checkPropDebtTotalRedeemLusd(ac1, "333333333333333333333333333", toUnit(200), toUnit(600), toUnit(4000), toUnit(200), "ac1 after price down");
+        await checkPropDebtTotalRedeemLusd(ac2, "333333333333333333333333332", toUnit(200), toUnit(600), toUnit(4000), toUnit(200), "ac2 after price down");
+        await checkPropDebtTotalRedeemLusd(ac3, "333333333333333333333333333", toUnit(200), toUnit(600), toUnit(4000), toUnit(200), "ac3 after price down");
+
+        await kLnCollateralSystem.Redeem(linaBytes32, toUnit(100), {from:ac1});
+        await kLnCollateralSystem.Redeem(linaBytes32, toUnit(100), {from:ac2});
+        await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac3});
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(3000).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(3000).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v, toUnit(3000).toString());
+
+        // price down
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(0.1), toUnit(10), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        assert.equal(v, toUnit(0).toString());
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v, toUnit(0).toString());
     });
 
 });

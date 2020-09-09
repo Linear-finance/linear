@@ -141,6 +141,27 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return userCollateralData[_user][_currency].collateral;
     }
 
+    function GetUserCollaterals(address _user) external view returns (bytes32[] memory, uint256[] memory) {
+        bytes32[] memory rCurrency = new bytes32[](tokenSymbol.length + 1);
+        uint256[] memory rAmount = new uint256[](tokenSymbol.length + 1);
+        uint256 retSize = 0;
+        for (uint256 i=0; i < tokenSymbol.length; i++) {
+            bytes32 currency = tokenSymbol[i];
+            if (userCollateralData[_user][currency].collateral > 0) {
+                rCurrency[retSize] = currency;
+                rAmount[retSize] = userCollateralData[_user][currency].collateral;
+                retSize++;
+            }
+        }
+        if (userCollateralData[_user][Currency_ETH].collateral > 0) {
+            rCurrency[retSize] = Currency_ETH;
+            rAmount[retSize] = userCollateralData[_user][Currency_ETH].collateral;
+            retSize++;
+        }
+
+        return (rCurrency, rAmount); 
+    }
+
     // need approve
     function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");

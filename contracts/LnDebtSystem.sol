@@ -66,7 +66,7 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
     }
 
     function _pushDebtFactor(uint256 _factor) private {
-        if (debtCurrentIndex == 0) {
+        if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex-1] == 0) { // init or all debt has be cleared, new set value will be one unit
             lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
         } else {
             lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex-1].multiplyDecimalRoundPrecise(_factor);
