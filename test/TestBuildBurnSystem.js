@@ -7,7 +7,7 @@ const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 //const toETHUnit = amount => ethers.utils.parseEther(amount.toString());
 
-const {InitComment, newAssetToken, CreateLina} = require ("./common.js");
+const {InitComment, newAssetToken, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const PRECISE_UNIT = toUnit(1e9); // 1e27
 
@@ -62,13 +62,11 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         const lina = await CreateLina(ac0);
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
-
-        let exception = "";
-        try {
-            await kLnBuildBurnSystem.BuildAsset( toUnit(10), {from:ac1} );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
-
+        
+        await exceptionEqual( 
+            kLnBuildBurnSystem.BuildAsset( toUnit(10), {from:ac1} ), 
+            "Build amount too big, you need more collateral");
+        
         // set price
         await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
     
@@ -137,10 +135,9 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         v = await kLnBuildBurnSystem.MaxCanBuildAsset(ac1); //
         assert.equal(v, toUnit(300).toString());
 
-        try {
-            await kLnBuildBurnSystem.BuildAsset( toUnit(301), {from:ac1} );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
+        await exceptionEqual(
+            kLnBuildBurnSystem.BuildAsset( toUnit(301), {from:ac1}, 
+            "Build amount too big, you need more collateral"));
 
         //-------------------
 
@@ -149,10 +146,9 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         assert.equal(v, 0);
 
         // before approve
-        try {
-            await kLnCollateralSystem.Collateral( linaBytes32, toUnit(900), {from:ac2});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "insufficient allowance, need approve more amount"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Collateral( linaBytes32, toUnit(900), {from:ac2}), 
+            "insufficient allowance, need approve more amount");
 
         //-------------------ac2 build 100
         // 1 eth (200lusd) + 900 lina(1800lusd)
@@ -198,10 +194,9 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         await checkPropDebtTotalRedeemLusd(ac3, toUnit(5e8), toUnit(100), toUnit(200), toUnit(500),  toUnit(100), "ac3 after ac1 burn 200");
 
         //-------------------ac1 burn 1 fail
-        try {
-            await kLnBuildBurnSystem.BurnAsset(toUnit(1), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "no debt, no burn"); exception = "";
+        await exceptionEqual(
+            kLnBuildBurnSystem.BurnAsset(toUnit(1), {from:ac1}),
+            "no debt, no burn");
         
         //-------------------ac2 burn 100
         await kLnBuildBurnSystem.BurnAsset(toUnit(100), {from:ac2});
@@ -211,9 +206,9 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         //-------------------ac3 build 100
         await kLnBuildBurnSystem.BuildAsset(toUnit(100), {from:ac3});
-        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0),  "ac1 after ac3 build 100");
-        await checkPropDebtTotalRedeemLusd(ac2, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0),  "ac2 after ac3 build 100");
-        await checkPropDebtTotalRedeemLusd(ac3, toUnit(10e8), toUnit(200), toUnit(200), toUnit(0), toUnit(200),"ac3 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac1, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0), "ac1 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac2, toUnit(0e8), toUnit(0),   toUnit(200), toUnit(2000), toUnit(0), "ac2 after ac3 build 100");
+        await checkPropDebtTotalRedeemLusd(ac3, toUnit(10e8), toUnit(200), toUnit(200), toUnit(0), toUnit(200), "ac3 after ac3 build 100");
 
         //-------------------ac3 burn 100 , all user burn all asset, debt clear
         await kLnBuildBurnSystem.BurnAsset(toUnit(200), {from:ac3});
@@ -275,18 +270,16 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         await checkPropDebtTotalRedeemLusd(ac2, "333333333333333333333333334", toUnit(100), toUnit(300), toUnit(400), toUnit(100), "ac2 after price down");
         await checkPropDebtTotalRedeemLusd(ac3, "333333333333333333333333333", toUnit(100), toUnit(300), toUnit(0),  toUnit(100), "ac3 after price down");
         
-        try {
-            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(250.00001), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem(linaBytes32, toUnit(250.00001), {from:ac1}),
+            "Because lower collateral ratio, can not redeem too much");
 
         await kLnCollateralSystem.Redeem(linaBytes32, toUnit(250), {from:ac1});
         await kLnCollateralSystem.Redeem(linaBytes32, toUnit(400), {from:ac2});
 
-        try {
-            await kLnCollateralSystem.RedeemETH(toUnit(0.000001), {from:ac3});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.RedeemETH(toUnit(0.000001), {from:ac3}),
+            "Because lower collateral ratio, can not redeem too much");
         
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
         assert.equal(v, toUnit(0).toString());
@@ -308,23 +301,21 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
         assert.equal(v, toUnit(0).toString());
 
-        try {
-            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(0.00001), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Because lower collateral ratio, can not redeem too much"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem(linaBytes32, toUnit(0.00001), {from:ac1}),
+            "Because lower collateral ratio, can not redeem too much");
 
-        try {
-            await kLnBuildBurnSystem.BuildAsset( toUnit(0.00001), {from:ac1} );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
-        try {
-            await kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac2});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
-        try {
-            await kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac3});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Build amount too big, you need more collateral"); exception = "";
+        await exceptionEqual(
+            kLnBuildBurnSystem.BuildAsset( toUnit(0.00001), {from:ac1} ),
+            "Build amount too big, you need more collateral");
+
+        await exceptionEqual(
+            kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac2}),
+            "Build amount too big, you need more collateral");
+
+        await exceptionEqual(
+            kLnBuildBurnSystem.BuildAsset(toUnit(0.00001), {from:ac3}), 
+            "Build amount too big, you need more collateral");
 
         // collateral price up
         await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(10), toUnit(1000), toUnit(1)], Math.floor(Date.now()/1000).toString() );
@@ -379,27 +370,23 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         await kLnBuildBurnSystem.setPaused(true);
 
-        try {
-            await kLnBuildBurnSystem.BuildAsset(toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnBuildBurnSystem.BuildAsset(toUnit(1)), 
+            "Pausable: paused");
 
-        try {
-            await kLnBuildBurnSystem.BurnAsset(toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnBuildBurnSystem.BurnAsset(toUnit(1)), 
+            "Pausable: paused");
 
         await kLnBuildBurnSystem.setPaused(false);
 
-        try {
-            await kLnBuildBurnSystem.BuildAsset(toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnBuildBurnSystem.BuildAsset(toUnit(1)), 
+            "Pausable: paused");
 
-        try {
-            await kLnBuildBurnSystem.BurnAsset(toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnBuildBurnSystem.BurnAsset(toUnit(1)),
+            "Pausable: paused");
     });
 });
 

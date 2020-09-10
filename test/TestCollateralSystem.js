@@ -6,7 +6,7 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
-const {InitComment, newAssetToken, CreateLina} = require ("./common.js");
+const {InitComment, newAssetToken, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 const { ethers } = require('ethers');
 
 contract('test LnCollateralSystem', async (accounts)=> {
@@ -45,19 +45,18 @@ contract('test LnCollateralSystem', async (accounts)=> {
         lina.mint(ac1, toUnit(1000) ); // ac1 mint lina
 
         // fail test
-        let exception = "";
-        try {
-            await kLnCollateralSystem.Collateral( toBytes32("notExist"), toUnit(10) );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Invalid token symbol"); exception = "";
-        try  {
-            await kLnCollateralSystem.Collateral( linaBytes32, toUnit(0.1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Collateral amount too small"); exception = "";
-        try { // collateral more than balance and approve balance
-            await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1001), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "insufficient balance"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Collateral( toBytes32("notExist"), toUnit(10) ),
+            "Invalid token symbol");
+
+        await exceptionEqual(
+            kLnCollateralSystem.Collateral( linaBytes32, toUnit(0.1)),
+            "Collateral amount too small");
+
+        // collateral more than balance and approve balance
+        await exceptionEqual(
+            kLnCollateralSystem.Collateral( linaBytes32, toUnit(1001), {from:ac1}),
+            "insufficient balance");
 
         // before 
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
@@ -86,14 +85,13 @@ contract('test LnCollateralSystem', async (accounts)=> {
         assert.equal(v.valueOf(), 2*1000e18);
 
         //redeem
-        try {
-            await kLnCollateralSystem.Redeem( toBytes32("notExist"), toUnit(10) );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Can not redeem more than collateral"); exception = "";
-        try {
-            await kLnCollateralSystem.Redeem( toBytes32("notExist"), 1 );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Can not redeem more than collateral"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem( toBytes32("notExist"), toUnit(10) ),
+            "Can not redeem more than collateral");
+
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem( toBytes32("notExist"), 1 ),
+            "Can not redeem more than collateral");
 
         await kLnCollateralSystem.Redeem( linaBytes32, toUnit(10), {from:ac1} );
 
@@ -113,10 +111,9 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
         assert.equal(v.valueOf(), 2*0e18);
 
-        try {
-            await kLnCollateralSystem.Redeem( linaBytes32, 1, {from:ac1} );
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Can not redeem more than collateral"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem( linaBytes32, 1, {from:ac1} ),
+            "Can not redeem more than collateral");
 
         // ETH test, ETH collateral
         let ac1balance = await web3.eth.getBalance(ac1);
@@ -141,10 +138,9 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         //ETH redeem
         // admin redeem
-        try {
-            await kLnCollateralSystem.RedeemETH(toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Can not redeem more than collateral"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.RedeemETH(toUnit(1)),
+            "Can not redeem more than collateral");
 
         await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
         
@@ -181,52 +177,43 @@ contract('test LnCollateralSystem', async (accounts)=> {
     });
 
     it('Pausable', async function () {
-        let exception = "";
         
         let kLnCollateralSystem = await LnCollateralSystem.new(ac0);
         await kLnCollateralSystem.setPaused(true);
 
-        try {
-            await kLnCollateralSystem.Collateral(linaBytes32, toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Collateral(linaBytes32, toUnit(1)),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.Redeem(linaBytes32, toUnit(1)),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)}),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.equal(exception, "Pausable: paused"); exception = "";
+        await exceptionEqual(
+            kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1}),
+            "Pausable: paused");
 
         await kLnCollateralSystem.setPaused(false);
 
-        try {
-            await kLnCollateralSystem.Collateral(linaBytes32, toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnCollateralSystem.Collateral(linaBytes32, toUnit(1)),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.Redeem(linaBytes32, toUnit(1));
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnCollateralSystem.Redeem(linaBytes32, toUnit(1)),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)});
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)}),
+            "Pausable: paused");
 
-        try {
-            await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
-        } catch (e) { exception = e.reason; }
-        assert.notEqual(exception, "Pausable: paused"); exception = "";
+        await exceptionNotEqual(
+            kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1}),
+            "Pausable: paused");
     });
 });
 
