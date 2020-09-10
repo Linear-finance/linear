@@ -36,8 +36,10 @@ contract LnFundVault is LnAdmin {
     }
 
     function claim( uint iReceive ) public {
-        mFundReceive.transfer( iReceive);
+        //mFundReceive.transfer( iReceive);
         //emit Claimed( mFundReceive, iReceive );
+        (bool success, ) = mFundReceive.call{value:iReceive}("");
+        require(success, "Transfer failed.");        
     }
 
     event ReceiveFund( address, uint );
