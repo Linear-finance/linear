@@ -123,6 +123,24 @@ async function CreateLina(admin) {
     return lina
 }
 
+async function exceptionEqual(contractCall, expectMsg) {
+    let exception = "";
+    try {
+        await contractCall;
+    } catch (e) { exception = e.reason; }
+    assert.equal(exception, expectMsg);
+}
+
+async function exceptionNotEqual(contractCall, expectMsg) {
+    let exception = "";
+    try {
+        await contractCall;
+    } catch (e) { exception = e.reason; }
+    assert.notEqual(exception, expectMsg);
+}
+
 exports.newAssetToken = newAssetToken;
 exports.InitComment = InitComment;
 exports.CreateLina = CreateLina;
+exports.exceptionEqual = exceptionEqual;
+exports.exceptionNotEqual = exceptionNotEqual;

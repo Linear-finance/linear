@@ -1,6 +1,7 @@
 const LinearFinance = artifacts.require("LinearFinance");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const testAddressCache = artifacts.require("testAddressCache");
+const {exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -33,18 +34,20 @@ contract('test LinearFinance', async (accounts)=> {
         assert.equal(balance.valueOf(), mintAmount - sendamount);
         assert.equal(balance1.valueOf(), sendamount);
 
-        // TODO: 
-        //lina.setPaused(true, { from: admin });
-        //await lina.transfer(ac1, sendamount, { from: admin });
-        //lina.setPaused(false, { from: admin });
+        lina.setPaused(true, { from: admin });
+        await exceptionEqual(
+            lina.transfer(ac1, sendamount, { from: admin }),
+            "ERC20Pausable: token transfer while paused");
+        lina.setPaused(false, { from: admin });
     });
    
-    //todo: test fail case
-    // it("mint fail by other account" , async ()=> {
-    //     const lina = await LinearFinance.deployed();
+    //test fail case
+    it("mint fail by other account" , async ()=> {
+        const lina = await LinearFinance.deployed();
  
-    //     await lina.mint(admin, mintAmount, { from: ac1 });
-    // });
+        await exceptionEqual(lina.mint(admin, mintAmount, { from: ac1 }),
+            "Only the contract admin can perform this action");
+    });
 
     it('staking', async ()=> {
         const lina = await LinearFinance.deployed();

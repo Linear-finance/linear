@@ -13,7 +13,6 @@ import "./LnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
 import "./LnConfig.sol";
 
-// TODO 价格比例
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
 contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
