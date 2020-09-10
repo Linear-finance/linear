@@ -120,7 +120,7 @@ async function CreateLina(admin) {
     await tokenstorage.setOperator(lina.address);
     await proxyErc20.setTarget(lina.address);
     await lina.setProxy(proxyErc20.address);
-    return lina
+    return [lina, proxyErc20]
 }
 
 async function exceptionEqual(contractCall, expectMsg) {

@@ -21,6 +21,7 @@
 const privatekey = process.env.WALLET_PRIVATE_KEY;
 const providerURL = "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID;
 const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR : "./build";
+const migrations_directory = process.env.MIGRATIONS_DIR ? process.env.MIGRATIONS_DIR: "./migrations";
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
 // const infuraKey = "fj4jll3k.....";
@@ -43,6 +44,7 @@ module.exports = {
    * $ truffle test --network <network-name>
    */
   contracts_build_directory: contracts_build_directory,
+  migrations_directory: migrations_directory,
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.

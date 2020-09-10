@@ -29,7 +29,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         let InitContracts = await InitComment(ac0);
         //console.log("InitContracts", InitContracts);
 
-        const lina = await CreateLina(ac0);
+        const [lina,linaproxy] = await CreateLina(ac0);
 
         let kLnCollateralSystem = InitContracts.kLnCollateralSystem;
 

@@ -1,56 +1,61 @@
 const LinearFinance = artifacts.require("LinearFinance");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const testAddressCache = artifacts.require("testAddressCache");
-const {exceptionEqual, exceptionNotEqual} = require ("./common.js");
+const {CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const w3utils = require('web3-utils');
-const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
+const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
+const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 contract('test LinearFinance', async (accounts)=> {
 
     const admin = accounts[0];
     const ac1 = accounts[1];
+    const ac2 = accounts[2];
 
-    const mintAmount = "1000000000000000000000";
-    const sendamount = "1000000000000000000";
+    const mintAmount = toUnit("1000").toString();
+    const sendamount = toUnit("1").toString();
 
     it('mint and transfer', async ()=> {
-        const lina = await LinearFinance.deployed();
-        let balance = await lina.balanceOf(admin);
-
+        const [lina,linaproxy] = await CreateLina(admin);
+        
+        let balance = await lina.balanceOf(ac1);
         assert.equal(balance.valueOf(), 0);
         
-        await lina.mint(admin, mintAmount, { from: admin });
-        balance = await lina.balanceOf(admin);
+        await lina.mint(ac1, mintAmount, { from: admin });
+        balance = await lina.balanceOf(ac1);
         assert.equal(balance.valueOf(), mintAmount);
 
-        let balance1 = await lina.balanceOf(ac1);
+        let balance1 = await lina.balanceOf(ac2);
         assert.equal(balance1.valueOf(), 0);
         
-        await lina.transfer(ac1, sendamount, { from: admin });
+        await lina.transfer(ac2, sendamount, { from: ac1 });
 
-        balance = await lina.balanceOf(admin);
-        balance1 = await lina.balanceOf(ac1);
+        balance = await lina.balanceOf(ac1);
+        balance1 = await lina.balanceOf(ac2);
         assert.equal(balance.valueOf(), mintAmount - sendamount);
         assert.equal(balance1.valueOf(), sendamount);
+        //console.log(balance.toString(), balance1.toString());
 
-        lina.setPaused(true, { from: admin });
+        await lina.setPaused(true, { from: admin });
         await exceptionEqual(
             lina.transfer(ac1, sendamount, { from: admin }),
             "ERC20Pausable: token transfer while paused");
-        lina.setPaused(false, { from: admin });
+        //lina.setPaused(false, { from: admin });
     });
    
     //test fail case
     it("mint fail by other account" , async ()=> {
-        const lina = await LinearFinance.deployed();
+        const [lina,linaproxy] = await CreateLina(admin);
  
         await exceptionEqual(lina.mint(admin, mintAmount, { from: ac1 }),
             "Only the contract admin can perform this action");
     });
 
     it('staking', async ()=> {
-        const lina = await LinearFinance.deployed();
+        const [lina,linaproxy] = await CreateLina(admin);
+        await lina.mint(admin, mintAmount, { from: admin });
+        
         let initbalance = await lina.balanceOf(admin);
         initbalance = initbalance.valueOf();
 
@@ -60,7 +65,7 @@ contract('test LinearFinance', async (accounts)=> {
         let stakingperiod = await lina.stakingPeriod();
         //console.log(stakingperiod);
 
-        const stakingAmount = "1000000000000000000";
+        const stakingAmount = toUnit("1").toString();
         await lina.staking(stakingAmount, { from: admin });
         await lina.staking(stakingAmount, { from: admin });
 

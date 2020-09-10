@@ -59,7 +59,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
         lUSD = InitContracts.lUSD;
 
-        const lina = await CreateLina(ac0);
+        const [lina,linaproxy] = await CreateLina(ac0);
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
         
