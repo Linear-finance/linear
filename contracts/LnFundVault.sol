@@ -4,11 +4,11 @@ pragma solidity ^0.6.12;
 import "./LnAdmin.sol";
 
 contract LnFundVault is LnAdmin {
-    uint mFundValue = 0;
-    uint mInvestNumb = 0;
-    address payable mFundReceive;
-    uint mCurInvest = 0;
-    mapping(address => uint) public receiveOf;
+    uint private mFundValue = 0;
+    uint private mInvestNumb = 0;
+    address payable private mFundReceive;
+    uint private mCurInvest = 0;
+    mapping(address => uint) private receiveOf;
 
 
     constructor(address _admin, uint fund, uint investNumb, address payable _receive ) public LnAdmin(_admin) {
@@ -32,14 +32,13 @@ contract LnFundVault is LnAdmin {
 
         receiveOf[ msg.sender ] = msg.value;
         mCurInvest = mCurInvest + 1;
-        //emit ReceiveFund( msg.sender, msg.value );
+        emit ReceiveFund( msg.sender, msg.value );
     }
 
     function claim( uint iReceive ) public {
-        //mFundReceive.transfer( iReceive);
-        //emit Claimed( mFundReceive, iReceive );
         (bool success, ) = mFundReceive.call{value:iReceive}("");
         require(success, "Transfer failed.");        
+        emit Claimed( mFundReceive, iReceive );
     }
 
     event ReceiveFund( address, uint );
