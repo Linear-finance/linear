@@ -7,6 +7,14 @@ const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
+const oneDay = 3600*24;
+const oneYear = oneDay*365;
+const thirtyDay = oneDay*30;
+
+function rpcCallback(a,b,c,d) {
+    //console.log("rpcCallback",a,b,c,d);
+}
+
 contract('test LinearFinance', async (accounts)=> {
 
     const admin = accounts[0];
@@ -60,9 +68,11 @@ contract('test LinearFinance', async (accounts)=> {
         initbalance = initbalance.valueOf();
 
         //set time
-        let starttime = Math.floor(Date.now()/1000);
-        await lina.set_StakingPeriod(starttime + 10, starttime + 20);
-        let stakingperiod = await lina.stakingPeriod();
+        //let starttime = Math.floor(Date.now()/1000);
+        const { timestamp } = await web3.eth.getBlock('latest', false, (a,b,c)=>{});
+
+        await lina.set_StakingPeriod(timestamp + 10, timestamp + 5*oneDay+20 );
+        //let stakingperiod = await lina.stakingPeriod();
         //console.log(stakingperiod);
 
         const stakingAmount = toUnit("1").toString();
@@ -85,25 +95,33 @@ contract('test LinearFinance', async (accounts)=> {
         assert.equal(stakingbalance, 0);
 
         balance = await lina.balanceOf(admin);
-        assert.equal(balance.valueOf()-initbalance, 0);
+        assert.equal(balance.valueOf(), initbalance.toString());
 
-        ///
         await lina.staking(stakingAmount, { from: admin });
-        //let _2days = 3600*24*2;
-        //await lina.set_StakingPeriod(starttime - 10, starttime + 60-_2days);// 这样设置时间有问题
-        await new Promise(resolve => setTimeout(resolve, 20*1000));
 
-//        let blocktime = await lina.blocktime();
-//        blocktime = blocktime.toNumber();
-//        console.log("tttttttttttttttttttttt", blocktime, starttime);
+        stakingbalance = await lina.stakingBalanceOf(admin);
+        assert.equal(stakingbalance, stakingAmount.toString());
+        balance = await lina.balanceOf(admin);
+        assert.equal(stakingbalance.add(balance), initbalance.toString());
 
+        web3.currentProvider.send({method: "evm_increaseTime", params: [5*oneDay+22]}, rpcCallback);
+
+        let rewardFactor = await lina.rewardFactor();
+        const stakingRewardFactor = rewardFactor[0]
+        const stakingRewardDenominator = rewardFactor[1]
+
+        //console.log("stakingRewardFactor, stakingRewardDenominator", stakingRewardFactor, stakingRewardDenominator);
         await lina.claim();
 
         stakingbalance = await lina.stakingBalanceOf(admin);
         assert.equal(stakingbalance, 0);
 
-        balance = await lina.balanceOf(admin);
-        assert.equal(balance.valueOf()-initbalance, 0);
+        let reward = stakingAmount*5*stakingRewardFactor/stakingRewardDenominator;
+        console.log("reward", reward);//500000000000000
+
+        balance = await lina.balanceOf(admin);     
+        console.log(balance.valueOf().toString()); // 500000000049152
+        assert.equal(balance.sub(initbalance), reward.toString());
     });
 
 });
