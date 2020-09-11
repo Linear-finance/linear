@@ -19,9 +19,14 @@
  */
 
 const privatekey = process.env.WALLET_PRIVATE_KEY;
-const providerURL = "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID;
+//process.env.INFURA_PROJECT_ID;
 const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR : "./build";
 const migrations_directory = process.env.MIGRATIONS_DIR ? process.env.MIGRATIONS_DIR: "./migrations";
+//process.env.ETH_GAS_PRICE
+
+console.log("privatekey", privatekey);
+console.log("contracts_build_directory", contracts_build_directory);
+console.log("migrations_directory", migrations_directory);
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
 // const infuraKey = "fj4jll3k.....";
@@ -88,12 +93,21 @@ module.exports = {
     // network_id: 2111,   // This network is yours, in the cloud.
     // production: true    // Treats this network as if it was a public net. (default: false)
     // }
+    mainnet: {
+      provider: () => CreateHDWallet(privatekey, "https://mainnet.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
+        network_id: "*",
+        gas: 5500000,        // # Gas limit used for deploys. Default is 6721975
+        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000, // # Gas price used for deploys. Default is 100000000000 (100 Shannon).
+        confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+        timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
+        skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    },
     ropsten: {
-      provider: () => CreateHDWallet(privatekey, providerURL), // free infura can not reuse by more than two connnection? yes...
+      provider: () => CreateHDWallet(privatekey, "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
         network_id: "*",       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-        timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+        timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     }
   },

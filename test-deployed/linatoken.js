@@ -17,7 +17,7 @@ const provider = new ethers.providers.JsonRpcProvider(providerURL);
 const wallet = new ethers.Wallet(privatekey, provider)
 
 function getAbi(tokenname) {
-    var abiPath = path.join(__dirname, '../', "build/contracts/" + tokenname + ".json");
+    var abiPath = path.join(__dirname, '../', "build/ropsten/" + tokenname + ".json");
     var fileconten = fs.readFileSync(abiPath)
     var abi = JSON.parse(fileconten).abi;
     return abi;
@@ -37,9 +37,9 @@ async function mint() {
     console.log("balance " + balance);
     
     try {
-        //let estimateGas = await contractLina.connect(wallet).estimateGas.mint(testaddress, toUnit(1000).toString());
+        let estimateGas = await contractLina.connect(wallet).estimateGas.mint(testaddress, toUnit(1000).toString());
         //console.log("estimateGas", estimateGas.toNumber());
-        let ret = await contractLina.connect(wallet).mint(testaddress, toUnit(1000).toString());
+        let ret = await contractLina.connect(wallet).mint(testaddress, toUnit(1000).toString(), {gasLimit:estimateGas.toString()});
         console.log("mint ret :"+ ret)
     }
     catch(err) {
@@ -65,6 +65,6 @@ async function setTimePeriod() {
 
 // run only one async func 
 
-mint();
-//setTimePeriod();
+//mint();
+setTimePeriod();
 

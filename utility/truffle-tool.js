@@ -12,10 +12,10 @@ async function GetDeployed(contract) {
     return null
 }
 
-async function DeployIfNotExist(deployer, contract) {
+async function DeployIfNotExist(deployer, contract, option) {
     var deployed = await GetDeployed(contract);
     if (deployed == null) {
-        deployed = await deployer.deploy(contract);
+        deployed = await deployer.deploy(contract, option);
     }
     return deployed;
 }
