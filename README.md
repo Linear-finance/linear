@@ -67,3 +67,28 @@ module.exports = {
 
 ```
 
+
+
+# Deploy
+
+Deploy LinaToken
+
+```shell
+#!/bin/sh
+
+# set your private key
+export WALLET_PRIVATE_KEY="";
+
+export MIGRATIONS_DIR="./migrations"
+
+# set your infura project id key, for provider
+export INFURA_PROJECT_ID="";
+
+export BUILD_DIR="./build/mainnet"
+
+export ETH_GAS_PRICE=150000000000
+
+truffle migrate --network mainnet
+
+```
+

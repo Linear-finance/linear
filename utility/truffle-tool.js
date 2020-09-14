@@ -15,7 +15,7 @@ async function GetDeployed(contract) {
 // TODO: deploy and record
 async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
     let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
-    console.log("gaslimit:", gaslimit);
+    console.log("estimate gaslimit:", contactObj.contractName, gaslimit);
     let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
     return newContract;
 }
