@@ -8,9 +8,10 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 const privatekey = process.env.WALLET_PRIVATE_KEY;
-const providerURL = "https://mainnet.infura.io/v3/" + process.env.INFURA_PROJECT_ID;
+const providerURL = "https://"+ process.env.URL_NETWORK +".infura.io/v3/" + process.env.INFURA_PROJECT_ID;
 
-console.log(privatekey, providerURL)
+console.log("privatekey", privatekey)
+console.log("providerURL", providerURL)
 
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 
@@ -27,20 +28,56 @@ function getAbi(tokenname) {
 
 var abiFundVa = getAbi("LnFundVault");
 
-const contractFV = new ethers.Contract("0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9", abiFundVa, provider);
+let contractAddress;
+if (process.env.URL_NETWORK == "mainnet" ) {
+    contractAddress = "0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9";
+} else if (process.env.URL_NETWORK == "ropsten" ) {
+    contractAddress = "0xF02DD62c451042C571cE9153DC62a9461b1bd93F";
+}
 
-async function claim() {
-    console.log("contract address " + contractFV.address);
-    console.log("wallet address", wallet.address);
-    
+const contractFV = new ethers.Contract(contractAddress, abiFundVa, provider);
+
+console.log("contract address " + contractFV.address);
+console.log("wallet address", wallet.address);
+
+async function claim() {    
     try {
         let estimateGas = await contractFV.connect(wallet).estimateGas.claim(toUnit(0.01).toString());
         console.log("estimateGas", estimateGas);
-        await contractFV.connect(wallet).claim(toUnit(0.01).toString(), { gasLimit: estimateGas.toNumber()+100 });
+        let r = await contractFV.connect(wallet).claim(toUnit(0.01).toString(), { gasLimit: estimateGas.toNumber()+100 });
+        console.log("claim", r);
     }
     catch(err) {
-        console.log("claim err :", err)
+        console.log("run err :", err);
     }
 }
 
-claim();
+async function SetFundValue(amount) {
+    try {
+        let estimateGas = await contractFV.connect(wallet).estimateGas.SetFundValue(amount.toString());
+        console.log("estimateGas", estimateGas);
+        console.log("SetFundValue", amount.toString());
+        let r = await contractFV.connect(wallet).SetFundValue(amount.toString(), { gasLimit: estimateGas.toNumber()+100 });
+        console.log("SetFundValue", r);
+    }
+    catch(err) {
+        console.log("run err :", err);
+    }
+}
+
+async function SetInvestNumb(number) {
+    try {
+        let estimateGas = await contractFV.connect(wallet).estimateGas.SetInvestNumb(number.toString());
+        console.log("estimateGas", estimateGas);
+        console.log("SetInvestNumb", number.toString());
+        let r = await contractFV.connect(wallet).SetInvestNumb(number.toString(), { gasLimit: estimateGas.toNumber()+100 });
+        console.log("SetInvestNumb", r);
+    }
+    catch(err) {
+        console.log("run err :", err);
+    }
+}
+
+//claim();
+//SetFundValue( toUnit(1) );
+//SetInvestNumb(1000);

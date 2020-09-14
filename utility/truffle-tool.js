@@ -12,10 +12,19 @@ async function GetDeployed(contract) {
     return null
 }
 
-async function DeployIfNotExist(deployer, contract, option) {
+// TODO: deploy and record
+async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
+    let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
+    console.log("gaslimit:", gaslimit);
+    let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
+    return newContract;
+}
+
+async function DeployIfNotExist(deployer, contract, ...manyMoreArgs) {
     var deployed = await GetDeployed(contract);
     if (deployed == null) {
-        deployed = await deployer.deploy(contract, option);
+        //deployed = await deployer.deploy(contract, option);
+        deployed = await DeployWithEstimate(deployer, contract, ...manyMoreArgs);
     }
     return deployed;
 }
@@ -23,6 +32,10 @@ async function DeployIfNotExist(deployer, contract, option) {
 //console.log(toBytes32("ETH"));
 //console.log(toBytes32("BTC"));
 
+// get gas price online
+// deploy contract: 1.estimateGas, 2.save deployed contract address.
+
 exports.GetDeployed = GetDeployed
 exports.DeployIfNotExist = DeployIfNotExist
 exports.toBytes32 = toBytes32
+exports.DeployWithEstimate = DeployWithEstimate

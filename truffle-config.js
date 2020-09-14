@@ -20,7 +20,7 @@
 
 const privatekey = process.env.WALLET_PRIVATE_KEY;
 //process.env.INFURA_PROJECT_ID;
-const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR : "./build";
+const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR : "./build/development";
 const migrations_directory = process.env.MIGRATIONS_DIR ? process.env.MIGRATIONS_DIR: "./migrations";
 //process.env.ETH_GAS_PRICE
 
