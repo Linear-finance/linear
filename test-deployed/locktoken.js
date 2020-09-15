@@ -26,19 +26,19 @@ function getAbi(tokenname) {
 var abilocker = getAbi("LnTokenLocker");
 
 const contractLocker = new ethers.Contract("0x31B62Dd1701B2b93f27F1aB7B37117fF43073f17", abilocker, provider);
-let testaddress = "0x27f12994A218B1649FE185D19aAC00310aB198C5"
+let testaddress = "0x64e2412A4A5910f54aeb2b204e211594A180b12D"
 
 async function locktoken() {
     console.log("contract address " + contractLocker.address);
     console.log("wallet address", wallet.address);
     
     try {
-        let estimateGas = await contractLocker.connect(wallet).estimateGas.sendLockToken(testaddress, toUnit(12345).toString(), "360");
+        let estimateGas = await contractLocker.connect(wallet).estimateGas.sendLockToken(testaddress, toUnit(5500).toString(), "360");
         //var options = { gasPrice: 1000000000, gasLimit: 85000, nonce: 45, value: 0 }
         console.log("estimateGas", estimateGas.toNumber());
 
         var options = { gasLimit: estimateGas.toNumber()+100 };
-        let ret = await contractLocker.connect(wallet).sendLockToken(testaddress, toUnit(12345).toString(), "360", options);
+        let ret = await contractLocker.connect(wallet).sendLockToken(testaddress, toUnit(5500).toString(), "360", options);
         console.log("mint ret :", ret)
     }
     catch(err) {
@@ -51,6 +51,6 @@ async function getdata() {
     console.log("data", data);
 }
 
-//locktoken();
-getdata();
+locktoken();
+//getdata();
 

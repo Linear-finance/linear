@@ -32,7 +32,7 @@ const contractErc20Proxy = new ethers.Contract("0xFB3Fd84CC952fFD44D91A04A171430
 async function mint() {
     console.log("contract address " + contractLina.address)
     
-    let testaddress = "0x474F7783D9a01d8eaA6FaeE9De8BDB9453ADf2CD"
+    let testaddress = "0x64e2412A4A5910f54aeb2b204e211594A180b12D"
     let balance = await contractErc20Proxy.balanceOf(testaddress);
     console.log("balance " + balance);
     
@@ -49,7 +49,7 @@ async function mint() {
 
 async function setTimePeriod() {
     try {
-        let ret = await contractLina.connect(wallet).set_StakingPeriod((1599955200).toString(), (1599955200+24*3600).toString());
+        let ret = await contractLina.connect(wallet).set_StakingPeriod((1600076028+24*3600 ).toString(), (1600076028 +2*24*3600).toString());
         console.log("set_StakingPeriod ret :"+ ret)
     }
     catch(err) {
@@ -59,12 +59,13 @@ async function setTimePeriod() {
     console.log("timeperiod", timeperiod);
 }
 
+
 //increment.then((value) => {
 //    console.log(value);
 //});
 
 // run only one async func 
 
-//mint();
-setTimePeriod();
+mint();
+//setTimePeriod();
 

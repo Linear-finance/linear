@@ -2,9 +2,13 @@
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
-async function GetDeployed(contract) {
+async function GetDeployed(contract, deployedAddress) {
     try {
         var deployed = await contract.deployed();
+        if (deployed == null && deployedAddress != null) {
+            deployed = await contract.at(deployedAddress);
+            console.log("GetDeployed", contactObj.contractName, "from", deployedAddress);
+        }
         return deployed;
     }
     catch (e) {

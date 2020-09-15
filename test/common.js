@@ -61,6 +61,7 @@ async function InitComment(admin) {
     let oracleAddress = admin;//"0x0000000000000000000000000000000000000000";
     //let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
 
+    await LnChainLinkPrices.link(SafeDecimalMath);
     let kLnChainLinkPrices = await LnChainLinkPrices.new(admin, oracleAddress, [], []);
   
     await LnDebtSystem.link(SafeDecimalMath);
