@@ -32,14 +32,14 @@ const contractErc20Proxy = new ethers.Contract("0xFB3Fd84CC952fFD44D91A04A171430
 async function mint() {
     console.log("contract address " + contractLina.address)
     
-    let testaddress = "0x64e2412A4A5910f54aeb2b204e211594A180b12D"
+    let testaddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa"
     let balance = await contractErc20Proxy.balanceOf(testaddress);
     console.log("balance " + balance);
     
     try {
         let estimateGas = await contractLina.connect(wallet).estimateGas.mint(testaddress, toUnit(1000).toString());
         //console.log("estimateGas", estimateGas.toNumber());
-        let ret = await contractLina.connect(wallet).mint(testaddress, toUnit(1000).toString(), {gasLimit:estimateGas.toString()});
+        let ret = await contractLina.connect(wallet).mint(testaddress, toUnit(1000).toString(), {gasLimit:estimateGas});
         console.log("mint ret :"+ ret)
     }
     catch(err) {
@@ -49,7 +49,7 @@ async function mint() {
 
 async function setTimePeriod() {
     try {
-        let ret = await contractLina.connect(wallet).set_StakingPeriod((1600076028+24*3600 ).toString(), (1600076028 +2*24*3600).toString());
+        let ret = await contractLina.connect(wallet).set_StakingPeriod((1600169645+24*3600 ).toString(), (1600169645+2*24*3600).toString());
         console.log("set_StakingPeriod ret :"+ ret)
     }
     catch(err) {

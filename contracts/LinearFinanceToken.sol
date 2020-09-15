@@ -68,7 +68,7 @@ contract LinearFinance is LnErc20Handler {
     //////////////////////////////////////////////////////
     event Staking(address indexed who, uint256 value, uint staketime);
     event CancelStaking(address indexed who, uint256 value);
-    event Claim(address indexed who, uint256 stakeval, uint256 rewardval, uint256 sum);
+    event Claim(address indexed who, uint256 rewardval, uint256 totalStaking);
     event PauseChanged(bool isPaused);
 
     struct StakingData {
@@ -76,20 +76,42 @@ contract LinearFinance is LnErc20Handler {
         uint staketime;
     }
 
-    address linaToken;
-    mapping (address => StakingData[]) private stakesdata;
-    uint private stakingEndTime = 1596805918;
-    uint private claimStartTime = stakingEndTime + 1 days; // set later
-    uint256 internal constant MIN_STAKING_AMOUNT = 1e18;
-
-    uint256 public stakingRewardFactor = 10;
-    uint256 public constant stakingRewardDenominator = 100000;
-
+    mapping (address => StakingData[]) public stakesdata;
     uint256 public accountStakingListLimit = 50;
 
+    uint public stakingStartTime = 1600329600; // TODO: UTC or UTC+8
+    uint public stakingEndTime = 1605168000;
+    uint256 public minStakingAmount = 1e18; // 1 token
+
+    uint256 public constant PRECISION_UINT = 1e18;
+    uint256 public weekRewardAmount = 18750000e18;
+
+    // days weeks
+    mapping (uint256 => uint256) public weeksTotal; // week staking amount
+
+    function weekTotalStaking() public view returns (uint256[] memory) {
+        uint256 totalWeekNumber = stakingEndTime.sub(stakingStartTime) / 1 weeks;
+        if (stakingEndTime.sub(stakingStartTime) % 1 weeks != 0) {
+            totalWeekNumber = totalWeekNumber.add(1);
+        }
+        uint256[] memory totals = new uint256[](totalWeekNumber);
+        for (uint256 i=0; i< totalWeekNumber; i++) {
+            uint256 delta = weeksTotal[i];
+            if (i == 0) {
+                totals[i] = delta;
+            } else {
+                
+                totals[i] = totals[i-1].add(delta);
+            }
+        }
+        return totals;
+    }
+
     function staking(uint256 amount) public notPaused returns (bool) {
+        require(stakingStartTime < block.timestamp, "Staking not start");
         require(block.timestamp < stakingEndTime, "Staking stage has end.");
-        require(amount >= MIN_STAKING_AMOUNT, "Staking amount too small.");
+
+        require(amount >= minStakingAmount, "Staking amount too small.");
         require(stakesdata[msg.sender].length < accountStakingListLimit, "Staking list out of limit.");
 
         _burn(msg.sender, amount);
@@ -101,11 +123,16 @@ contract LinearFinance is LnErc20Handler {
         stakesdata[msg.sender].push(skaking);
 
         emit Staking(msg.sender, amount, block.timestamp);
+
+        uint256 weekNumber = block.timestamp.sub(stakingStartTime) / 1 weeks;
+        weeksTotal[weekNumber] = weeksTotal[weekNumber].add(amount);
         return true;
     }
 
     function cancelStaking(uint256 amount) public notPaused returns (bool) {
+        require(stakingStartTime < block.timestamp, "Staking not start");
         require(block.timestamp < stakingEndTime, "Staking stage has end.");
+
         require(amount > 0, "Invalid amount.");
 
         uint256 returnToken = amount;
@@ -114,9 +141,17 @@ contract LinearFinance is LnErc20Handler {
             StakingData storage lastElement = stakes[i-1];
             if (amount >= lastElement.amount) {
                 amount = amount.sub(lastElement.amount);
+                
+                uint256 wn = lastElement.staketime.sub(stakingStartTime) / 1 weeks;
+                weeksTotal[wn] = weeksTotal[wn].sub(lastElement.amount);
+
                 stakes.pop();
             } else {
                 lastElement.amount = lastElement.amount.sub(amount);
+
+                uint256 wn = lastElement.staketime.sub(stakingStartTime) / 1 weeks;
+                weeksTotal[wn] = weeksTotal[wn].sub(amount);
+
                 amount = 0;
             }
             if (amount == 0) break;
@@ -126,52 +161,62 @@ contract LinearFinance is LnErc20Handler {
         _mint(msg.sender, returnToken);
 
         emit CancelStaking(msg.sender, returnToken);
+
         return true;
     }
 
+    // claim reward
     function claim() public notPaused returns (bool) {
-        require(block.timestamp > claimStartTime, "Too early to claim");
-        require(stakingRewardFactor > 0, "Need stakingRewardFactor > 0");
-        
-        uint256 total = 0;
-        uint256 rewardSum = 0;
+        //require(stakingStartTime < block.timestamp, "Staking not start");
+        require(block.timestamp > stakingEndTime, "Need wait to staking end");
+
         StakingData[] memory stakes = stakesdata[msg.sender];
         require(stakes.length > 0, "Nothing to claim");
-        uint256 timesDelta = 1 days;
-        for (uint256 i=0; i < stakes.length; i++) {
-            uint256 amount = stakes[i].amount;
-            total = total.add(amount); // principal
 
-            uint256 stakedays = (claimStartTime.sub(stakes[i].staketime)) / timesDelta;
-            uint256 reward = amount.mul(stakedays).mul(stakingRewardFactor).div(stakingRewardDenominator);
-            rewardSum = rewardSum.add(reward);
+        uint256 claimtime = stakingEndTime;
+        uint256 totalWeekNumber = claimtime.sub(stakingStartTime) / 1 weeks;
+        if (claimtime.sub(stakingStartTime) % 1 weeks != 0) {
+            totalWeekNumber = totalWeekNumber.add(1);
         }
-        delete stakesdata[msg.sender];
 
-        uint256 tomint = total.add(rewardSum);
-        _mint(msg.sender, tomint);
+        uint256 totalStaking = 0;
+        uint256 totalReward = 0;
 
-        emit Claim(msg.sender, total, rewardSum, tomint);
+        uint256[] memory finalTotals = weekTotalStaking();
+        for (uint256 i=0; i < stakes.length; i++) {
+            uint256 stakedWeedNumber = stakes[i].staketime.sub(stakingStartTime) / 1 weeks;
+
+            totalStaking = totalStaking.add(stakes[i].amount);
+            
+            uint256 reward = 0;
+            for (uint256 j=stakedWeedNumber; j < totalWeekNumber; j++) {
+                reward = reward.add( stakes[i].amount.mul(PRECISION_UINT).div(finalTotals[j]) ); //move .mul(weekRewardAmount) to next line.
+            }
+            reward = reward.mul(weekRewardAmount).div(PRECISION_UINT);
+
+            totalReward = totalReward.add( reward );
+        }
+
+        delete stakesdata[msg.sender];        
+        _mint(msg.sender, totalStaking.add(totalReward) );
+
+        emit Claim(msg.sender, totalReward, totalStaking);
         return true;
     }
 
-    function set_stakingRewardFactor(uint256 factor) external onlyAdmin() {
-        stakingRewardFactor = factor;
+    function setMinStakingAmount(uint256 _minStakingAmount) external onlyAdmin {
+        minStakingAmount = _minStakingAmount;
     }
 
-    function rewardFactor() external view returns(uint256, uint256) {
-        return (stakingRewardFactor, stakingRewardDenominator);
+    function setWeekRewardAmount(uint256 _weekRewardAmount) external onlyAdmin {
+        weekRewardAmount = _weekRewardAmount;
     }
 
-    function set_StakingPeriod(uint stakingendtime, uint claimstarttime) external onlyAdmin() {
-        require(claimstarttime > stakingendtime);
+    function setStakingPeriod(uint _stakingStartTime, uint _stakingEndTime) external onlyAdmin {
+        require(_stakingEndTime > _stakingStartTime);
 
-        stakingEndTime = stakingendtime;
-        claimStartTime = claimstarttime;
-    }
-
-    function stakingPeriod() external view returns(uint,uint) {
-        return (stakingEndTime, claimStartTime);
+        stakingStartTime = _stakingStartTime;
+        stakingEndTime = _stakingEndTime;
     }
 
     function stakingBalanceOf(address account) external view returns(uint256) {

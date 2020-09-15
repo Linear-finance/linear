@@ -114,8 +114,8 @@ async function CreateLina(admin) {
     let tokenstorage = await LnTokenStorage.new(admin, admin);
     let proxyErc20 = await LnProxyERC20.new(admin);
 
-    await LinearFinance.link(SafeMath);
-    await LinearFinance.link(SafeDecimalMath);
+    //await LinearFinance.link(SafeMath);
+    //await LinearFinance.link(SafeDecimalMath);
     let lina = await LinearFinance.new(proxyErc20.address, tokenstorage.address, admin, "0");
 
     await tokenstorage.setOperator(lina.address);

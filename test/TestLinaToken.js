@@ -8,6 +8,7 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 const oneDay = 3600*24;
+const oneWeek = oneDay*7;
 const oneYear = oneDay*365;
 const thirtyDay = oneDay*30;
 
@@ -15,11 +16,17 @@ function rpcCallback(a,b,c,d) {
     //console.log("rpcCallback",a,b,c,d);
 }
 
+const currentTime = async () => {
+    const { timestamp } = await web3.eth.getBlock('latest', false, (a,b,c)=>{});
+    return timestamp;
+};
+
 contract('test LinearFinance', async (accounts)=> {
 
     const admin = accounts[0];
     const ac1 = accounts[1];
     const ac2 = accounts[2];
+    const ac3 = accounts[3];
 
     const mintAmount = toUnit("1000").toString();
     const sendamount = toUnit("1").toString();
@@ -62,67 +69,120 @@ contract('test LinearFinance', async (accounts)=> {
 
     it('staking', async ()=> {
         const [lina,linaproxy] = await CreateLina(admin);
-        await lina.mint(admin, mintAmount, { from: admin });
+        //await lina.mint(admin, mintAmount, { from: admin });
         
-        let initbalance = await lina.balanceOf(admin);
-        initbalance = initbalance.valueOf();
+        await lina.mint(ac1, mintAmount, { from: admin });
+        await lina.mint(ac2, mintAmount, { from: admin });
+        await lina.mint(ac3, mintAmount, { from: admin });
 
-        //set time
-        //let starttime = Math.floor(Date.now()/1000);
-        const { timestamp } = await web3.eth.getBlock('latest', false, (a,b,c)=>{});
+        let blocktime = await currentTime();
 
-        await lina.set_StakingPeriod(timestamp + 10, timestamp + 5*oneDay+20 );
-        //let stakingperiod = await lina.stakingPeriod();
-        //console.log(stakingperiod);
+        await lina.setStakingPeriod(blocktime-1, blocktime-1 + 8 * 3600*24*7);
 
-        const stakingAmount = toUnit("1").toString();
-        await lina.staking(stakingAmount, { from: admin });
-        await lina.staking(stakingAmount, { from: admin });
+        //---------------------------------------- week 0
+        let balance1 = await lina.balanceOf(ac1);
+        for (let i=0; i<50; i++) {
+            await lina.staking( toUnit(1).toString(), {from:ac1} );
+        }
 
-        let balance = await lina.balanceOf(admin);
-        assert.equal(balance.valueOf(), initbalance-stakingAmount*2);
+        let v = await lina.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(50).toString());
 
-        let stakingbalance = await lina.stakingBalanceOf(admin);
-        assert.equal(stakingbalance, stakingAmount*2);
-        
-        let stakingb2 = await lina.stakingBalanceOf(ac1);
-        assert.equal(stakingb2.valueOf(), 0);
+        v = await lina.weeksTotal(0);
+        assert.equal(v, toUnit(50).toString());
 
-        await lina.cancelStaking(stakingAmount);
-        await lina.cancelStaking(stakingAmount);
+        v = await lina.balanceOf(ac1);
+        assert.equal(v.toString(), balance1 - toUnit(50));
+        balance1 = v;
 
-        stakingbalance = await lina.stakingBalanceOf(admin);
-        assert.equal(stakingbalance, 0);
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [oneWeek+1]}, rpcCallback);
 
-        balance = await lina.balanceOf(admin);
-        assert.equal(balance.valueOf(), initbalance.toString());
+        //---------------------------------------- week 1
+        await lina.cancelStaking(toUnit(10).toString(), {from:ac1});
 
-        await lina.staking(stakingAmount, { from: admin });
+        v = await lina.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(40).toString());
 
-        stakingbalance = await lina.stakingBalanceOf(admin);
-        assert.equal(stakingbalance, stakingAmount.toString());
-        balance = await lina.balanceOf(admin);
-        assert.equal(stakingbalance.add(balance), initbalance.toString());
+        v = await lina.weeksTotal(0);
+        assert.equal(v, toUnit(40).toString());
 
-        web3.currentProvider.send({method: "evm_increaseTime", params: [5*oneDay+22]}, rpcCallback);
+        v = await lina.weeksTotal(1);
+        assert.equal(v, toUnit(0).toString());
 
-        let rewardFactor = await lina.rewardFactor();
-        const stakingRewardFactor = rewardFactor[0]
-        const stakingRewardDenominator = rewardFactor[1]
+        await lina.staking( toUnit(60).toString(), {from:ac1} );
+        v = await lina.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(100).toString());
 
-        //console.log("stakingRewardFactor, stakingRewardDenominator", stakingRewardFactor, stakingRewardDenominator);
-        await lina.claim();
+        await lina.staking( toUnit(30).toString(), {from:ac2} );
+        await lina.staking( toUnit(70).toString(), {from:ac2} );
+        v = await lina.stakingBalanceOf( ac2 );
+        assert.equal(v, toUnit(100).toString());
 
-        stakingbalance = await lina.stakingBalanceOf(admin);
-        assert.equal(stakingbalance, 0);
+        v = await lina.weeksTotal(1);
+        assert.equal(v, toUnit(160).toString());
 
-        let reward = stakingAmount*5*stakingRewardFactor/stakingRewardDenominator;
-        console.log("reward", reward);//500000000000000
+        //---------------------------------------- week 3
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneWeek+1]}, rpcCallback);
 
-        balance = await lina.balanceOf(admin);     
-        console.log(balance.valueOf().toString()); // 500000000049152
-        assert.equal(balance.sub(initbalance), reward.toString());
+        await lina.staking( toUnit(100).toString(), {from:ac3} );
+        v = await lina.weeksTotal(2);
+        assert.equal(v, toUnit(0).toString());
+        v = await lina.weeksTotal(3);
+        assert.equal(v, toUnit(100).toString());
+
+        //---------------------------------------- week 5
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneWeek+1]}, rpcCallback);
+
+        await lina.cancelStaking(toUnit(10).toString(), {from:ac3});
+        await lina.staking( toUnit(100).toString(), {from:ac3} );
+        v = await lina.stakingBalanceOf( ac3 );
+        assert.equal(v, toUnit(190).toString());
+
+        await lina.staking( toUnit(50).toString(), {from:ac2} );
+        v = await lina.stakingBalanceOf( ac2 );
+        assert.equal(v, toUnit(150).toString());
+
+        v = await lina.weeksTotal(3);
+        assert.equal(v, toUnit(90).toString());
+        v = await lina.weeksTotal(4);
+        assert.equal(v, toUnit(0).toString());
+        v = await lina.weeksTotal(5);
+        assert.equal(v, toUnit(150).toString());
+        //---------------------------------------- week 7
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneWeek+1]}, rpcCallback);
+
+        await lina.staking( toUnit(100).toString(), {from:ac1} );
+
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [oneWeek+1]}, rpcCallback);
+
+        await lina.claim({from:ac1});
+        await lina.claim({from:ac2});
+        await lina.claim({from:ac3});
+
+        v = await lina.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(0).toString());
+        v = await lina.stakingBalanceOf( ac2 );
+        assert.equal(v, toUnit(0).toString());
+        v = await lina.stakingBalanceOf( ac3 );
+        assert.equal(v, toUnit(0).toString());
+
+        arrayTotal = await lina.weekTotalStaking();
+        //console.log(arrayTotal);
+        assert.equal(arrayTotal[0], toUnit(40).toString());
+        assert.equal(arrayTotal[1], toUnit(200).toString());
+        assert.equal(arrayTotal[2], toUnit(200).toString());
+        assert.equal(arrayTotal[3], toUnit(290).toString());
+        assert.equal(arrayTotal[4], toUnit(290).toString());
+        assert.equal(arrayTotal[5], toUnit(440).toString());
+        assert.equal(arrayTotal[6], toUnit(440).toString());
+        assert.equal(arrayTotal[7], toUnit(540).toString());
+
+        v = await lina.balanceOf(ac1);
+        console.log("ac1 balance", v.toString());
+        v = await lina.balanceOf(ac2);
+        console.log("ac2 balance", v.toString());
+        v = await lina.balanceOf(ac3);
+        console.log("ac3 balance", v.toString());
     });
-
 });
 
