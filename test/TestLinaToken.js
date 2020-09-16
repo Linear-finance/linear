@@ -74,6 +74,16 @@ contract('test LinearFinance', async (accounts)=> {
         //    "Only the contract admin can perform this action");
     });
 
+    it("LnLinearStakingStorage access role", async ()=> {
+        const kLnAccessControl = await LnAccessControl.new(admin);
+        const kLnLinearStakingStorage = await LnLinearStakingStorage.new(admin, kLnAccessControl.address);
+
+        const msg = "Only Linear Staking Storage Role";
+        await exceptionEqual(kLnLinearStakingStorage.PushStakingData(admin, toUnit(1).toString(), toUnit(1).toString()), msg);
+        await exceptionEqual(kLnLinearStakingStorage.StakingDataAdd(admin, 0, toUnit(1).toString()), msg);
+        
+    });
+
     it('staking', async ()=> {
         const [lina,linaproxy] = await CreateLina(admin);
         const kLnAccessControl = await LnAccessControl.new(admin);
