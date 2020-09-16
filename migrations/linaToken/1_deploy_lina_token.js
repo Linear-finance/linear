@@ -26,5 +26,8 @@ module.exports = function (deployer, network, accounts) {
     gaslimit = await lina.setProxy.estimateGas(proxyErc20.address);
     console.log("gaslimit setProxy", gaslimit);
     await lina.setProxy(proxyErc20.address, {gas: gaslimit});
+
+    //let kLinearStaking = await DeployIfNotExist(deployer, LnLinearStaking, admin, lina.address);
+    //await lina.setOperator(kLinearStaking.address);
   });
 };

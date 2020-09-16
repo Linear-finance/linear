@@ -43,10 +43,10 @@ module.exports = function (deployer, network, accounts) {
     
     // lina token has deployed before main contract deploying.
     const contractLina = await GetDeployed(LinearFinance);
-    const contractLinaProxy = await contractLina.proxy();
+    //const contractLinaProxy = await contractLina.proxy();
     
-    //
-    //assert.ok(contractLina, "LinearFinance was not deployed");
+    if (network == "mainnet" || network == "ropsten")
+      assert.ok(contractLina, "LinearFinance was not deployed");
 
     // deploy base infrastructure
     let kLnAssetSystem = await DeployIfNotExist(deployer, LnAssetSystem, admin);
