@@ -52,7 +52,9 @@ contract('test LnTokenLocker', async (accounts)=> {
         const [lina, linaProxy] = await CreateLina(admin);
         const tl = await LnTokenLocker.new(lina.address, admin);
 
-        await tl.sendLockToken(ac1, toUnit(360), 360);
+        let v
+        v = await tl.sendLockToken(ac1, toUnit(360), 360);
+        console.log("sendLockToken gasUsed", v.receipt.gasUsed);
         await tl.sendLockToken(ac2, toUnit(360), 180);
 
         // before claim
@@ -74,7 +76,7 @@ contract('test LnTokenLocker', async (accounts)=> {
         //-----------------------
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay+1]}, rpcCallback);
 
-        let v = await tl.claimToken(toUnit(10000), {from: ac1});
+        v = await tl.claimToken(toUnit(10000), {from: ac1});
         //console.log("claimToken", v.tx);
 
         v = await tl.lockData(ac1);
@@ -136,5 +138,30 @@ contract('test LnTokenLocker', async (accounts)=> {
         );
     });
 
+    it('sendLockTokenMany', async ()=> {
+        const [lina, linaProxy] = await CreateLina(admin);
+        const tl = await LnTokenLocker.new(lina.address, admin);
+
+        let mintAmount = toUnit(10000);
+        await lina.mint(tl.address, mintAmount);
+
+        let v = await tl.sendLockTokenMany([ac1,ac2,ac3], [100, 200, 300].map(toUnit), [100, 200, 300]);
+        console.log("sendLockTokenMany 3 gasUsed", v.receipt.gasUsed);
+
+        v = await tl.lockData(ac1);
+        assert.equal(v.amount, toUnit(100).toString());
+        assert.equal(v.lockDays, (100).toString());
+        assert.equal(v.claimedAmount, toUnit(0).toString());
+
+        v = await tl.lockData(ac2);
+        assert.equal(v.amount, toUnit(200).toString());
+        assert.equal(v.lockDays, (200).toString());
+        assert.equal(v.claimedAmount, toUnit(0).toString());
+
+        v = await tl.lockData(ac3);
+        assert.equal(v.amount, toUnit(300).toString());
+        assert.equal(v.lockDays, (300).toString());
+        assert.equal(v.claimedAmount, toUnit(0).toString());
+    });
 });
 
