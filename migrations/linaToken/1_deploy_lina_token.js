@@ -8,7 +8,7 @@ module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
     let gaslimit = 0;
-
+/*
     let tokenstorage = await DeployIfNotExist(deployer, LnTokenStorage, admin, admin);
     let proxyErc20 = await DeployIfNotExist(deployer, LnProxyERC20, admin);
 
@@ -26,8 +26,6 @@ module.exports = function (deployer, network, accounts) {
     gaslimit = await lina.setProxy.estimateGas(proxyErc20.address);
     console.log("gaslimit setProxy", gaslimit);
     await lina.setProxy(proxyErc20.address, {gas: gaslimit});
-
-    //let kLinearStaking = await DeployIfNotExist(deployer, LnLinearStaking, admin, lina.address);
-    //await lina.setOperator(kLinearStaking.address);
+    */
   });
 };

@@ -1,6 +1,7 @@
 {
     "LnFundVault":{"address":"0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9"},
-    "LnTokenStorage":{"address":"0x08D62732B8653e6707d1A627085F00970EB9a699"},
-    "LnProxyERC20":{"address":"0x070f3d4322B8Bb9b408c032bCf6A6F0EFb5111e2"},
-    "LinearFinance":{"address":"0x28434eC1A29F27C73F7ff2A68a44B46860850D77"}
+    "LnTokenStorage":{"address":"0xf1A16D778fE004c495dF8d3C46d2ABe71eCF6CfE"},
+    "LnProxyERC20":{"address":"0x3E9BC21C9b189C09dF3eF1B824798658d5011937"},
+    "LinearFinance":{"address":"0xC0D8B58EDcA5628b121aDb3F7011791716EEb2DC"},
+    "LnTokenLocker":{"address":"0x6c4803280D98D3fBe768aD64e176d6a081D3CB33"}
 }

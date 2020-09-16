@@ -105,8 +105,7 @@ contract LnTokenCliffLocker is LnAdmin, Pausable {
         }
     }
 
-    function avaible( ) external view returns( uint256 ){
-        address _user = msg.sender;
+    function avaible(address _user ) external view returns( uint256 ){
         require(lockData[_user].amount > 0, "No lock token to claim");
         if( now < lockData[_user].lockTimestamp ){
             return 0;
