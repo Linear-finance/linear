@@ -10,7 +10,7 @@ contract('test Admin', async (accounts)=> {
     const ac1 = accounts[1];
 
     it('Admin', async ()=> {
-        const testCache = await testAddressCache.deployed();
+        const testCache = await testAddressCache.new(admin);
         await testCache.setCandidate( ac1 );
         await testCache.becomeAdmin( { from: ac1 } );
         let addr1 = await testCache.admin();

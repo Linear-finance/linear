@@ -14,11 +14,11 @@ contract('test LnAddressStorage', async (accounts)=> {
 
   
     it('Address cache', async ()=> {
-        const addrStorage = await LnAddressStorage.deployed();
+        const addrStorage = await LnAddressStorage.new(admin);
         await addrStorage.update( toBytes32("a"), addrStorage.address );
         await addrStorage.update( toBytes32("b"), addrStorage.address );
         
-        const testCache = await testAddressCache.deployed();
+        const testCache = await testAddressCache.new(admin);
         await testCache.updateAddressCache( addrStorage.address );
     
         let addr1 = await testCache.addr1();

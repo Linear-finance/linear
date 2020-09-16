@@ -3,7 +3,7 @@ const LnLinearStakingStorage = artifacts.require("LnLinearStakingStorage");
 const LnAccessControl = artifacts.require("LnAccessControl");
 const LnLinearStaking = artifacts.require("LnLinearStaking");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
-const testAddressCache = artifacts.require("testAddressCache");
+//const testAddressCache = artifacts.require("testAddressCache");
 const {CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const w3utils = require('web3-utils');
@@ -81,7 +81,7 @@ contract('test LinearFinance', async (accounts)=> {
         const msg = "Only Linear Staking Storage Role";
         await exceptionEqual(kLnLinearStakingStorage.PushStakingData(admin, toUnit(1).toString(), toUnit(1).toString()), msg);
         await exceptionEqual(kLnLinearStakingStorage.StakingDataAdd(admin, 0, toUnit(1).toString()), msg);
-        
+
     });
 
     it('staking', async ()=> {

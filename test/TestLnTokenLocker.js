@@ -25,7 +25,7 @@ contract('test LnTokenLocker', async (accounts)=> {
 
     it('sendLockToken', async ()=> {
         const [lina, linaProxy] = await CreateLina(admin);
-        const tl = await LnTokenLocker.new(lina.address, admin);
+        const tl = await LnTokenLocker.new(linaProxy.address, admin);
 
         await tl.sendLockToken(ac1, toUnit(360), 360);
 
@@ -50,7 +50,7 @@ contract('test LnTokenLocker', async (accounts)=> {
 
     it('claimToken', async ()=> {
         const [lina, linaProxy] = await CreateLina(admin);
-        const tl = await LnTokenLocker.new(lina.address, admin);
+        const tl = await LnTokenLocker.new(linaProxy.address, admin);
 
         let v
         v = await tl.sendLockToken(ac1, toUnit(360), 360);
@@ -140,7 +140,7 @@ contract('test LnTokenLocker', async (accounts)=> {
 
     it('sendLockTokenMany', async ()=> {
         const [lina, linaProxy] = await CreateLina(admin);
-        const tl = await LnTokenLocker.new(lina.address, admin);
+        const tl = await LnTokenLocker.new(linaProxy.address, admin);
 
         let mintAmount = toUnit(10000);
         await lina.mint(tl.address, mintAmount);
