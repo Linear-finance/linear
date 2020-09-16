@@ -28,7 +28,7 @@ const convertToOraclePrice = (val) => {
 }
 
 const currentTime = async () => {
-    const { timestamp } = await web3.eth.getBlock('latest');
+    const { timestamp } = await web3.eth.getBlock('latest', false, (a,b,c)=>{});
     return timestamp;
 };
 
@@ -97,6 +97,7 @@ contract('LnExchangeSystem', async (accounts)=> {
             await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig","LnFeeSystem"].map(toBytes32),
                 [ assets.address, clPrices.address, accessCtrl.address, config.address, feeSys.address ]);
 
+            await LnExchangeSystem.link(SafeDecimalMath);
             const exchangeSys = await LnExchangeSystem.new( admin, assets.address );
 
             await accessCtrl.SetBurnAssetRole( [admin, exchangeSys.address], [true,true]);

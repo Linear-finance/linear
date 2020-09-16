@@ -46,6 +46,7 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('constructor', () => {
         it('init prices', async ()=> {
             // new instance of LnDefaultPrices
+            await LnDefaultPrices.link(SafeDecimalMath);
             const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
             let linaPrice = await defaultPrices.getPrice( toBytes32("LINA") );    
             assert.equal( linaPrice.valueOf(), 1 );
