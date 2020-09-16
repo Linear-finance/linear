@@ -108,6 +108,9 @@ contract LnTokenCliffLocker is LnAdmin, Pausable {
     function avaible( ) external view returns( uint256 ){
         address _user = msg.sender;
         require(lockData[_user].amount > 0, "No lock token to claim");
+        if( now < lockData[_user].lockTimestamp ){
+            return 0;
+        }
 
         uint256 available = 0;
         available = lockData[_user].amount;
@@ -135,6 +138,7 @@ contract LnTokenCliffLocker is LnAdmin, Pausable {
         require(_amount > 0, "Invalid parameter amount");
         address _user = msg.sender;
         require(lockData[_user].amount > 0, "No lock token to claim");
+        require( now >= lockData[_user].lockTimestamp );
 
         uint256 available = 0;
         available = lockData[_user].amount;
