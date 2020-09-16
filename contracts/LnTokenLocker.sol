@@ -97,11 +97,11 @@ contract LnTokenCliffLocker is LnAdmin, Pausable {
         token = IERC20(_token);
     }
     
-    function sendLockTokenMany(address[] calldata _users, uint256[] calldata _amounts, uint256[] calldata _lockdays) external onlyAdmin {
+    function sendLockTokenMany(address[] calldata _users, uint256[] calldata _amounts, uint256[] calldata _locktimes) external onlyAdmin {
         require(_users.length == _amounts.length, "array length not eq");
-        require(_users.length == _lockdays.length, "array length not eq");
+        require(_users.length == _locktimes.length, "array length not eq");
         for (uint256 i=0; i < _users.length; i++) {
-            sendLockToken(_users[i], _amounts[i], _lockdays[i]);
+            sendLockToken(_users[i], _amounts[i], _locktimes[i]);
         }
     }
 
@@ -138,7 +138,7 @@ contract LnTokenCliffLocker is LnAdmin, Pausable {
         require(_amount > 0, "Invalid parameter amount");
         address _user = msg.sender;
         require(lockData[_user].amount > 0, "No lock token to claim");
-        require( now >= lockData[_user].lockTimestamp );
+        require( now >= lockData[_user].lockTimestamp, "Not time to claim" );
 
         uint256 available = 0;
         available = lockData[_user].amount;

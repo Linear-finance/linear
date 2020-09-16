@@ -24,9 +24,8 @@ const contracts_build_directory = process.env.BUILD_DIR ? process.env.BUILD_DIR 
 const migrations_directory = process.env.MIGRATIONS_DIR ? process.env.MIGRATIONS_DIR: "./migrations";
 //process.env.ETH_GAS_PRICE
 
-console.log("privatekey", privatekey);
-console.log("contracts_build_directory", contracts_build_directory);
-console.log("migrations_directory", migrations_directory);
+console.log("\ncontracts_build_directory", contracts_build_directory);
+console.log("\nmigrations_directory", migrations_directory);
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
 // const infuraKey = "fj4jll3k.....";
@@ -35,7 +34,14 @@ const HDWalletProvider = require("truffle-hdwallet-provider");
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 function CreateHDWallet(mnemonic, providerUrl) {
-  return new HDWalletProvider(mnemonic, providerUrl, 0, 1);
+  let wallet = new HDWalletProvider(mnemonic, providerUrl, 0, 1);
+  return wallet;
+}
+
+//private wallet address.
+if (privatekey != null) {
+  let wallet = CreateHDWallet(privatekey, "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID);
+  console.log("\n* wallet address:", wallet.addresses[0]);
 }
 
 module.exports = {

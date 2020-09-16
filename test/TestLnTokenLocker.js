@@ -1,4 +1,5 @@
 const LnTokenLocker = artifacts.require("LnTokenLocker");
+const LnTokenCliffLocker = artifacts.require("LnTokenCliffLocker");
 
 const {CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
@@ -9,6 +10,11 @@ const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 function rpcCallback(a,b,c,d) {
     //console.log("rpcCallback",a,b,c,d);
 }
+
+const currentTime = async () => {
+    const { timestamp } = await web3.eth.getBlock('latest', false, (a,b,c)=>{});
+    return timestamp;
+};
 
 contract('test LnTokenLocker', async (accounts)=> {
 
@@ -31,6 +37,10 @@ contract('test LnTokenLocker', async (accounts)=> {
 
         await exceptionEqual(
             tl.sendLockToken(ac1, toUnit(360), 360), "this address has locked"
+        );
+
+        await exceptionEqual(
+            tl.sendLockToken(ac2, toUnit(360), 360, {from:ac2}), "Only the contract admin can perform this action"
         );
 
         await tl.sendLockToken(ac2, toUnit(360), 180);
@@ -145,6 +155,10 @@ contract('test LnTokenLocker', async (accounts)=> {
         let mintAmount = toUnit(10000);
         await lina.mint(tl.address, mintAmount);
 
+        await exceptionEqual(
+            tl.sendLockTokenMany([ac1,ac2,ac3], [100, 200, 300].map(toUnit), [100, 200, 300], {from:ac3}), "Only the contract admin can perform this action"
+        );
+
         let v = await tl.sendLockTokenMany([ac1,ac2,ac3], [100, 200, 300].map(toUnit), [100, 200, 300]);
         console.log("sendLockTokenMany 3 gasUsed", v.receipt.gasUsed);
 
@@ -162,6 +176,75 @@ contract('test LnTokenLocker', async (accounts)=> {
         assert.equal(v.amount, toUnit(300).toString());
         assert.equal(v.lockDays, (300).toString());
         assert.equal(v.claimedAmount, toUnit(0).toString());
+    });
+
+    it('LnTokenCliffLocker sendLockTokenMany', async ()=> {
+        const [lina, linaProxy] = await CreateLina(admin);
+        const tl = await LnTokenCliffLocker.new(linaProxy.address, admin);
+
+        let mintAmount = toUnit(10000);
+        await lina.mint(tl.address, mintAmount);
+
+        let blocktime = await currentTime();
+
+        await exceptionEqual(
+            tl.sendLockToken(ac1, toUnit(100), blocktime + oneDay, {from:ac1}), "Only the contract admin can perform this action"
+        );
+
+        await exceptionEqual(
+            tl.sendLockTokenMany([ac2,ac3], [200, 300].map(toUnit), [blocktime + 2*oneDay, blocktime + 3*oneDay], {from:ac3}), "Only the contract admin can perform this action"
+        );
+
+        await tl.sendLockToken(ac1, toUnit(100), blocktime + oneDay);
+        await tl.sendLockTokenMany([ac2,ac3], [200, 300].map(toUnit), [blocktime + 2*oneDay, blocktime + 3*oneDay]);
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(1)), "No lock token to claim"
+        );
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(100), {from:ac1}), "Not time to claim"
+        );
+        await exceptionEqual(
+            tl.claimToken(toUnit(100), {from:ac2}), "Not time to claim"
+        );
+        await exceptionEqual(
+            tl.claimToken(toUnit(100), {from:ac3}), "Not time to claim"
+        );
+
+        web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay+1]}, rpcCallback);
+
+        await tl.claimToken(toUnit(100), {from:ac1});
+        let v = await linaProxy.balanceOf(ac1);
+        assert.equal(v.cmp(toUnit(100)), 0);
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(100), {from:ac2}), "Not time to claim"
+        );
+        await exceptionEqual(
+            tl.claimToken(toUnit(100), {from:ac3}), "Not time to claim"
+        );
+
+        web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneDay+1]}, rpcCallback);
+
+        await tl.claimToken(toUnit(100), {from:ac2});
+        await tl.claimToken(toUnit(100), {from:ac2});
+
+        await tl.claimToken(toUnit(100), {from:ac3});
+        await tl.claimToken(toUnit(100), {from:ac3});
+        await tl.claimToken(toUnit(100), {from:ac3});
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(1), {from:ac1}), "not available claim"
+        );
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(1), {from:ac2}), "not available claim"
+        );
+
+        await exceptionEqual(
+            tl.claimToken(toUnit(1), {from:ac3}), "not available claim"
+        );
     });
 });
 
