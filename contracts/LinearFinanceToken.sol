@@ -8,7 +8,7 @@ import "./LnOperatorModifier.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract LinearFinance is LnErc20Handler, LnOperatorModifier {
+contract LinearFinance is LnErc20Handler {
     
     string public constant TOKEN_NAME = "Linear Finance Token";
     string public constant TOKEN_SYMBOL = "LINA";
@@ -22,15 +22,9 @@ contract LinearFinance is LnErc20Handler, LnOperatorModifier {
     )
         public
         LnErc20Handler(_proxy, _tokenStorage, TOKEN_NAME, TOKEN_SYMBOL, _totalSupply, DECIMALS, _admin)
-        LnOperatorModifier(_admin)
     {
     }
     
-    modifier onlyManager {
-        require(msg.sender == operator || msg.sender == admin, "Only manager can perform this action");
-        _;
-    }
-
     //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
@@ -42,7 +36,7 @@ contract LinearFinance is LnErc20Handler, LnOperatorModifier {
         emitTransfer(address(0), account, amount);
     }
 
-    function mint(address account, uint256 amount) external onlyManager {
+    function mint(address account, uint256 amount) external onlyAdmin {
         _mint(account, amount);
     }
 
@@ -55,9 +49,9 @@ contract LinearFinance is LnErc20Handler, LnOperatorModifier {
         emitTransfer(account, address(0), amount);
     }
 
-    function burn(address account, uint256 amount) external onlyManager {
-        _burn(account, amount);
-    }
+    //function burn(address account, uint256 amount) external onlyAdmin {
+    //    _burn(account, amount);
+    //}
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
         super._beforeTokenTransfer(from, to, amount);

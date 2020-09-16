@@ -35,6 +35,12 @@ contract LnAccessControl is AccessControl {
 
     // -------------------------------------------------------
     // this func need admin role. grantRole and revokeRole need admin role
+    function SetRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) external {
+        require(IsAdmin(msg.sender), "Only admin");
+
+        _setRoles(roleType, addresses, setTo);
+    }
+
     function _setRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) private {
         require(addresses.length == setTo.length, "parameter address length not eq");
 

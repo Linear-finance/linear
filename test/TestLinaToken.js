@@ -1,4 +1,6 @@
 const LinearFinance = artifacts.require("LinearFinance");
+const LnLinearStakingStorage = artifacts.require("LnLinearStakingStorage");
+const LnAccessControl = artifacts.require("LnAccessControl");
 const LnLinearStaking = artifacts.require("LnLinearStaking");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const testAddressCache = artifacts.require("testAddressCache");
@@ -7,6 +9,7 @@ const {CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
+const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 const oneDay = 3600*24;
 const oneWeek = oneDay*7;
@@ -29,7 +32,8 @@ contract('test LinearFinance', async (accounts)=> {
     const ac2 = accounts[2];
     const ac3 = accounts[3];
 
-    const mintAmount = toUnit("1000").toString();
+    const mintBN = toUnit("1000");
+    const mintAmount = mintBN.toString();
     const sendamount = toUnit("1").toString();
 
     it('mint and transfer', async ()=> {
@@ -65,25 +69,30 @@ contract('test LinearFinance', async (accounts)=> {
         const [lina,linaproxy] = await CreateLina(admin);
  
         await exceptionEqual(lina.mint(admin, mintAmount, { from: ac1 }),
-            "Only manager can perform this action");
-        await exceptionEqual(lina.burn(admin, mintAmount, { from: ac1 }),
-            "Only manager can perform this action");
+            "Only the contract admin can perform this action");
+        //await exceptionEqual(lina.burn(admin, mintAmount, { from: ac1 }),
+        //    "Only the contract admin can perform this action");
     });
 
     it('staking', async ()=> {
         const [lina,linaproxy] = await CreateLina(admin);
-        const staking = await LnLinearStaking.new(admin, lina.address, admin);
-        await lina.setOperator(staking.address);
+        const kLnAccessControl = await LnAccessControl.new(admin);
+        const kLnLinearStakingStorage = await LnLinearStakingStorage.new(admin, kLnAccessControl.address);
+        const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
+        const staking = await LnLinearStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address);
+        await kLnAccessControl.SetRoles( roleKey, [staking.address], [true] );
 
-        //await lina.mint(admin, mintAmount, { from: admin });
-        
         await lina.mint(ac1, mintAmount, { from: admin });
         await lina.mint(ac2, mintAmount, { from: admin });
         await lina.mint(ac3, mintAmount, { from: admin });
 
+        await linaproxy.approve(staking.address, mintAmount, {from: ac1});
+        await linaproxy.approve(staking.address, mintAmount, {from: ac2});
+        await linaproxy.approve(staking.address, mintAmount, {from: ac3});
+
         let blocktime = await currentTime();
 
-        await staking.setStakingPeriod(blocktime-1, blocktime-1 + 8 * 3600*24*7);
+        await kLnLinearStakingStorage.setStakingPeriod(blocktime-1, blocktime-1 + 8 * 3600*24*7);
 
         //---------------------------------------- week 0
         let balance1 = await lina.balanceOf(ac1);
@@ -94,7 +103,7 @@ contract('test LinearFinance', async (accounts)=> {
         let v = await staking.stakingBalanceOf( ac1 );
         assert.equal(v, toUnit(50).toString());
 
-        v = await staking.weeksTotal(0);
+        v = await kLnLinearStakingStorage.weeksTotal(0);
         assert.equal(v, toUnit(50).toString());
 
         v = await lina.balanceOf(ac1);
@@ -109,10 +118,10 @@ contract('test LinearFinance', async (accounts)=> {
         v = await staking.stakingBalanceOf( ac1 );
         assert.equal(v, toUnit(40).toString());
 
-        v = await staking.weeksTotal(0);
+        v = await kLnLinearStakingStorage.weeksTotal(0);
         assert.equal(v, toUnit(40).toString());
 
-        v = await staking.weeksTotal(1);
+        v = await kLnLinearStakingStorage.weeksTotal(1);
         assert.equal(v, toUnit(0).toString());
 
         await staking.staking( toUnit(60).toString(), {from:ac1} );
@@ -124,16 +133,16 @@ contract('test LinearFinance', async (accounts)=> {
         v = await staking.stakingBalanceOf( ac2 );
         assert.equal(v, toUnit(100).toString());
 
-        v = await staking.weeksTotal(1);
+        v = await kLnLinearStakingStorage.weeksTotal(1);
         assert.equal(v, toUnit(160).toString());
 
         //---------------------------------------- week 3
         await web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneWeek+1]}, rpcCallback);
 
         await staking.staking( toUnit(100).toString(), {from:ac3} );
-        v = await staking.weeksTotal(2);
+        v = await kLnLinearStakingStorage.weeksTotal(2);
         assert.equal(v, toUnit(0).toString());
-        v = await staking.weeksTotal(3);
+        v = await kLnLinearStakingStorage.weeksTotal(3);
         assert.equal(v, toUnit(100).toString());
 
         //---------------------------------------- week 5
@@ -148,11 +157,11 @@ contract('test LinearFinance', async (accounts)=> {
         v = await staking.stakingBalanceOf( ac2 );
         assert.equal(v, toUnit(150).toString());
 
-        v = await staking.weeksTotal(3);
+        v = await kLnLinearStakingStorage.weeksTotal(3);
         assert.equal(v, toUnit(90).toString());
-        v = await staking.weeksTotal(4);
+        v = await kLnLinearStakingStorage.weeksTotal(4);
         assert.equal(v, toUnit(0).toString());
-        v = await staking.weeksTotal(5);
+        v = await kLnLinearStakingStorage.weeksTotal(5);
         assert.equal(v, toUnit(150).toString());
         //---------------------------------------- week 7
         await web3.currentProvider.send({method: "evm_increaseTime", params: [2*oneWeek+1]}, rpcCallback);
@@ -162,6 +171,12 @@ contract('test LinearFinance', async (accounts)=> {
         await staking.staking( toUnit(100).toString(), {from:ac1} );
 
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneWeek+1]}, rpcCallback);
+
+        // reward
+        let totalWeekNumber = await kLnLinearStakingStorage.totalWeekNumber();
+        let weekRewardAmount = await kLnLinearStakingStorage.weekRewardAmount();
+        const totalrewad = weekRewardAmount.mul(totalWeekNumber);
+        await lina.mint(staking.address, totalrewad.toString(), { from: admin });
 
         v = await staking.claim({from:ac1}); // gasUsed: 458839
         console.log("claim gasUsed", v.receipt.gasUsed);
@@ -175,7 +190,7 @@ contract('test LinearFinance', async (accounts)=> {
         v = await staking.stakingBalanceOf( ac3 );
         assert.equal(v, toUnit(0).toString());
 
-        arrayTotal = await staking.weekTotalStaking();
+        arrayTotal = await kLnLinearStakingStorage.weekTotalStaking();
         //console.log(arrayTotal);
         assert.equal(arrayTotal[0], toUnit(40).toString());
         assert.equal(arrayTotal[1], toUnit(200).toString());
@@ -186,12 +201,26 @@ contract('test LinearFinance', async (accounts)=> {
         assert.equal(arrayTotal[6], toUnit(440).toString());
         assert.equal(arrayTotal[7], toUnit(540).toString());
 
-        v = await lina.balanceOf(ac1);
-        console.log("ac1 balance", v.toString());
-        v = await lina.balanceOf(ac2);
-        console.log("ac2 balance", v.toString());
-        v = await lina.balanceOf(ac3);
-        console.log("ac3 balance", v.toString());
+        let b1 = await lina.balanceOf(ac1);
+        console.log("ac1 balance", b1.toString());
+        let b2 = await lina.balanceOf(ac2);
+        console.log("ac2 balance", b2.toString());
+        let b3 = await lina.balanceOf(ac3);
+        console.log("ac3 balance", b3.toString());
+        // TODO: check reward data.
+
+        v = b1.add(b2).add(b3);
+        const PRECISION = new BN(1e8);
+        const sum = totalrewad.add(mintBN.mul(new BN(3)));
+        const left = sum.sub(v);
+        //assert.equal(left, new BN(0));
+        console.log("left", left.toString());
+        assert.ok(left > 0, "left amount need > 0");
+        assert.equal(left.cmp(new BN(1e6)), -1); // 
+
+        v = await lina.balanceOf(staking.address);
+        //assert.equal(v, toUnit(0).toString());
+        assert.equal(v.cmp(left), 0);
     });
 });
 
