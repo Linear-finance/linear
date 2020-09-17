@@ -81,7 +81,7 @@ module.exports = function (deployer, network, accounts) {
 
     //gaslimit = await kLnTokenLocker.sendLockTokenMany.estimateGas(user1, amount1, days1);
     //console.log("gaslimit", gaslimit);
-    //await kLnTokenLocker.sendLockTokenMany(user1, amount1, days1);
+    //await kLnTokenLocker.sendLockTokenMany(user1, amount1, days1, {gas: gaslimit});
 
   });
 };
