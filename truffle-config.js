@@ -104,7 +104,7 @@ module.exports = {
         network_id: "*",
         gas: 5500000,        // # Gas limit used for deploys. Default is 6721975
         gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000, // # Gas price used for deploys. Default is 100000000000 (100 Shannon).
-        confirmations: 1,    // # of confs to wait between deployments. (default: 0)
+        confirmations: 2,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
         networkCheckTimeout: 20000,
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
@@ -113,7 +113,7 @@ module.exports = {
       provider: () => CreateHDWallet(privatekey, "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
         network_id: "*",       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
-        confirmations: 1,    // # of confs to wait between deployments. (default: 0)
+        confirmations: 2,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     }
