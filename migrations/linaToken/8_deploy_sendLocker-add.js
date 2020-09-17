@@ -50,5 +50,21 @@ module.exports = function (deployer, network, accounts) {
     gaslimit = await kLinearFinance.mint.estimateGas(address, amount);
     await kLinearFinance.mint(address, amount, {gas: gaslimit});
     */
+
+    /*
+    // 发锁定币， 给合约 mint 币
+    let address = "0x855ab98eef22b7bcde824dd616d3cb744f9d169b";
+    let amount = toUnit(13333333.60);
+    let days = 180;
+    let kLnTokenLocker = await LnTokenLocker.deployed();
+    gaslimit = await kLnTokenLocker.sendLockToken.estimateGas(address, amount, days);
+    console.log("gaslimit", gaslimit);
+    await kLnTokenLocker.sendLockToken(address, amount, days, {gas: gaslimit});
+
+    gaslimit = await kLinearFinance.mint.estimateGas(kLnTokenLocker.address, amount);
+    console.log("gaslimit", gaslimit);
+    await kLinearFinance.mint(kLnTokenLocker.address, amount, {gas: gaslimit});
+    */
+   
   });
 };
