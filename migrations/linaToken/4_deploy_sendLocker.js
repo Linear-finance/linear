@@ -18,14 +18,7 @@ module.exports = function (deployer, network, accounts) {
     console.log("linaProxyErc20Address", linaProxyErc20Address);
     let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);
 
-    //let cliffLocker = await DeployIfNotExist(deployer, LnTokenCliffLocker, linaProxyErc20Address, admin);
-
-    //gaslimit = await LnTokenCliffLocker.new.estimateGas(linaProxyErc20Address, admin);
-    //let cliffLocker = await deployer.deploy(LnTokenCliffLocker, linaProxyErc20Address, admin);
-
-    //await deployer.deploy(LnTokenLocker, linaProxyErc20Address, admin);
-
-    let kLnTokenLocker = await LnTokenLocker.deployed();
+    //let kLnTokenLocker = await LnTokenLocker.deployed();
     //
     let user1 = [
       "0xD0605442b51E6884d4Ccdfe7BCd31ac2722DB541",
@@ -86,9 +79,9 @@ module.exports = function (deployer, network, accounts) {
     assert.ok(user1.length == amount1.length);
     assert.ok(user1.length == days1.length);
 
-    gaslimit = await kLnTokenLocker.sendLockTokenMany.estimateGas(user1, amount1, days1);
-    console.log("gaslimit", gaslimit);
-    await kLnTokenLocker.sendLockTokenMany(user1, amount1, days1);
+    //gaslimit = await kLnTokenLocker.sendLockTokenMany.estimateGas(user1, amount1, days1);
+    //console.log("gaslimit", gaslimit);
+    //await kLnTokenLocker.sendLockTokenMany(user1, amount1, days1);
 
   });
 };
