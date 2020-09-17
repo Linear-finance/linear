@@ -10,8 +10,6 @@ const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 const privatekey = process.env.WALLET_PRIVATE_KEY;
 const providerURL = "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID;
 
-console.log(privatekey, providerURL)
-
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 
 const wallet = new ethers.Wallet(privatekey, provider)

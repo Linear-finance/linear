@@ -8,10 +8,7 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 const privatekey = process.env.WALLET_PRIVATE_KEY;
-const providerURL = "https://"+ process.env.URL_NETWORK +".infura.io/v3/" + process.env.INFURA_PROJECT_ID;
-
-console.log("privatekey", privatekey)
-console.log("providerURL", providerURL)
+const providerURL = "https://"+ process.env.NETWORK +".infura.io/v3/" + process.env.INFURA_PROJECT_ID;
 
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 
@@ -29,9 +26,9 @@ function getAbi(tokenname) {
 var abiFundVa = getAbi("LnFundVault");
 
 let contractAddress;
-if (process.env.URL_NETWORK == "mainnet" ) {
+if (process.env.NETWORK == "mainnet" ) {
     contractAddress = "0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9";
-} else if (process.env.URL_NETWORK == "ropsten" ) {
+} else if (process.env.NETWORK == "ropsten" ) {
     contractAddress = "0xF02DD62c451042C571cE9153DC62a9461b1bd93F";
 }
 
