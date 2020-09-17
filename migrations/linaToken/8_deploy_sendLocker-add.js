@@ -16,8 +16,9 @@ module.exports = function (deployer, network, accounts) {
     let kLinearFinance = await LinearFinance.deployed();
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
-    let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);
+    //let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);
 
+    /* done 1
     let kLnTokenLocker = await LnTokenLocker.deployed();
     //
     let user1 = [
@@ -41,6 +42,13 @@ module.exports = function (deployer, network, accounts) {
     gaslimit = await kLnTokenLocker.sendLockTokenMany.estimateGas(user1, amount1, days1);
     console.log("gaslimit", gaslimit);
     await kLnTokenLocker.sendLockTokenMany(user1, amount1, days1, {gas: gaslimit});
+    */
 
+    /* done 2
+    let address = "0x1c29d38F6669acF0Ba49c837E3188F9Ab2A0F374";
+    let amount = toUnit(17999999.89);
+    gaslimit = await kLinearFinance.mint.estimateGas(address, amount);
+    await kLinearFinance.mint(address, amount, {gas: gaslimit});
+    */
   });
 };
