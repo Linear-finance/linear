@@ -1,3 +1,4 @@
+const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
@@ -63,7 +64,6 @@ async function GetDeployed(contract, deployedAddress) {
     return null
 }
 
-// TODO: deploy and record
 async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
     let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
     console.log("estimate gaslimit:", contactObj.contractName, gaslimit);
@@ -89,6 +89,14 @@ async function DeployIfNotExist(deployer, contract, ...manyMoreArgs) {
     return deployed;
 }
 
+//auto estimateGas for send call contract function
+async function CallWithEstimateGas(contractFun, ...manyMoreArgs) {
+  assert.ok(contractFun.estimateGas, "function without estimateGas member");
+  let gaslimit = await contractFun.estimateGas(...manyMoreArgs);
+  await contractFun(...manyMoreArgs, {gas: gaslimit});
+  console.log("call gaslimit", gaslimit);
+}
+
 //console.log(toBytes32("ETH"));
 //console.log(toBytes32("BTC"));
 
@@ -100,4 +108,5 @@ exports.DeployIfNotExist = DeployIfNotExist
 exports.toBytes32 = toBytes32
 exports.DeployWithEstimate = DeployWithEstimate
 exports.getDeployedAddress = getDeployedAddress
+exports.CallWithEstimateGas = CallWithEstimateGas
 

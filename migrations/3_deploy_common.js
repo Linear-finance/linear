@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {GetDeployed, DeployIfNotExist, DeployWithEstimate} = require("../utility/truffle-tool");
+const {GetDeployed, DeployIfNotExist, DeployWithEstimate, CallWithEstimateGas} = require("../utility/truffle-tool");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -22,15 +22,16 @@ const LnDebtSystem = artifacts.require("LnDebtSystem");
 const LinearFinance = artifacts.require("LinearFinance");
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
-    let kLnProxyERC20 = await DeployIfNotExist(deployer, LnProxyERC20, admin);
-    let kLnTokenStorage = await DeployIfNotExist(deployer, LnTokenStorage, admin, admin);
-    let kAsset = await DeployIfNotExist(deployer, LnAsset, keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
-    await kLnTokenStorage.setOperator(kAsset.address);
-    await kLnProxyERC20.setTarget(kAsset.address);
-    await kAsset.setProxy(kLnProxyERC20.address);
-    await kAsset.updateAddressCache(kLnAssetSystem.address);
+    let kLnProxyERC20 = await DeployWithEstimate(deployer, LnProxyERC20, admin);
+    let kLnTokenStorage = await DeployWithEstimate(deployer, LnTokenStorage, admin, admin);
+    let kAsset = await DeployWithEstimate(deployer, LnAsset, keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
 
-    await kLnAssetSystem.addAsset(kAsset.address);
+    await CallWithEstimateGas(kLnTokenStorage.setOperator, kAsset.address);
+    await CallWithEstimateGas(kLnProxyERC20.setTarget, kAsset.address);
+    await CallWithEstimateGas(kAsset.setProxy, kLnProxyERC20.address);
+    await CallWithEstimateGas(kAsset.updateAddressCache, kLnAssetSystem.address);
+
+    await CallWithEstimateGas(kLnAssetSystem.addAsset, kAsset.address);
 
     return kAsset;
 }
@@ -55,7 +56,7 @@ module.exports = function (deployer, network, accounts) {
     
     let kLnConfig = await DeployIfNotExist(deployer, LnConfig, admin);
     let buildRatio = await kLnConfig.BUILD_RATIO();
-    await kLnConfig.setUint(buildRatio, BUILD_RATIO);
+    await CallWithEstimateGas(kLnConfig.setUint, buildRatio, BUILD_RATIO);
 
     let kLnAccessControl = await DeployIfNotExist(deployer, LnAccessControl, admin);
 
@@ -77,10 +78,10 @@ module.exports = function (deployer, network, accounts) {
 
     // access role setting
 
-    await kLnAccessControl.SetIssueAssetRole([kLnBuildBurnSystem.address],[true]);
-    await kLnAccessControl.SetBurnAssetRole([kLnBuildBurnSystem.address],[true]);
+    await CallWithEstimateGas(kLnAccessControl.SetIssueAssetRole, [kLnBuildBurnSystem.address], [true]);
+    await CallWithEstimateGas(kLnAccessControl.SetBurnAssetRole, [kLnBuildBurnSystem.address], [true]);
 
-    await kLnAccessControl.SetDebtSystemRole([kLnBuildBurnSystem.address, admin], [true, true]); // admin to test
+    await CallWithEstimateGas(kLnAccessControl.SetDebtSystemRole, [kLnBuildBurnSystem.address, admin], [true, true]); // admin to test
 
     let contractNames = [];
     let contractAddrs = [];
@@ -97,13 +98,13 @@ module.exports = function (deployer, network, accounts) {
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
   
-    await kLnAssetSystem.updateAll(contractNames, contractAddrs);
+    await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
 
     let lUSD = await newAssetToken(deployer, toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
-    await kLnBuildBurnSystem.SetLusdTokenAddress(lUSD.address);
+    await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, lUSD.address);
 
-    await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
-    await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);
-    await kLnBuildBurnSystem.updateAddressCache(kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
   });
 };
