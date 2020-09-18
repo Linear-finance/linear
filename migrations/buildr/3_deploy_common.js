@@ -20,6 +20,8 @@ const LnCollateralSystem = artifacts.require("LnCollateralSystem");
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 const LinearFinance = artifacts.require("LinearFinance");
+const LnRewardCalculator = artifacts.require("LnRewardCalculator");
+
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
     let kLnProxyERC20 = await DeployWithEstimate(deployer, LnProxyERC20, admin);
@@ -60,6 +62,8 @@ module.exports = function (deployer, network, accounts) {
     await CallWithEstimateGas(kLnConfig.setUint, buildRatio, BUILD_RATIO);
 
     let kLnAccessControl = await DeployIfNotExist(deployer, LnAccessControl, admin);
+
+    await deployer.link(SafeDecimalMath, LnRewardCalculator);
 
     const emptyAddr = "0x0000000000000000000000000000000000000000";
     let oracleAddress = admin; // TODO: need udpate price later
