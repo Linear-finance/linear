@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {GetDeployed, DeployIfNotExist, DeployWithEstimate, CallWithEstimateGas} = require("../utility/truffle-tool");
+const {DeployIfNotExist, DeployWithEstimate, CallWithEstimateGas} = require("../utility/truffle-tool");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -43,7 +43,7 @@ module.exports = function (deployer, network, accounts) {
     const admin = accounts[0];
     
     // lina token has deployed before main contract deploying.
-    const kLinearFinance = await GetDeployed(LinearFinance);
+    const kLinearFinance = await LinearFinance.deployed();
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
     let klinaProxy = await LnProxyERC20.at(linaProxyErc20Address);

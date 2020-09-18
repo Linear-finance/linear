@@ -1,4 +1,4 @@
-const {DeployWithEstimate, DeployIfNotExist, GetDeployed, getDeployedAddress} = require("../../utility/truffle-tool");
+const {DeployWithEstimate, DeployIfNotExist, getDeployedAddress} = require("../../utility/truffle-tool");
 
 const LinearFinance = artifacts.require("LinearFinance");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");

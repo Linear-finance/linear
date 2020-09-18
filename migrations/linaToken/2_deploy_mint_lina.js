@@ -13,7 +13,7 @@ module.exports = function (deployer, network, accounts) {
     //let kLinearStaking = await DeployIfNotExist(deployer, LnLinearStaking, admin, lina.address);
     //await lina.setOperator(kLinearStaking.address);
  // avoid to re-mint
-    let kLinearFinance = await GetDeployed(LinearFinance);
+    let kLinearFinance = await LinearFinance.deployed();
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
 

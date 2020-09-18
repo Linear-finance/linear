@@ -1,23 +1,53 @@
 {
   "LnTokenStorage": {
-    "address": "0xf5B2aC25ee13d291529D171ef017C56e3e3F5469"
+    "address": "0xFFfE11e7a3CB07C32917694A1047ab88CE99CF7D"
   },
   "LnProxyERC20": {
-    "address": "0x3259Db29001533a051C220777c55daDDE51e98Be"
+    "address": "0x908B56f016233E84c391eebe52Ee4d461fD8fb87"
   },
   "LinearFinance": {
-    "address": "0xD9d326d63d048259aDD25cbE605776bFf84efe55"
+    "address": "0x8e3FB2Eb50EFED1cEd03FD290EC6829b43999A7C"
   },
   "LnTokenLocker": {
-    "address": "0x0F272ed25420d3332afC22fD59630893aC15ddb4"
+    "address": "0x7e8ae0F245B867A34Fdbf63f11414D0BbF004182"
   },
   "LnAccessControl": {
-    "address": "0x6dB83d4d6671266c1a0Df16607610D4FED52507E"
+    "address": "0x8693857c081C4c13dACa86087f0A4dED86De9261"
   },
   "LnLinearStakingStorage": {
-    "address": "0x894761980f0584319ef4764c66ecbD635Cf84e5d"
+    "address": "0x05dC36B32abf27E9C43093c1D9afacDB3b01BDbf"
   },
   "LnLinearStaking": {
-    "address": "0x45470a0B24916ef27D60089a8Cf477235ce7C586"
+    "address": "0x6E399001031fe7105ff218c3d5c9b558d3Be837c"
+  },
+  "SafeDecimalMath": {
+    "address": "0x93d7Fe915848aB6782399ae301dC6826e7C101c7"
+  },
+  "LnAssetSystem": {
+    "address": "0xaEB21D608C2B607C6ff37f6943439e8aDdBe323f"
+  },
+  "LnConfig": {
+    "address": "0x6c7Be26cC2afcb571f43298950F29764BE2Ca74E"
+  },
+  "LnChainLinkPrices": {
+    "address": "0xEF92cF6721DB4D35009f036C43fea69Cf4e82ae5"
+  },
+  "LnDebtSystem": {
+    "address": "0xE9D86F9f32C79d017F39Ed4661a32D65b7A2F804"
+  },
+  "LnCollateralSystem": {
+    "address": "0x84Dfa3C2056d4A42e409b4Edda0b7C78EE3B1eB7"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x807BDD38b469cdbB99b2293448b1F1cE6B3d3Fa5"
+  },
+  "LnProxyERC20-1600419005960": {
+    "address": "0xd8dAaCE0557726475758Ae2EaE13E05b9cE2956E"
+  },
+  "LnTokenStorage-1600419073691": {
+    "address": "0xa4baFb83514926106c6802d9fA11E96Ab943FeBE"
+  },
+  "LnAsset": {
+    "address": "0xeef6729d47e6dfD4a67704764E6A22dbE496080A"
   }
 }
