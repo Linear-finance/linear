@@ -41,7 +41,7 @@ contract LnRewardCalculator  {
     }
 
 
-    function calcReward( uint256 curBlock, address _user) external view returns (uint256) {
+    function calcReward( uint256 curBlock, address _user) public view returns (uint256) {
         PoolInfo storage pool = mPoolInfo;
         UserInfo storage user = userInfo[_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -51,24 +51,26 @@ contract LnRewardCalculator  {
             uint256 curReward = multiplier.mul(rewardPerBlock);
             accRewardPerShare = accRewardPerShare.add(curReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt);
+        uint newReward = user.amount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt);
+        return newReward.add( user.reward );
     }
 
-    function rewardOf( address _user ) external view returns( uint256 ){
+
+    function rewardOf( address _user ) public view returns( uint256 ){
         return userInfo[_user].reward;
     }
 
 
-    function amount( ) external view returns( uint256 ){
+    function amount( ) public view returns( uint256 ){
         return mPoolInfo.amount;
     }
 
-    function amountOf( address _user ) external view returns( uint256 ){
+    function amountOf( address _user ) public view returns( uint256 ){
         return userInfo[_user].amount;
     }
 
 
-    function update( uint256 curBlock ) public {
+    function _update( uint256 curBlock ) internal {
         PoolInfo storage pool = mPoolInfo;
         if (curBlock <= pool.lastRewardBlock) {
             return;
@@ -88,10 +90,10 @@ contract LnRewardCalculator  {
         pool.lastRewardBlock = curBlock;
     }
 
-    function deposit( uint256 curBlock, address _addr, uint256 _amount) public {
+    function _deposit( uint256 curBlock, address _addr, uint256 _amount) internal {
         PoolInfo storage pool = mPoolInfo;
         UserInfo storage user = userInfo[ _addr];
-        update( curBlock );
+        _update( curBlock );
         if (user.amount > 0) {
             uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
             if(pending > 0) {
@@ -105,11 +107,11 @@ contract LnRewardCalculator  {
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
     }
 
-    function withdraw( uint256 curBlock, address _addr, uint256 _amount) public {
+    function _withdraw( uint256 curBlock, address _addr, uint256 _amount) internal {
         PoolInfo storage pool = mPoolInfo;
         UserInfo storage user = userInfo[_addr];
-        require(user.amount >= _amount, "withdraw: not good");
-        update( curBlock );
+        require(user.amount >= _amount, "_withdraw: not good");
+        _update( curBlock );
         uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
         if(pending > 0) {
             reward( user, pending );
@@ -131,4 +133,168 @@ contract LnRewardCalculator  {
 
 }
 
+contract LnRewardCalculatorTest is LnRewardCalculator{
+    constructor( uint256 _rewardPerBlock, uint256 _startBlock ) public 
+        LnRewardCalculator( _rewardPerBlock, _startBlock ) {
+    }
 
+    function deposit( uint256 curBlock, address _addr, uint256 _amount) public {
+        _deposit( curBlock, _addr, _amount );
+    }
+
+    function withdraw( uint256 curBlock, address _addr, uint256 _amount) public {
+        _withdraw( curBlock, _addr, _amount );
+    }
+}
+
+
+contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculator {
+    using SafeMath for uint256;
+
+    IERC20 public linaToken; // lina token proxy address
+    LnLinearStakingStorage public stakingStorage;
+    uint256 public endBlock;
+    uint256 public startBlockTime;
+
+    constructor(
+        address _admin,
+        address _linaToken,
+        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock, uint256 _startBlockTime
+    ) public LnAdmin(_admin) LnRewardCalculator(_rewardPerBlock, _startBlock ){
+        linaToken = IERC20(_linaToken);
+        stakingStorage = LnLinearStakingStorage(_storage);
+        endBlock = _endBlock;
+        startBlockTime = _startBlockTime;
+    }
+
+    function setLinaToken(address _linaToken) external onlyAdmin {
+        linaToken = IERC20(_linaToken);
+    }
+
+    function setPaused(bool _paused) external onlyAdmin {
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
+    //////////////////////////////////////////////////////
+    event Staking(address indexed who, uint256 value, uint staketime);
+    event CancelStaking(address indexed who, uint256 value);
+    event Claim(address indexed who, uint256 rewardval, uint256 totalStaking);
+
+    uint256 public accountStakingListLimit = 50;
+    uint256 public minStakingAmount = 1e18; // 1 token
+    uint256 public constant PRECISION_UINT = 1e23;
+
+    function setLinaTokenAddress(address _token) external onlyAdmin {
+        linaToken = IERC20(_token);
+    }
+
+    function setStakingListLimit(uint256 _limit) external onlyAdmin {
+        accountStakingListLimit = _limit;
+    }
+
+    function setMinStakingAmount(uint256 _minStakingAmount) external onlyAdmin {
+        minStakingAmount = _minStakingAmount;
+    }
+
+    function stakingBalanceOf(address account) external override view returns(uint256) {
+        return stakingStorage.stakingBalanceOf(account);
+    }
+
+    function getStakesdataLength(address account) external view returns(uint256) {
+        return stakingStorage.getStakesdataLength(account);
+    }
+    //--------------------------------------------------------
+
+    function staking(uint256 amount) public whenNotPaused override returns (bool) {
+        stakingStorage.requireInStakingPeriod();
+
+        require(amount >= minStakingAmount, "Staking amount too small.");
+        require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
+
+        //linaToken.burn(msg.sender, amount);
+        linaToken.transferFrom(msg.sender, address(this), amount);
+     
+        stakingStorage.PushStakingData(msg.sender, amount, block.timestamp);
+        stakingStorage.AddWeeksTotal(block.timestamp, amount);
+
+        upgrade( msg.sender );
+        super._deposit( block.number, msg.sender, amount );
+        emit Staking(msg.sender, amount, block.timestamp);
+        return true;
+    }
+
+    function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
+        stakingStorage.requireInStakingPeriod();
+
+        require(amount > 0, "Invalid amount.");
+
+        uint256 returnToken = amount;
+        for (uint256 i = stakingStorage.getStakesdataLength(msg.sender); i >= 1 ; i--) {
+            (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i-1);
+            if (amount >= stakingAmount) {
+                amount = amount.sub(stakingAmount);
+                
+                stakingStorage.PopStakesData(msg.sender);
+                stakingStorage.SubWeeksTotal(staketime, stakingAmount);
+            } else {
+                stakingStorage.StakingDataSub(msg.sender, i-1, amount);
+                stakingStorage.SubWeeksTotal(staketime, amount);
+
+                amount = 0;
+            }
+            if (amount == 0) break;
+        }
+        require(amount == 0, "Cancel amount too big then staked.");
+
+        //linaToken.mint(msg.sender, returnToken);
+        linaToken.transfer(msg.sender, returnToken);
+
+        upgrade( msg.sender );
+        super._withdraw( block.number, msg.sender, returnToken );
+
+        emit CancelStaking(msg.sender, returnToken);
+
+        return true;
+    }
+
+    function upgrade( address _addr ) public {
+        uint iLen = stakingStorage.getStakesdataLength( _addr );
+
+        if( iLen > 0 && userInfo[_addr].amount == 0 ){
+            for( uint i = 0; i < iLen; ++i ){
+                uint256 amount;
+                uint time;
+                (amount, time ) = stakingStorage.getStakesDataByIndex( _addr, i );
+                uint blockNb = startBlock + ( now - startBlockTime ).div( 15 );
+                if( blockNb > block.number ){
+                    blockNb = block.number;
+                }
+                _deposit( blockNb, _addr, amount );               
+            }
+        }
+    }
+
+    // claim reward
+    // Note: 需要提前提前把奖励token转进来
+    function claim() public whenNotPaused override returns (bool) {
+        stakingStorage.requireStakingEnd();
+
+        require(stakingStorage.getStakesdataLength(msg.sender) > 0, "Nothing to claim");
+
+        upgrade( msg.sender );
+        uint256 reward = super.calcReward( endBlock, msg.sender );
+        uint256 amount = super.amountOf( msg.sender );
+
+        stakingStorage.DeleteStakesData(msg.sender);
+        
+        //linaToken.mint(msg.sender, totalStaking.add(totalReward) );
+        linaToken.transfer(msg.sender, amount.add(reward) );
+
+        emit Claim(msg.sender, reward, amount);
+        return true;
+    }
+}

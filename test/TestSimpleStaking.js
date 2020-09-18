@@ -1,11 +1,13 @@
 const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const LnRewardCalculator = artifacts.require('LnRewardCalculator');
+const LnRewardCalculatorTest = artifacts.require('LnRewardCalculatorTest');
+
 
 contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
     it('reward calc test', async () => {
         // 100 per block farming rate starting at block 300 with bonus until block 1000
-        let calculator = await LnRewardCalculator.new('1000', '300', { from: alice });
+        let calculator = await LnRewardCalculatorTest.new('1000', '300', { from: alice });
         // Alice deposits 10 tokens at block 310
         await calculator.deposit( 310, alice, '10', { from: alice });
         // Bob deposits 20 tokens at block 314
