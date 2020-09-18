@@ -65,6 +65,20 @@ module.exports = function (deployer, network, accounts) {
     console.log("gaslimit", gaslimit);
     await kLinearFinance.mint(kLnTokenLocker.address, amount, {gas: gaslimit});
     */
-   
+/* done 3
+    let addr1 = "0xE943340B0474D50460C05BA8358d894bF300Ab08";
+    let amount1 = toUnit("139333430.65");
+
+    gaslimit = await kLinearFinance.mint.estimateGas(addr1, amount1);
+    console.log("gaslimit", gaslimit);
+    await kLinearFinance.mint(addr1, amount1, {gas: gaslimit});
+
+    let addr2 = "0xaC75749cE61d9349f6B7dD6251045F5A9EC09bBA";
+    let amount2 = toUnit("45333433.3333");
+
+    gaslimit = await kLinearFinance.mint.estimateGas(addr2, amount2);
+    console.log("gaslimit", gaslimit);
+    await kLinearFinance.mint(addr2, amount2, {gas: gaslimit});
+*/
   });
 };

@@ -1,4 +1,4 @@
-const {DeployWithEstimate, DeployIfNotExist, GetDeployed, getDeployedAddress} = require("../../utility/truffle-tool");
+const {DeployWithEstimate, DeployIfNotExist, getDeployedAddress} = require("../../utility/truffle-tool");
 
 const LinearFinance = artifacts.require("LinearFinance");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");
@@ -19,7 +19,7 @@ module.exports = function (deployer, network, accounts) {
     let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);
 
 
-    //let kLnTokenLocker = await DeployIfNotExist(deployer, LnTokenLocker, linaProxyErc20Address, admin);
+    let kLnTokenLocker = await DeployIfNotExist(deployer, LnTokenLocker, linaProxyErc20Address, admin);
 
   });
 };

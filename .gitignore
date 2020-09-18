@@ -2,4 +2,5 @@ package-lock.json
 yarn.lock
 node_modules
 build/development
+log/development-deployed.json
 .openzeppelin/.session
