@@ -8,10 +8,10 @@ function readJson(filePath) {
     jsonObj = {};
     if(fs.existsSync(filePath)){
         try {
-            jsonObj = require(filePath); // the `require` method alway return the loaded obj
-            //jsonObj = JSON.parse(fs.readFileSync(filePath)); // reload from disk
+            //jsonObj = require(filePath); // the `require` method alway return the loaded obj
+            jsonObj = JSON.parse(fs.readFileSync(filePath)); // reload from disk
         } catch (error) {
-            logerr.error("readJson error:", error);
+            console.error("readJson error:", error);
         }
     }
     return jsonObj;
@@ -21,10 +21,16 @@ exports.readJson = readJson
 
 let deployedContracts;
 
+function getDeployedFileName() {
+    return path.join(__dirname, "../log", process.env.NETWORK + "-deployed.json");
+}
+
 // TODO : log many address, an array list
 function LoadDeployedContractsData() {
-    let file = path.join(__dirname, "../log", process.env.NETWORK + "-deployed.json");
-    deployedContracts = readJson(file);
+    let file = getDeployedFileName();
+    if (deployedContracts == null)
+        deployedContracts = readJson(file);
+    return deployedContracts;
 }
 LoadDeployedContractsData();
 
@@ -62,6 +68,15 @@ async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
     let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
     console.log("estimate gaslimit:", contactObj.contractName, gaslimit);
     let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
+    if (deployedContracts[contactObj.contractName] != null) {
+        let timestamp = Date.now();
+        console.log("contact has in deployed log file", timestamp);
+        deployedContracts[contactObj.contractName+"-"+timestamp] = {address: newContract.address}
+    } else {
+        deployedContracts[contactObj.contractName] = {address: newContract.address}
+    }
+    let file = getDeployedFileName();
+    fs.writeFileSync(file, JSON.stringify(deployedContracts, null, 2));
     return newContract;
 }
 
