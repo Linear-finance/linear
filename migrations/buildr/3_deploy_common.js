@@ -33,6 +33,7 @@ async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSys
 
     await CallWithEstimateGas(kLnAssetSystem.addAsset, kAsset.address);
 
+    //record kAsset.address by sp name
     return kAsset;
 }
 
