@@ -73,6 +73,7 @@ module.exports = function (deployer, network, accounts) {
       console.log("[",lockToTimes[i],",",addresses[i],"],");
     }
 
+    // after DeployWithEstimate LnTokenCliffLocker
     let mainnetCliffLocker = [
       [ 1615910400 , "0x073882b743a3a1E134E8c765bc294f29cFa76b3F" ],
       [ 1623859200 , "0x10872CFbbD289fEf1Ae359fA68b3bBE824d9D071" ],
@@ -102,9 +103,11 @@ module.exports = function (deployer, network, accounts) {
       lockers = mainnetCliffLocker;
     } else if (network == "development") {
       lockers = devLocker;
+    } else {
+      lockers = [];
     }
 
-    assert.ok(lockers.length == lockToTimes.length);
+    //assert.ok(lockers.length == lockToTimes.length);
 
     let sendAmount = teampAmouonts.map( x => x.div(new BN(lockToTimes.length)) );
     console.log("sendAmount", sendAmount.map( x => x.toString() ));
@@ -124,7 +127,8 @@ module.exports = function (deployer, network, accounts) {
       //console.log(teampAddrs, pa, times);
     }
 
-    // TODO: mint
+    // mint
+    /* done
     let mintAmount = toUnit(187500000);
     for (let i=0; i<lockers.length; i++) {
       let addr = lockers[i][1];
@@ -138,6 +142,7 @@ module.exports = function (deployer, network, accounts) {
         console.log(addr, "has lina", balance.toString());
       }
     }
+    */
   });
 };
 

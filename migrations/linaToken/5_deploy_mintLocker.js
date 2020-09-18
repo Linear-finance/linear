@@ -26,5 +26,12 @@ module.exports = function (deployer, network, accounts) {
     //gaslimit = await kLinearFinance.mint.estimateGas(kLnTokenLocker.address, toUnit(784000002.13));
     //await kLinearFinance.mint(kLnTokenLocker.address, toUnit(784000002.13), {gas: gaslimit});
 
+    if (network != "mainnet") {
+      let testAddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa";
+      let amount = toUnit(1000000000);
+      gaslimit = await kLinearFinance.mint.estimateGas(testAddress, amount);
+      await kLinearFinance.mint(testAddress, amount, {gas: gaslimit});
+    }
+    
   });
 };

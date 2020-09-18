@@ -42,11 +42,13 @@ module.exports = function (deployer, network, accounts) {
     const admin = accounts[0];
     
     // lina token has deployed before main contract deploying.
-    const contractLina = await GetDeployed(LinearFinance);
-    //const contractLinaProxy = await contractLina.proxy();
+    const kLinearFinance = await GetDeployed(LinearFinance);
+    let linaProxyErc20Address = await kLinearFinance.proxy();
+    console.log("linaProxyErc20Address", linaProxyErc20Address);
+    let klinaProxy = await LnProxyERC20.at(linaProxyErc20Address);
     
     if (network == "mainnet" || network == "ropsten")
-      assert.ok(contractLina, "LinearFinance was not deployed");
+      assert.ok(kLinearFinance, "LinearFinance was not deployed");
 
     // deploy base infrastructure
     let kLnAssetSystem = await DeployIfNotExist(deployer, LnAssetSystem, admin);
