@@ -1,0 +1,23 @@
+{
+  "LnTokenStorage": {
+    "address": "0xf5B2aC25ee13d291529D171ef017C56e3e3F5469"
+  },
+  "LnProxyERC20": {
+    "address": "0x3259Db29001533a051C220777c55daDDE51e98Be"
+  },
+  "LinearFinance": {
+    "address": "0xD9d326d63d048259aDD25cbE605776bFf84efe55"
+  },
+  "LnTokenLocker": {
+    "address": "0x0F272ed25420d3332afC22fD59630893aC15ddb4"
+  },
+  "LnAccessControl": {
+    "address": "0x6dB83d4d6671266c1a0Df16607610D4FED52507E"
+  },
+  "LnLinearStakingStorage": {
+    "address": "0x894761980f0584319ef4764c66ecbD635Cf84e5d"
+  },
+  "LnLinearStaking": {
+    "address": "0x45470a0B24916ef27D60089a8Cf477235ce7C586"
+  }
+}
