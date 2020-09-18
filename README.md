@@ -71,24 +71,44 @@ module.exports = {
 
 # Deploy
 
-Deploy LinaToken
+## environment variable:
+
+**NETWORK** : setup truffle network.
+
+**WALLET_PRIVATE_KEY**: deploy ETH private key.
+
+**MIGRATIONS_DIR**: migrations directory.
+
+**INFURA_PROJECT_ID**: Infura project ID.
+
+**BUILD_DIR**: contract output directory.
+
+**ETH_GAS_PRICE**: gas price.
+
+## Deploy script
+
+run in root directory.
 
 ```shell
-#!/bin/sh
+#!/bin/bash
+network="mainnet"
+echo "network is $network"
 
-# set your private key
-export WALLET_PRIVATE_KEY="";
+export NETWORK=$network
+
+read -s -p "input private key:" privateKey
+
+export WALLET_PRIVATE_KEY=$privateKey
 
 export MIGRATIONS_DIR="./migrations"
 
-# set your infura project id key, for provider
+#set your id
 export INFURA_PROJECT_ID="";
 
-export BUILD_DIR="./build/mainnet"
+export BUILD_DIR="./build/$network"
 
-export ETH_GAS_PRICE=150000000000
+export ETH_GAS_PRICE=650000000000
 
-truffle migrate --network mainnet
-
+truffle migrate --network $network 
 ```
 
