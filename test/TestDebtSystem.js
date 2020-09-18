@@ -5,7 +5,7 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
-const {InitComment, newAssetToken, CreateLina} = require ("./common.js");
+const {InitComment, CreateLina} = require ("./common.js");
 
 contract('test LnDebtSystem', async (accounts)=> {
 

@@ -1,5 +1,5 @@
 
-const {DeployIfNotExist} = require("../utility/truffle-tool");
+const {DeployIfNotExist} = require("../../utility/truffle-tool");
 
 //const SafeMath = artifacts.require("SafeMath");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");

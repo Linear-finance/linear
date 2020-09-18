@@ -26,7 +26,6 @@ function getDeployedFileName() {
     return path.join(__dirname, "../log", process.env.NETWORK + "-deployed.json");
 }
 
-// TODO : log many address, an array list
 function LoadDeployedContractsData() {
     let file = getDeployedFileName();
     if (deployedContracts == null)
@@ -64,19 +63,28 @@ async function GetDeployed(contract, deployedAddress) {
     return null
 }
 
+async function SaveContractAddress(contactObj, newContract) {
+    let recordName = contactObj.contractName;
+    if (recordName == "LnAsset") {
+        let symbol = await newContract.symbol();
+        recordName = recordName + "-" + symbol;
+    }
+    if (deployedContracts[recordName] != null) {
+        let timestamp = Date.now();
+        console.log("contact has in deployed log file", timestamp);
+        deployedContracts[recordName+"-"+timestamp] = {address: newContract.address}
+    } else {
+        deployedContracts[recordName] = {address: newContract.address}
+    }
+    let file = getDeployedFileName();
+    fs.writeFileSync(file, JSON.stringify(deployedContracts, null, 2));
+}
+
 async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
     let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
     console.log("estimate gaslimit:", contactObj.contractName, gaslimit);
     let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
-    if (deployedContracts[contactObj.contractName] != null) {
-        let timestamp = Date.now();
-        console.log("contact has in deployed log file", timestamp);
-        deployedContracts[contactObj.contractName+"-"+timestamp] = {address: newContract.address}
-    } else {
-        deployedContracts[contactObj.contractName] = {address: newContract.address}
-    }
-    let file = getDeployedFileName();
-    fs.writeFileSync(file, JSON.stringify(deployedContracts, null, 2));
+    await SaveContractAddress(contactObj, newContract);
     return newContract;
 }
 

@@ -7,7 +7,7 @@ const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 //const toETHUnit = amount => ethers.utils.parseEther(amount.toString());
 
-const {InitComment, newAssetToken, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
+const {InitComment, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const PRECISE_UNIT = toUnit(1e9); // 1e27
 

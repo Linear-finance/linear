@@ -28,7 +28,7 @@ function registContract(name, contractObj) {
     contractAddrs.push(contractObj.address);
 }
 
-async function newAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
+async function testNewAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
     let kLnProxyERC20 = await LnProxyERC20.new(admin);
     let kLnTokenStorage = await LnTokenStorage.new(admin, admin);
     let kAsset = await LnAsset.new(keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
@@ -89,7 +89,7 @@ async function InitComment(admin) {
   
     await kLnAssetSystem.updateAll(contractNames, contractAddrs);
 
-    let lUSD = await newAssetToken(toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
+    let lUSD = await testNewAssetToken(toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
     await kLnBuildBurnSystem.SetLusdTokenAddress(lUSD.address);
 
     await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
@@ -140,7 +140,7 @@ async function exceptionNotEqual(contractCall, expectMsg) {
     assert.notEqual(exception, expectMsg);
 }
 
-exports.newAssetToken = newAssetToken;
+exports.testNewAssetToken = testNewAssetToken;
 exports.InitComment = InitComment;
 exports.CreateLina = CreateLina;
 exports.exceptionEqual = exceptionEqual;

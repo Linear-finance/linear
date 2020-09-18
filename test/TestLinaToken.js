@@ -232,5 +232,51 @@ contract('test LinearFinance', async (accounts)=> {
         //assert.equal(v, toUnit(0).toString());
         assert.equal(v.cmp(left), 0);
     });
+
+    it('unstaking', async ()=> {
+        const [lina,linaproxy] = await CreateLina(admin);
+        const kLnAccessControl = await LnAccessControl.new(admin);
+        const kLnLinearStakingStorage = await LnLinearStakingStorage.new(admin, kLnAccessControl.address);
+        const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
+        const staking = await LnLinearStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address);
+        await kLnAccessControl.SetRoles( roleKey, [staking.address], [true] );
+
+        await lina.mint(ac1, mintAmount, { from: admin });
+        await lina.mint(ac2, mintAmount, { from: admin });
+        await lina.mint(ac3, mintAmount, { from: admin });
+
+        await linaproxy.approve(staking.address, mintAmount, {from: ac1});
+        await linaproxy.approve(staking.address, mintAmount, {from: ac2});
+        await linaproxy.approve(staking.address, mintAmount, {from: ac3});
+
+        let blocktime = await currentTime();
+
+        await kLnLinearStakingStorage.setStakingPeriod(blocktime-1, blocktime-1 + 8 * 3600*24*7);
+
+        //---------------------------------------- week 0
+        let balance1 = await lina.balanceOf(ac1);
+        for (let i=0; i<10; i++) {
+            await staking.staking( toUnit(1).toString(), {from:ac1} );
+        }
+
+        let v = await staking.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(10).toString());
+
+        v = await kLnLinearStakingStorage.weeksTotal(0);
+        assert.equal(v, toUnit(10).toString());
+
+        v = await lina.balanceOf(ac1);
+        assert.equal(v.toString(), balance1 - toUnit(10));
+        balance1 = v;
+
+        await web3.currentProvider.send({method: "evm_increaseTime", params: [oneWeek+1]}, rpcCallback);
+
+        //---------------------------------------- week 1
+        await staking.cancelStaking(toUnit(10).toString(), {from:ac1});
+        v = await staking.stakingBalanceOf( ac1 );
+        assert.equal(v, toUnit(0).toString());
+
+        //await staking.cancelStaking(toUnit(1).toString(), {from:ac1});
+    });
 });
 
