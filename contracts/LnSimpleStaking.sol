@@ -251,35 +251,28 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         mOldReward[ _addr ] = mOldReward[_addr].add( reward );
     }
 
-
-    function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
-        stakingStorage.requireInStakingPeriod();
-
-        require(amount > 0, "Invalid amount.");
-
-        uint256 returnToken = amount;
-
-        uint256 newAmount = super.amountOf(msg.sender);
+    function _settleStaking(address user, uint256 amount) internal {
+        uint256 newAmount = super.amountOf(user);
         if (newAmount >= amount) {
-            super._withdraw( block.number, msg.sender, amount );
+            super._withdraw( block.number, user, amount );
             amount = 0;
         } else {
-            super._withdraw( block.number, msg.sender, newAmount );
+            super._withdraw( block.number, user, newAmount );
             amount = amount.sub(newAmount);
             
-            for (uint256 i = stakingStorage.getStakesdataLength(msg.sender); i >= 1 ; i--) {
-                (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i-1);
+            for (uint256 i = stakingStorage.getStakesdataLength(user); i >= 1 ; i--) {
+                (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(user, i-1);
                 if (amount >= stakingAmount) {
                     amount = amount.sub(stakingAmount);
                     
-                    stakingStorage.PopStakesData(msg.sender);
+                    stakingStorage.PopStakesData(user);
                     stakingStorage.SubWeeksTotal(staketime, stakingAmount);
-                    _widthdrawFromOldStaking( msg.sender, stakingAmount );
+                    _widthdrawFromOldStaking( user, stakingAmount );
 
                 } else {
-                    stakingStorage.StakingDataSub(msg.sender, i-1, amount);
+                    stakingStorage.StakingDataSub(user, i-1, amount);
                     stakingStorage.SubWeeksTotal(staketime, amount);
-                    _widthdrawFromOldStaking( msg.sender, amount );
+                    _widthdrawFromOldStaking( user, amount );
 
                     amount = 0;
                 }
@@ -288,10 +281,18 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         }
 
         require(amount == 0, "Cancel amount too big then staked.");
+    }
 
-        linaToken.transfer(msg.sender, returnToken);
+    function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
+        stakingStorage.requireInStakingPeriod();
 
-        emit CancelStaking(msg.sender, returnToken);
+        require(amount > 0, "Invalid amount.");
+
+        _settleStaking(msg.sender, amount);
+
+        linaToken.transfer(msg.sender, amount);
+
+        emit CancelStaking(msg.sender, amount);
 
         return true;
     }
@@ -330,7 +331,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         uint iMyOldStaking = stakingStorage.stakingBalanceOf( msg.sender );
         uint iAmount = super.amountOf( msg.sender );
-        cancelStaking( iMyOldStaking.add( iAmount ));
+        _settleStaking( msg.sender, iMyOldStaking.add( iAmount ));
 
         uint iReward = getTotalReward( mEndBlock, msg.sender );
         linaToken.transfer(msg.sender, iReward );
