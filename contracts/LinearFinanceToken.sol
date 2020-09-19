@@ -49,9 +49,9 @@ contract LinearFinance is LnErc20Handler {
         emitTransfer(account, address(0), amount);
     }
 
-    //function burn(address account, uint256 amount) external onlyAdmin {
-    //    _burn(account, amount);
-    //}
+    function burn(address account, uint256 amount) external onlyAdmin {
+       _burn(account, amount);
+    }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
         super._beforeTokenTransfer(from, to, amount);
