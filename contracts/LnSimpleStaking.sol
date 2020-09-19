@@ -203,7 +203,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function stakingBalanceOf(address account) external override view returns(uint256) {
-        return super.amountOf(account).add( stakingStorage.stakingBalanceOf(account) );
+        uint256 stakingBalance = super.amountOf(account).add( stakingStorage.stakingBalanceOf(account) );
+        return stakingBalance;
     }
 
     function getStakesdataLength(address account) external view returns(uint256) {
@@ -302,4 +303,25 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         emit Claim(msg.sender, reward, amount);
         return true;
     }
+}
+
+contract HelperPushStakingData is LnAdmin {
+
+    constructor(address _admin) public LnAdmin(_admin) {
+
+    }
+
+    function pushStakingData(address _storage, address[] calldata account, uint256[] calldata amount, uint256[] calldata staketime) external {
+        require(account.length > 0, "array length zero");
+        require(account.length == amount.length, "array length not eq");
+        require(account.length == staketime.length, "array length not eq");
+
+        LnLinearStakingStorage stakingStorage = LnLinearStakingStorage(_storage);
+        for (uint256 i=0; i<account.length; i++) {
+            stakingStorage.PushStakingData(account[i], amount[i], staketime[i]);
+            stakingStorage.AddWeeksTotal(staketime[i], amount[i]);
+        }
+    }
+
+    //unstaking.
 }
