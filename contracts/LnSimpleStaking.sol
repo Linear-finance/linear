@@ -42,7 +42,7 @@ contract LnRewardCalculator  {
     }
 
 
-    function calcReward( uint256 curBlock, address _user) public view returns (uint256) {
+    function _calcReward( uint256 curBlock, address _user) internal view returns (uint256) {
         PoolInfo storage pool = mPoolInfo;
         UserInfo storage user = userInfo[_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -132,6 +132,14 @@ contract LnRewardCalculator  {
         user.reward = user.reward.add( _amount );
     }
 
+    function _claim( address _addr ) internal {
+        UserInfo storage user = userInfo[_addr];
+        if( user.reward > 0 )
+        {
+            user.reward = 0;
+        }
+    }
+
 }
 
 contract LnRewardCalculatorTest is LnRewardCalculator{
@@ -146,6 +154,10 @@ contract LnRewardCalculatorTest is LnRewardCalculator{
     function withdraw( uint256 curBlock, address _addr, uint256 _amount) public {
         _withdraw( curBlock, _addr, _amount );
     }
+    function calcReward( uint256 curBlock, address _user) public view returns (uint256) {
+        return _calcReward( curBlock, _user);
+    }
+
 }
 
 
@@ -316,12 +328,12 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         }
         if( iMyOldStaking > 0 ){
             uint oldStakingAmount = super.amountOf( mOldStaking );
-            uint iReward2 = super.calcReward( blockNb, mOldStaking).sub( mWidthdrawRewardFromOldStaking, "getTotalReward iReward2 sub overflow" )
+            uint iReward2 = super._calcReward( blockNb, mOldStaking).sub( mWidthdrawRewardFromOldStaking, "getTotalReward iReward2 sub overflow" )
                 .mul( iMyOldStaking ).div( oldStakingAmount );
             total = total.add( iReward2 );
         }
 
-        uint256 reward3 = super.calcReward( blockNb, _user );
+        uint256 reward3 = super._calcReward( blockNb, _user );
         total = total.add( reward3 );
     }
 
@@ -336,6 +348,9 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         cancelStaking( iMyOldStaking.add( iAmount ));
 
         uint iReward = getTotalReward( mEndBlock, msg.sender );
+
+        _claim( msg.sender );
+        mOldReward[ msg.sender ] = 0;
         linaToken.transfer(msg.sender, iReward );
 
         emit Claim(msg.sender, iReward, iMyOldStaking.add( iAmount ));
