@@ -333,7 +333,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         uint iMyOldStaking = stakingStorage.stakingBalanceOf( msg.sender );
         uint iAmount = super.amountOf( msg.sender );
-        _settleStaking( msg.sender, iMyOldStaking.add( iAmount ));
+        cancelStaking( iMyOldStaking.add( iAmount ));
 
         uint iReward = getTotalReward( mEndBlock, msg.sender );
         linaToken.transfer(msg.sender, iReward );
