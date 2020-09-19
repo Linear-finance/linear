@@ -203,7 +203,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function stakingBalanceOf(address account) external override view returns(uint256) {
-        return stakingStorage.stakingBalanceOf(account);
+        return super.amountOf(account).add( stakingStorage.stakingBalanceOf(account) );
     }
 
     function getStakesdataLength(address account) external view returns(uint256) {
@@ -215,16 +215,18 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         stakingStorage.requireInStakingPeriod();
 
         require(amount >= minStakingAmount, "Staking amount too small.");
-        require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
+        //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
 
-        //linaToken.burn(msg.sender, amount);
         linaToken.transferFrom(msg.sender, address(this), amount);
      
-        stakingStorage.PushStakingData(msg.sender, amount, block.timestamp);
-        stakingStorage.AddWeeksTotal(block.timestamp, amount);
+        // don't need to write old storage
+        //stakingStorage.PushStakingData(msg.sender, amount, block.timestamp);
+        //stakingStorage.AddWeeksTotal(block.timestamp, amount);
 
         super._deposit( block.number, msg.sender, amount );
+
         emit Staking(msg.sender, amount, block.timestamp);
+
         return true;
     }
 
@@ -234,37 +236,45 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         require(amount > 0, "Invalid amount.");
 
         uint256 returnToken = amount;
-        for (uint256 i = stakingStorage.getStakesdataLength(msg.sender); i >= 1 ; i--) {
-            (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i-1);
-            if (amount >= stakingAmount) {
-                amount = amount.sub(stakingAmount);
-                
-                stakingStorage.PopStakesData(msg.sender);
-                stakingStorage.SubWeeksTotal(staketime, stakingAmount);
-            } else {
-                stakingStorage.StakingDataSub(msg.sender, i-1, amount);
-                stakingStorage.SubWeeksTotal(staketime, amount);
 
-                amount = 0;
+        uint256 newAmount = super.amountOf(msg.sender);
+        if (newAmount >= amount) {
+            super._withdraw( block.number, msg.sender, amount );
+            amount = 0;
+        } else {
+            super._withdraw( block.number, msg.sender, newAmount );
+            amount = amount.sub(newAmount);
+            
+            for (uint256 i = stakingStorage.getStakesdataLength(msg.sender); i >= 1 ; i--) {
+                (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i-1);
+                if (amount >= stakingAmount) {
+                    amount = amount.sub(stakingAmount);
+                    
+                    stakingStorage.PopStakesData(msg.sender);
+                    stakingStorage.SubWeeksTotal(staketime, stakingAmount);
+                } else {
+                    stakingStorage.StakingDataSub(msg.sender, i-1, amount);
+                    stakingStorage.SubWeeksTotal(staketime, amount);
+
+                    amount = 0;
+                }
+                if (amount == 0) break;
             }
-            if (amount == 0) break;
         }
+
         require(amount == 0, "Cancel amount too big then staked.");
 
-        //linaToken.mint(msg.sender, returnToken);
         linaToken.transfer(msg.sender, returnToken);
-
-        super._withdraw( block.number, msg.sender, returnToken );
 
         emit CancelStaking(msg.sender, returnToken);
 
         return true;
     }
 
-    function getTotalReward( uint blockNb, address _user ) internal returns( uint256 total ){
-        uint256[] memory finalTotals = stakingStorage.weekTotalStaking();
+    function getTotalReward( uint blockNb, address _user ) internal view returns ( uint256 total ){
+        //uint256[] memory finalTotals = stakingStorage.weekTotalStaking();
         for (uint256 i=0; i < stakingStorage.getStakesdataLength( _user ); i++) {
-            (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex( _user, i);
+            (uint256 stakingAmount, ) = stakingStorage.getStakesDataByIndex( _user, i);
             total = total.add( stakingAmount.multiplyDecimal( mScaleFactor ) );
         }
 
