@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./LnAccessControl.sol";
 import "./LnLinearStaking.sol";
+import "./SafeDecimalMath.sol";
 
 
 contract LnRewardCalculator  {
@@ -150,21 +151,22 @@ contract LnRewardCalculatorTest is LnRewardCalculator{
 
 contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculator {
     using SafeMath for uint256;
+    using SafeDecimalMath for uint256;
 
     IERC20 public linaToken; // lina token proxy address
     LnLinearStakingStorage public stakingStorage;
     uint256 public endBlock;
-    uint256 public startBlockTime;
+    uint256 public mScaleFactor;
 
     constructor(
         address _admin,
         address _linaToken,
-        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock, uint256 _startBlockTime
+        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock, uint256 _scaleFactor
     ) public LnAdmin(_admin) LnRewardCalculator(_rewardPerBlock, _startBlock ){
         linaToken = IERC20(_linaToken);
         stakingStorage = LnLinearStakingStorage(_storage);
         endBlock = _endBlock;
-        startBlockTime = _startBlockTime;
+        mScaleFactor = _scaleFactor;
     }
 
     function setLinaToken(address _linaToken) external onlyAdmin {
@@ -259,6 +261,17 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         return true;
     }
 
+    function getTotalReward( uint blockNb, address _user ) internal returns( uint256 total ){
+        uint256[] memory finalTotals = stakingStorage.weekTotalStaking();
+        for (uint256 i=0; i < stakingStorage.getStakesdataLength( _user ); i++) {
+            (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex( _user, i);
+            total = total.add( stakingAmount.multiplyDecimal( mScaleFactor ) );
+        }
+
+        uint256 reward = super.calcReward( blockNb, _user );
+        total = total.add( reward );
+    }
+
 
     // claim reward
     // Note: 需要提前提前把奖励token转进来
@@ -267,7 +280,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         require(stakingStorage.getStakesdataLength(msg.sender) > 0, "Nothing to claim");
 
-        uint256 reward = super.calcReward( endBlock, msg.sender );
+        //uint256 reward = super.calcReward( endBlock, msg.sender );
+        uint256 reward = getTotalReward( endBlock, msg.sender );
         uint256 amount = super.amountOf( msg.sender );
 
         stakingStorage.DeleteStakesData(msg.sender);
