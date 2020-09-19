@@ -221,7 +221,6 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         stakingStorage.PushStakingData(msg.sender, amount, block.timestamp);
         stakingStorage.AddWeeksTotal(block.timestamp, amount);
 
-        upgrade( msg.sender );
         super._deposit( block.number, msg.sender, amount );
         emit Staking(msg.sender, amount, block.timestamp);
         return true;
@@ -253,7 +252,6 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         //linaToken.mint(msg.sender, returnToken);
         linaToken.transfer(msg.sender, returnToken);
 
-        upgrade( msg.sender );
         super._withdraw( block.number, msg.sender, returnToken );
 
         emit CancelStaking(msg.sender, returnToken);
@@ -261,22 +259,6 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         return true;
     }
 
-    function upgrade( address _addr ) public {
-        uint iLen = stakingStorage.getStakesdataLength( _addr );
-
-        if( iLen > 0 && userInfo[_addr].amount == 0 ){
-            for( uint i = 0; i < iLen; ++i ){
-                uint256 amount;
-                uint time;
-                (amount, time ) = stakingStorage.getStakesDataByIndex( _addr, i );
-                uint blockNb = startBlock + ( now - startBlockTime ).div( 15 );
-                if( blockNb > block.number ){
-                    blockNb = block.number;
-                }
-                _deposit( blockNb, _addr, amount );               
-            }
-        }
-    }
 
     // claim reward
     // Note: 需要提前提前把奖励token转进来
@@ -285,7 +267,6 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         require(stakingStorage.getStakesdataLength(msg.sender) > 0, "Nothing to claim");
 
-        upgrade( msg.sender );
         uint256 reward = super.calcReward( endBlock, msg.sender );
         uint256 amount = super.amountOf( msg.sender );
 
