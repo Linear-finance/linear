@@ -133,6 +133,10 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal((await staking.rewardOf(carol)).valueOf(), '0');
         assert.equal((await staking.remainReward()).valueOf(), '4334');
 
+        assert.equal((await staking.calcReward( start_block.add(toBN(10)), alice)).valueOf(), '5666');
+        assert.equal((await staking.calcReward( start_block.add(toBN(10)), bob)).valueOf(), '3333');
+        assert.equal((await staking.calcReward( start_block.add(toBN(10)), carol)).valueOf(), '1000');
+
         assert.equal((await staking.amountOf(alice)).valueOf(), '20');
         assert.equal((await staking.amountOf(bob)).valueOf(), '20');
         assert.equal((await staking.amountOf(carol)).valueOf(), '30');
@@ -145,6 +149,10 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal((await staking.rewardOf(bob)).valueOf(), '6190');
         assert.equal((await staking.rewardOf(carol)).valueOf(), '0');
         assert.equal((await staking.remainReward()).valueOf(), '8144');
+
+        assert.equal((await staking.calcReward( start_block.add(toBN(20)), alice)).valueOf(), '8523');
+        assert.equal((await staking.calcReward( start_block.add(toBN(20)), bob)).valueOf(), '6190');
+        assert.equal((await staking.calcReward( start_block.add(toBN(20)), carol)).valueOf(), '5286');
 
         assert.equal((await staking.amountOf(alice)).valueOf(), '20');
         assert.equal((await staking.amountOf(bob)).valueOf(), '15');
@@ -168,6 +176,13 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal((await staking.rewardOf(bob)).valueOf(), '11831');
         // Carol should have: 2*3/6*1000 + 10*3/7*1000 + 10*3/6.5*1000 + 10*3/4.5*1000 + 10*1000 = 26568
         assert.equal((await staking.rewardOf(carol)).valueOf(), '26568');
+
+        // alice = 8523 + 10*2/6.5*1000
+        assert.equal((await staking.calcReward( start_block.add(toBN(50)), alice)).valueOf(), '11600');
+        // bob = 6190 + 10*1.5/6.5 * 1000 + 10*1.5/4.5*1000 = 11831
+        assert.equal((await staking.calcReward( start_block.add(toBN(50)), bob)).valueOf(), '11831');
+        // Carol should have: 2*3/6*1000 + 10*3/7*1000 + 10*3/6.5*1000 + 10*3/4.5*1000 + 10*1000 = 26568
+        assert.equal((await staking.calcReward( start_block.add(toBN(50)), carol)).valueOf(), '26568');
 
         assert.equal((await staking.amountOf(alice)).valueOf(), '0');
         assert.equal((await staking.amountOf(bob)).valueOf(), '0');
