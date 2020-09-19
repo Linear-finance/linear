@@ -263,7 +263,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         mOldReward[ _addr ] = mOldReward[_addr].add( reward );
     }
 
-    function _settleStaking(address user, uint256 amount) internal {
+    function _cancelStaking(address user, uint256 amount) internal {
+        uint256 returnAmount = amount;
         uint256 newAmount = super.amountOf(user);
         if (newAmount >= amount) {
             super._withdraw( block.number, user, amount );
@@ -271,13 +272,13 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         } else {
             if (newAmount > 0) {
                 super._withdraw( block.number, user, newAmount );
-                amount = amount.sub(newAmount, "_settleStaking amount sub overflow");
+                amount = amount.sub(newAmount, "_cancelStaking amount sub overflow");
             }
             
             for (uint256 i = stakingStorage.getStakesdataLength(user); i >= 1 ; i--) {
                 (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(user, i-1);
                 if (amount >= stakingAmount) {
-                    amount = amount.sub(stakingAmount, "_settleStaking amount sub overflow");
+                    amount = amount.sub(stakingAmount, "_cancelStaking amount sub overflow");
                     
                     stakingStorage.PopStakesData(user);
                     stakingStorage.SubWeeksTotal(staketime, stakingAmount);
@@ -295,6 +296,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         }
 
         require(amount == 0, "Cancel amount too big then staked.");
+
+        linaToken.transfer(msg.sender, returnAmount);
     }
 
     function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
@@ -302,9 +305,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         require(amount > 0, "Invalid amount.");
 
-        _settleStaking(msg.sender, amount);
-
-        linaToken.transfer(msg.sender, amount);
+        _cancelStaking(msg.sender, amount);
 
         emit CancelStaking(msg.sender, amount);
 
@@ -345,7 +346,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         uint iMyOldStaking = stakingStorage.stakingBalanceOf( msg.sender );
         uint iAmount = super.amountOf( msg.sender );
-        cancelStaking( iMyOldStaking.add( iAmount ));
+        _cancelStaking( msg.sender, iMyOldStaking.add( iAmount ));
 
         uint iReward = getTotalReward( mEndBlock, msg.sender );
 
