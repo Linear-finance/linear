@@ -205,7 +205,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, 1000, cur_block, cur_block.add(toBN(1000)), 0 );
         await kLnAccessControl.SetRoles( roleKey, [staking.address, kHelperPushStakingData.address], [true, true] );
 
-        let mintAmount = toBN(1000);
+        let mintAmount = toUnit(1000);
         await lina.mint(ac1, mintAmount, { from: admin });
         await lina.mint(ac2, mintAmount, { from: admin });
         await lina.mint(ac3, mintAmount, { from: admin });
@@ -225,19 +225,20 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         await staking.setMinStakingAmount( 0 );
 
         //load history data
-        let jsonObj = JSON.parse(fs.readFileSync("./test/stakingBlock.log"));
         let users = [];
         let amounts = [];
         let stakingtime = [];
-        let stakingbalance = {};
-
+        
         function pushStakingData(_user, _amount, _stakingtime) {
             users.push(_user);
             amounts.push(_amount);
             stakingtime.push(_stakingtime);
         }
 
-        for (let i=0; i<jsonObj.length; i++) {
+        let stakingbalance = {};
+        let jsonObj = JSON.parse(fs.readFileSync("./test/stakingBlock.log"));
+        let maxsize = jsonObj.length>100 ? 100 : jsonObj.length;
+        for (let i=0; i<maxsize; i++) {
             let item = jsonObj[i]
             if (item[0] == "Staking") {
                 let [,_user, _amount, _stakingtime] = item;
@@ -253,6 +254,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
             }
         }
 
+        //test data
         pushStakingData(ac1, toUnit(10), 1600354651);
         pushStakingData(ac2, toUnit(20), 1600354651);
 
@@ -263,13 +265,15 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
             await kHelperPushStakingData.pushStakingData(kLnLinearStakingStorage.address, u, a, t);
         }
         
+        
         let stakinger = Object.keys(stakingbalance);
         //...
         assert.equal(await staking.stakingBalanceOf(stakinger[2]), stakingbalance[stakinger[2]].toString());
         assert.equal(await staking.stakingBalanceOf(stakinger[7]), stakingbalance[stakinger[7]].toString());
 
+        //console.log(stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString()); //6000000000000000000000000
         // address for log file.
-        assert.equal(await staking.stakingBalanceOf("0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A", stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString()));
+        assert.equal(await staking.stakingBalanceOf("0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"), stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString());
 
         await staking.staking( toUnit(10), { from: ac1 });
         assert.equal(await staking.amountOf(ac1), toUnit(10).toString());
@@ -281,6 +285,9 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(10).toString());
         assert.equal(await staking.stakingBalanceOf(ac1), toUnit(15).toString());
 
-
+        await staking.cancelStaking( toUnit(15), { from: ac1 } );
+        assert.equal(await staking.amountOf(ac1), toUnit(0).toString());
+        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(5).toString());
+        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(5).toString());
     });
 });
