@@ -155,18 +155,21 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
     IERC20 public linaToken; // lina token proxy address
     LnLinearStakingStorage public stakingStorage;
-    uint256 public endBlock;
-    uint256 public mScaleFactor;
+    uint256 public mEndBlock;
+    address public mOldStaking;
+    uint256 public mOldAmount;
+    uint256 public mWidthdrawRewardFromOldStaking;
+
+    mapping (address => uint ) public mOldReward;
 
     constructor(
         address _admin,
         address _linaToken,
-        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock, uint256 _scaleFactor
-    ) public LnAdmin(_admin) LnRewardCalculator(_rewardPerBlock, _startBlock ){
+        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock ) 
+            public LnAdmin(_admin) LnRewardCalculator(_rewardPerBlock, _startBlock ){
         linaToken = IERC20(_linaToken);
         stakingStorage = LnLinearStakingStorage(_storage);
-        endBlock = _endBlock;
-        mScaleFactor = _scaleFactor;
+        mEndBlock = _endBlock;
     }
 
     function setLinaToken(address _linaToken) external onlyAdmin {
@@ -212,6 +215,13 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
     //--------------------------------------------------------
 
+    function migrationsOldStaking( address contractAddr, uint amount, uint blockNb ) public onlyAdmin {
+        super._deposit( blockNb, contractAddr, amount );
+        mOldStaking = contractAddr;
+        mOldAmount = amount;
+    }
+
+
     function staking(uint256 amount) public whenNotPaused override returns (bool) {
         stakingStorage.requireInStakingPeriod();
 
@@ -230,6 +240,17 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         return true;
     }
+
+    function _widthdrawFromOldStaking( address _addr, uint amount ) internal {
+        uint oldStakingAmount = super.amountOf( mOldStaking );
+        super._withdraw( block.number, _addr, amount );
+        // sub already withraw reward, then cal portion 
+        uint reward = super.rewardOf( mOldStaking).sub( mWidthdrawRewardFromOldStaking )
+            .mul( amount ).div( oldStakingAmount );
+        mWidthdrawRewardFromOldStaking = mWidthdrawRewardFromOldStaking.add( reward );
+        mOldReward[ _addr ] = mOldReward[_addr].add( reward );
+    }
+
 
     function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
         stakingStorage.requireInStakingPeriod();
@@ -253,9 +274,12 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
                     
                     stakingStorage.PopStakesData(msg.sender);
                     stakingStorage.SubWeeksTotal(staketime, stakingAmount);
+                    _widthdrawFromOldStaking( msg.sender, stakingAmount );
+
                 } else {
                     stakingStorage.StakingDataSub(msg.sender, i-1, amount);
                     stakingStorage.SubWeeksTotal(staketime, amount);
+                    _widthdrawFromOldStaking( msg.sender, amount );
 
                     amount = 0;
                 }
@@ -273,14 +297,29 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function getTotalReward( uint blockNb, address _user ) internal view returns ( uint256 total ){
-        //uint256[] memory finalTotals = stakingStorage.weekTotalStaking();
+        if( blockNb > mEndBlock ){
+            blockNb = mEndBlock;
+        }
+        
+        // 这里奖励分成了三部分
+        // 1,已经从旧奖池中cancel了的
+        // 2,还在旧奖池中的
+        // 3，在新奖池中的
+        total = mOldReward[ _user ];
+        uint iMyOldStaking = 0;
         for (uint256 i=0; i < stakingStorage.getStakesdataLength( _user ); i++) {
             (uint256 stakingAmount, ) = stakingStorage.getStakesDataByIndex( _user, i);
-            total = total.add( stakingAmount.multiplyDecimal( mScaleFactor ) );
+            iMyOldStaking = iMyOldStaking.add( stakingAmount );
+        }
+        if( iMyOldStaking > 0 ){
+            uint oldStakingAmount = super.amountOf( mOldStaking );
+            uint iReward2 = super.calcReward( blockNb, mOldStaking).sub( mWidthdrawRewardFromOldStaking )
+                .mul( iMyOldStaking ).div( oldStakingAmount );
+            total = total.add( iReward2 );
         }
 
-        uint256 reward = super.calcReward( blockNb, _user );
-        total = total.add( reward );
+        uint256 reward3 = super.calcReward( blockNb, _user );
+        total = total.add( reward3 );
     }
 
 
@@ -289,18 +328,14 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     function claim() public whenNotPaused override returns (bool) {
         stakingStorage.requireStakingEnd();
 
-        require(stakingStorage.getStakesdataLength(msg.sender) > 0, "Nothing to claim");
+        uint iMyOldStaking = stakingStorage.stakingBalanceOf( msg.sender );
+        uint iAmount = super.amountOf( msg.sender );
+        cancelStaking( iMyOldStaking.add( iAmount ));
 
-        //uint256 reward = super.calcReward( endBlock, msg.sender );
-        uint256 reward = getTotalReward( endBlock, msg.sender );
-        uint256 amount = super.amountOf( msg.sender );
+        uint iReward = getTotalReward( mEndBlock, msg.sender );
+        linaToken.transfer(msg.sender, iReward );
 
-        stakingStorage.DeleteStakesData(msg.sender);
-        
-        //linaToken.mint(msg.sender, totalStaking.add(totalReward) );
-        linaToken.transfer(msg.sender, amount.add(reward) );
-
-        emit Claim(msg.sender, reward, amount);
+        emit Claim(msg.sender, iReward, iMyOldStaking.add( iAmount ));
         return true;
     }
 }
