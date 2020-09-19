@@ -48,11 +48,11 @@ contract LnRewardCalculator  {
         uint256 accRewardPerShare = pool.accRewardPerShare;
         uint256 lpSupply = pool.amount;
         if (curBlock > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier = curBlock.sub( pool.lastRewardBlock );
+            uint256 multiplier = curBlock.sub( pool.lastRewardBlock, "cr curBlock sub overflow" );
             uint256 curReward = multiplier.mul(rewardPerBlock);
             accRewardPerShare = accRewardPerShare.add(curReward.mul(1e12).div(lpSupply));
         }
-        uint newReward = user.amount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt);
+        uint newReward = user.amount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt, "cr newReward sub overflow");
         return newReward.add( user.reward );
     }
 
@@ -81,7 +81,7 @@ contract LnRewardCalculator  {
             pool.lastRewardBlock = curBlock;
             return;
         }
-        uint256 multiplier = curBlock.sub( pool.lastRewardBlock );
+        uint256 multiplier = curBlock.sub( pool.lastRewardBlock, "_update curBlock sub overflow" );
         uint256 curReward = multiplier.mul(rewardPerBlock);
         
         remainReward = remainReward.add( curReward );
@@ -96,7 +96,7 @@ contract LnRewardCalculator  {
         UserInfo storage user = userInfo[ _addr];
         _update( curBlock );
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
+            uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt, "_deposit pending sub overflow");
             if(pending > 0) {
                 reward( user, pending );
             }
@@ -113,13 +113,13 @@ contract LnRewardCalculator  {
         UserInfo storage user = userInfo[_addr];
         require(user.amount >= _amount, "_withdraw: not good");
         _update( curBlock );
-        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt, "_withdraw pending sub overflow");
         if(pending > 0) {
             reward( user, pending );
         }
         if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
-            pool.amount = pool.amount.sub(_amount);
+            user.amount = user.amount.sub(_amount, "_withdraw user.amount sub overflow");
+            pool.amount = pool.amount.sub(_amount, "_withdraw pool.amount sub overflow");
         }
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
     }
@@ -128,7 +128,7 @@ contract LnRewardCalculator  {
         if (_amount > remainReward) {
             _amount = remainReward;
         }
-        remainReward = remainReward.sub( _amount );
+        remainReward = remainReward.sub( _amount, "reward remainReward sub overflow");
         user.reward = user.reward.add( _amount );
     }
 
@@ -243,9 +243,9 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
     function _widthdrawFromOldStaking( address _addr, uint amount ) internal {
         uint oldStakingAmount = super.amountOf( mOldStaking );
-        super._withdraw( block.number, _addr, amount );
+        super._withdraw( block.number, mOldStaking, amount );
         // sub already withraw reward, then cal portion 
-        uint reward = super.rewardOf( mOldStaking).sub( mWidthdrawRewardFromOldStaking )
+        uint reward = super.rewardOf( mOldStaking).sub( mWidthdrawRewardFromOldStaking, "_widthdrawFromOldStaking reward sub overflow" )
             .mul( amount ).div( oldStakingAmount );
         mWidthdrawRewardFromOldStaking = mWidthdrawRewardFromOldStaking.add( reward );
         mOldReward[ _addr ] = mOldReward[_addr].add( reward );
@@ -257,13 +257,15 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
             super._withdraw( block.number, user, amount );
             amount = 0;
         } else {
-            super._withdraw( block.number, user, newAmount );
-            amount = amount.sub(newAmount);
+            if (newAmount > 0) {
+                super._withdraw( block.number, user, newAmount );
+                amount = amount.sub(newAmount, "_settleStaking amount sub overflow");
+            }
             
             for (uint256 i = stakingStorage.getStakesdataLength(user); i >= 1 ; i--) {
                 (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(user, i-1);
                 if (amount >= stakingAmount) {
-                    amount = amount.sub(stakingAmount);
+                    amount = amount.sub(stakingAmount, "_settleStaking amount sub overflow");
                     
                     stakingStorage.PopStakesData(user);
                     stakingStorage.SubWeeksTotal(staketime, stakingAmount);
@@ -314,7 +316,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         }
         if( iMyOldStaking > 0 ){
             uint oldStakingAmount = super.amountOf( mOldStaking );
-            uint iReward2 = super.calcReward( blockNb, mOldStaking).sub( mWidthdrawRewardFromOldStaking )
+            uint iReward2 = super.calcReward( blockNb, mOldStaking).sub( mWidthdrawRewardFromOldStaking, "getTotalReward iReward2 sub overflow" )
                 .mul( iMyOldStaking ).div( oldStakingAmount );
             total = total.add( iReward2 );
         }

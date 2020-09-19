@@ -101,7 +101,7 @@ contract LnLinearStakingStorage is LnAdmin {
     }
 
     function StakingDataSub(address account, uint256 index, uint256 amount) external OnlyLinearStakingStorageRole(msg.sender) {
-        stakesdata[account][index].amount = stakesdata[account][index].amount.sub(amount);
+        stakesdata[account][index].amount = stakesdata[account][index].amount.sub(amount, "StakingDataSub sub overflow");
     }
 
     function DeleteStakesData(address account) external OnlyLinearStakingStorageRole(msg.sender) {
@@ -113,13 +113,13 @@ contract LnLinearStakingStorage is LnAdmin {
     }
 
     function AddWeeksTotal(uint256 staketime, uint256 amount) external OnlyLinearStakingStorageRole(msg.sender) {
-        uint256 weekNumber = staketime.sub(stakingStartTime) / 1 weeks;
+        uint256 weekNumber = staketime.sub(stakingStartTime, "AddWeeksTotal sub overflow") / 1 weeks;
         weeksTotal[weekNumber] = weeksTotal[weekNumber].add(amount);
     }
 
     function SubWeeksTotal(uint256 staketime, uint256 amount) external OnlyLinearStakingStorageRole(msg.sender) {
-        uint256 weekNumber = staketime.sub(stakingStartTime) / 1 weeks;
-        weeksTotal[weekNumber] = weeksTotal[weekNumber].sub(amount);
+        uint256 weekNumber = staketime.sub(stakingStartTime, "SubWeeksTotal weekNumber sub overflow") / 1 weeks;
+        weeksTotal[weekNumber] = weeksTotal[weekNumber].sub(amount, "SubWeeksTotal weeksTotal sub overflow");
     }
 
     function setWeekRewardAmount(uint256 _weekRewardAmount) external onlyAdmin {
@@ -132,8 +132,8 @@ contract LnLinearStakingStorage is LnAdmin {
         stakingStartTime = _stakingStartTime;
         stakingEndTime = _stakingEndTime;
 
-        totalWeekNumber = stakingEndTime.sub(stakingStartTime) / 1 weeks;
-        if (stakingEndTime.sub(stakingStartTime) % 1 weeks != 0) {
+        totalWeekNumber = stakingEndTime.sub(stakingStartTime, "setStakingPeriod totalWeekNumber sub overflow") / 1 weeks;
+        if (stakingEndTime.sub(stakingStartTime, "setStakingPeriod stakingEndTime sub overflow") % 1 weeks != 0) {
             totalWeekNumber = totalWeekNumber.add(1);
         }
     }
@@ -221,7 +221,7 @@ contract LnLinearStaking is LnAdmin, Pausable, ILinearStaking {
         for (uint256 i = stakingStorage.getStakesdataLength(msg.sender); i >= 1 ; i--) {
             (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i-1);
             if (amount >= stakingAmount) {
-                amount = amount.sub(stakingAmount);
+                amount = amount.sub(stakingAmount, "cancelStaking sub overflow");
                 
                 stakingStorage.PopStakesData(msg.sender);
                 stakingStorage.SubWeeksTotal(staketime, stakingAmount);
@@ -258,7 +258,7 @@ contract LnLinearStaking is LnAdmin, Pausable, ILinearStaking {
         uint256[] memory finalTotals = stakingStorage.weekTotalStaking();
         for (uint256 i=0; i < stakingStorage.getStakesdataLength(msg.sender); i++) {
             (uint256 stakingAmount, uint256 staketime) = stakingStorage.getStakesDataByIndex(msg.sender, i);
-            uint256 stakedWeedNumber = staketime.sub(stakingStorage.stakingStartTime()) / 1 weeks;
+            uint256 stakedWeedNumber = staketime.sub(stakingStorage.stakingStartTime(), "claim sub overflow") / 1 weeks;
 
             totalStaking = totalStaking.add(stakingAmount);
             
