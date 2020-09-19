@@ -237,7 +237,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
         let stakingbalance = {};
         let jsonObj = JSON.parse(fs.readFileSync("./test/stakingBlock.log"));
-        let maxsize = jsonObj.length>100 ? 100 : jsonObj.length;
+        let maxsize = jsonObj.length > 41 ? 41 : jsonObj.length;
         for (let i=0; i<maxsize; i++) {
             let item = jsonObj[i]
             if (item[0] == "Staking") {
@@ -284,10 +284,21 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal(await staking.amountOf(ac1), toUnit(5).toString());
         assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(10).toString());
         assert.equal(await staking.stakingBalanceOf(ac1), toUnit(15).toString());
-
+/**
+        console.log("dddddddddddddd");
+        console.log((await kLnLinearStakingStorage.stakingStartTime()).toString());
+        console.log((await kLnLinearStakingStorage.stakingEndTime()).toString());
+        console.log((await kLnLinearStakingStorage.weeksTotal(0)).toString());
+        console.log((await kLnLinearStakingStorage.weeksTotal(1)).toString());
+1600329600
+1605168000
+49218310113669398212000000
+0
+ */
+        // error
         await staking.cancelStaking( toUnit(15), { from: ac1 } );
         assert.equal(await staking.amountOf(ac1), toUnit(0).toString());
-        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(5).toString());
-        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(5).toString());
+        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(0).toString());
+        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(0).toString());
     });
 });
