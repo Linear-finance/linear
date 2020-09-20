@@ -207,7 +207,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         const kHelperPushStakingData = await HelperPushStakingData.new(admin);
 
         let cur_block = await time.latestBlock();
-        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, 1000, cur_block, cur_block.add(toBN(1000)));
+        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, toUnit(100), cur_block, cur_block.add(toBN(100)));
         await kLnAccessControl.SetRoles( roleKey, [staking.address, kHelperPushStakingData.address], [true, true] );
 
         let mintAmount = toUnit(1000);
@@ -316,15 +316,20 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         blocktime = await currentTime();
         console.log("curtime", blocktime, "end time", (await kLnLinearStakingStorage.stakingEndTime()).toString());
         
+        let start_block = await time.latestBlock();
+
+        await time.advanceBlockTo( start_block.add(toBN(30)));
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay]}, rpcCallback);
         await staking.staking( toUnit(20), { from: ac1 });
 
+        await time.advanceBlockTo( start_block.add(toBN(60)));
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay]}, rpcCallback);
         await staking.staking( toUnit(20), { from: ac3 });
 
         //set time to end
         blocktime = await currentTime();
         let stakingEndTime = await kLnLinearStakingStorage.stakingEndTime();
+        await time.advanceBlockTo( start_block.add(toBN(90)));
         if (blocktime < stakingEndTime) {
             await web3.currentProvider.send({method: "evm_increaseTime", params: [stakingEndTime-blocktime+1]}, rpcCallback);
         }
@@ -335,8 +340,8 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let balance1 = await linaproxy.balanceOf(ac1);
         await staking.claim( {from: ac1} );
         let balance1AfterClaim1 = await linaproxy.balanceOf(ac1);
-        let reward1 = balance1AfterClaim1.sub(balance1);
-        assert.equal(reward1.cmp(0), 1);
+        let claim1 = balance1AfterClaim1.sub(balance1);
+        assert.equal(claim1.cmp(0), 1);
         try {
             await staking.claim( {from: ac1} );// should not success??
         } catch(e) {}
@@ -346,18 +351,19 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let balance2 = await linaproxy.balanceOf(ac2);
         await staking.claim( {from: ac2} );
         let balance1AfterClaim2 = await linaproxy.balanceOf(ac2);
-        let reward2 = balance1AfterClaim2.sub(balance2);
-        assert.equal(reward2.cmp(0), 1);
-        console.log([reward1,reward2,balance1AfterClaim1,balance1AfterClaim2].map(x=>x.toString()));
+        let claim2 = balance1AfterClaim2.sub(balance2);
+        assert.equal(claim2.cmp(0), 1);
+        //console.log([claim1,claim2,balance1AfterClaim1,balance1AfterClaim2].map(x=>x.toString()));
         
-        //assert.equal(reward2.cmp(reward1), 1);
+        assert.equal(claim2.cmp(claim1), 1);
         
         let balance3 = await linaproxy.balanceOf(ac3);
         await staking.claim( {from: ac3} );
         let balance1AfterClaim3 = await linaproxy.balanceOf(ac3);
-        let reward3 = balance1AfterClaim3.sub(balance3);
-        assert.equal(reward3.cmp(0), 1);
-        //assert.equal(reward3.cmp(reward1), -1);
-        console.log([reward1,reward2, reward3].map(x=>x.toString()));
+        let claim3 = balance1AfterClaim3.sub(balance3);
+        assert.equal(claim3.cmp(0), 1);
+        assert.equal(claim3.cmp(claim1), -1);
+        //console.log([claim1,claim2, claim3].map(x=>x.toString()));
+        //console.log([balance1AfterClaim1,balance1AfterClaim2, balance1AfterClaim3].map(x=>x.toString()));
     });
 });
