@@ -70,6 +70,13 @@ contract LnRewardCalculator  {
         return userInfo[_user].amount;
     }
 
+    function getUserInfo(address _user) public view returns(uint256,uint256,uint256) {
+        return (userInfo[_user].reward, userInfo[_user].amount, userInfo[_user].rewardDebt);
+    }
+
+    function getPoolInfo() public view returns(uint256,uint256,uint256) {
+        return (mPoolInfo.amount, mPoolInfo.lastRewardBlock, mPoolInfo.accRewardPerShare);
+    }
 
     function _update( uint256 curBlock ) internal {
         PoolInfo storage pool = mPoolInfo;
@@ -172,6 +179,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     uint256 public mOldAmount;
     uint256 public mWidthdrawRewardFromOldStaking;
 
+    uint256 public claimRewardLockTime = 1620806400; // 2021-5-12
+
     mapping (address => uint ) public mOldReward;
 
     constructor(
@@ -242,11 +251,11 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
         linaToken.transferFrom(msg.sender, address(this), amount);
      
-        // don't need to write old storage
-        //stakingStorage.PushStakingData(msg.sender, amount, block.timestamp);
-        //stakingStorage.AddWeeksTotal(block.timestamp, amount);
-
-        super._deposit( block.number, msg.sender, amount );
+        uint256 blockNb = block.number;
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+        super._deposit( blockNb, msg.sender, amount );
 
         emit Staking(msg.sender, amount, block.timestamp);
 
@@ -254,8 +263,13 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function _widthdrawFromOldStaking( address _addr, uint amount ) internal {
+        uint256 blockNb = block.number;
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+        
         uint oldStakingAmount = super.amountOf( mOldStaking );
-        super._withdraw( block.number, mOldStaking, amount );
+        super._withdraw( blockNb, mOldStaking, amount );
         // sub already withraw reward, then cal portion 
         uint reward = super.rewardOf( mOldStaking).sub( mWidthdrawRewardFromOldStaking, "_widthdrawFromOldStaking reward sub overflow" )
             .mul( amount ).div( oldStakingAmount );
@@ -264,14 +278,19 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function _cancelStaking(address user, uint256 amount) internal {
+        uint256 blockNb = block.number;
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+
         uint256 returnAmount = amount;
         uint256 newAmount = super.amountOf(user);
         if (newAmount >= amount) {
-            super._withdraw( block.number, user, amount );
+            super._withdraw( blockNb, user, amount );
             amount = 0;
         } else {
             if (newAmount > 0) {
-                super._withdraw( block.number, user, newAmount );
+                super._withdraw( blockNb, user, newAmount );
                 amount = amount.sub(newAmount, "_cancelStaking amount sub overflow");
             }
             
@@ -295,13 +314,14 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
             }
         }
 
-        require(amount == 0, "Cancel amount too big then staked.");
-
-        linaToken.transfer(msg.sender, returnAmount);
+        // cancel as many as possible, not fail, that waste gas
+        //require(amount == 0, "Cancel amount too big then staked.");
+        
+        linaToken.transfer(msg.sender, returnAmount.sub(amount));
     }
 
     function cancelStaking(uint256 amount) public whenNotPaused override returns (bool) {
-        stakingStorage.requireInStakingPeriod();
+        //stakingStorage.requireInStakingPeriod();
 
         require(amount > 0, "Invalid amount.");
 
@@ -342,7 +362,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     // claim reward
     // Note: 需要提前提前把奖励token转进来
     function claim() public whenNotPaused override returns (bool) {
-        stakingStorage.requireStakingEnd();
+        //stakingStorage.requireStakingEnd();
+        require(block.timestamp > claimRewardLockTime, "Not time to claim reward");
 
         uint iMyOldStaking = stakingStorage.stakingBalanceOf( msg.sender );
         uint iAmount = super.amountOf( msg.sender );
@@ -357,15 +378,9 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         emit Claim(msg.sender, iReward, iMyOldStaking.add( iAmount ));
         return true;
     }
-}
 
-contract LnSimpleStakingTest is LnSimpleStaking {
-    constructor(
-        address _admin,
-        address _linaToken,
-        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock ) 
-        public LnSimpleStaking(_admin, _linaToken, _storage, _rewardPerBlock, _startBlock, _endBlock)
-    {
+    function setRewardLockTime(uint256 newtime) public onlyAdmin {
+        claimRewardLockTime = newtime;
     }
 
     function calcReward( uint256 curBlock, address _user) public view returns (uint256) {

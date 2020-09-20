@@ -2,7 +2,6 @@ const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const LnRewardCalculator = artifacts.require('LnRewardCalculator');
 const LnRewardCalculatorTest = artifacts.require('LnRewardCalculatorTest');
 const LnSimpleStaking = artifacts.require('LnSimpleStaking');
-const LnSimpleStakingTest = artifacts.require("LnSimpleStakingTest");
 
 const LinearFinance = artifacts.require("LinearFinance");
 const LnLinearStakingStorage = artifacts.require("LnLinearStakingStorage");
@@ -101,7 +100,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
 
         let cur_block = await time.latestBlock();
-        const staking = await LnSimpleStakingTest.new(admin, linaproxy.address, kLnLinearStakingStorage.address, 1000, cur_block, cur_block.add(toBN(1000)));
+        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, 1000, cur_block, cur_block.add(toBN(1000)));
         await kLnAccessControl.SetRoles( roleKey, [staking.address], [true] );
 
         let mintAmount = toBN(1000);
@@ -221,11 +220,16 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
         let oldStartTime = await kLnLinearStakingStorage.stakingStartTime(); //standard time
         let oldEndTime = await kLnLinearStakingStorage.stakingEndTime();
+        let claimtime = await staking.claimRewardLockTime();
+        let claimwaittime = oldEndTime - claimtime;
 
         let blocktime = await currentTime();
         let newStartTime = blocktime-1;// test time
         let newEndTime = blocktime-1 + 8 * oneWeek;
+        let startclaimtime = newEndTime + claimwaittime;
         await kLnLinearStakingStorage.setStakingPeriod(newStartTime, newEndTime);
+        await staking.setRewardLockTime(startclaimtime);
+        
         console.log("set starttime, endtime", newStartTime, newEndTime);
 
         await staking.setMinStakingAmount( 0 );
@@ -328,14 +332,30 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
         //set time to end
         blocktime = await currentTime();
+
+        await time.advanceBlockTo( start_block.add(toBN(100)));
         let stakingEndTime = await kLnLinearStakingStorage.stakingEndTime();
-        await time.advanceBlockTo( start_block.add(toBN(90)));
         if (blocktime < stakingEndTime) {
             await web3.currentProvider.send({method: "evm_increaseTime", params: [stakingEndTime-blocktime+1]}, rpcCallback);
         }
 
+        // cancel on staking end, ac1
+        let beforecsb = await linaproxy.balanceOf(ac1);
+        await staking.cancelStaking( toUnit(30), { from: ac1 } );
+        assert.equal( (await linaproxy.balanceOf(ac1)).sub(beforecsb), toUnit(20).toString() );
+
+        let newclaimtime = await staking.claimRewardLockTime();
+        if (blocktime <= newclaimtime) {
+            await web3.currentProvider.send({method: "evm_increaseTime", params: [newclaimtime-blocktime+2]}, rpcCallback);
+        }
+
         // before claim
         await lina.mint(staking.address, toUnit(10000), { from: admin });// TODO: calc total reward
+
+        // cancel after claiming time ac2
+        beforecsb = await linaproxy.balanceOf(ac2);
+        await staking.cancelStaking( toUnit(30), { from: ac2 } );
+        assert.equal( (await linaproxy.balanceOf(ac2)).sub(beforecsb).cmp(toUnit(20)), 0);
 
         let balance1 = await linaproxy.balanceOf(ac1);
         await staking.claim( {from: ac1} );
@@ -353,8 +373,6 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let balance1AfterClaim2 = await linaproxy.balanceOf(ac2);
         let claim2 = balance1AfterClaim2.sub(balance2);
         assert.equal(claim2.cmp(0), 1);
-        //console.log([claim1,claim2,balance1AfterClaim1,balance1AfterClaim2].map(x=>x.toString()));
-        
         assert.equal(claim2.cmp(claim1), 1);
         
         let balance3 = await linaproxy.balanceOf(ac3);
@@ -362,8 +380,27 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let balance1AfterClaim3 = await linaproxy.balanceOf(ac3);
         let claim3 = balance1AfterClaim3.sub(balance3);
         assert.equal(claim3.cmp(0), 1);
-        assert.equal(claim3.cmp(claim1), -1);
-        //console.log([claim1,claim2, claim3].map(x=>x.toString()));
-        //console.log([balance1AfterClaim1,balance1AfterClaim2, balance1AfterClaim3].map(x=>x.toString()));
+        assert.equal(claim3.sub(toUnit(20)).cmp(claim1), -1);
+        console.log([claim1,claim2, claim3].map(x=>x.toString()));
+        console.log([balance1AfterClaim1,balance1AfterClaim2, balance1AfterClaim3].map(x=>x.toString()));
+
+        //
+        async function reclaim(ac) {
+            let balance = await linaproxy.balanceOf(ac);
+            await staking.claim( {from: ac} );
+            await staking.cancelStaking( toUnit(30), {from: ac} );
+            assert.equal( (await linaproxy.balanceOf(ac)).cmp(balance), 0 );
+        }
+        await reclaim(ac1);
+        await reclaim(ac2);
+        await reclaim(ac3);
+        /**
+[ '3431421014999999', '5452670740000000', '20001378835320000000' ]
+[
+  '1010003431421014999999',
+  '1020005452670740000000',
+  '1000001378835320000000'
+]
+         */
     });
 });
