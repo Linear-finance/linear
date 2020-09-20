@@ -359,6 +359,20 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 }
 
+contract LnSimpleStakingTest is LnSimpleStaking {
+    constructor(
+        address _admin,
+        address _linaToken,
+        address _storage, uint256 _rewardPerBlock, uint256 _startBlock, uint256 _endBlock ) 
+        public LnSimpleStaking(_admin, _linaToken, _storage, _rewardPerBlock, _startBlock, _endBlock)
+    {
+    }
+
+    function calcReward( uint256 curBlock, address _user) public view returns (uint256) {
+        return _calcReward( curBlock, _user);
+    }
+}
+
 contract HelperPushStakingData is LnAdmin {
 
     constructor(address _admin) public LnAdmin(_admin) {
