@@ -29,7 +29,7 @@ contract LinearFinance is LnErc20Handler {
     //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
-        require(totalSupply.add(amount) < MAX_SUPPLY, "Can not mint over max supply");
+        require(totalSupply.add(amount) <= MAX_SUPPLY, "Can not mint over max supply");
         _beforeTokenTransfer(address(0), account, amount);
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).add(amount));
