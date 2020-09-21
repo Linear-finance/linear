@@ -206,7 +206,10 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         const kHelperPushStakingData = await HelperPushStakingData.new(admin);
 
         let cur_block = await time.latestBlock();
-        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, toUnit(100), cur_block, cur_block.add(toBN(100)));
+        let rewardPerBlock = toUnit(100);
+        let startRewardBn = cur_block;
+        let endRewardBn = startRewardBn.add(toBN(100));
+        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, rewardPerBlock, startRewardBn, endRewardBn);
         await kLnAccessControl.SetRoles( roleKey, [staking.address, kHelperPushStakingData.address], [true, true] );
 
         let mintAmount = toUnit(1000);
@@ -239,12 +242,13 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let amounts = [];
         let stakingtime = [];
         
-        let totalOld = new BN(0);
+        let totalOld = toBN(0);
         function pushStakingData(_user, _amount, _stakingtime) {
             users.push(_user);
             amounts.push(_amount);
             stakingtime.push(_stakingtime-oldStartTime+newStartTime); // fix to new test time
             totalOld = totalOld.add(_amount);
+            //console.log("stakingtime", stakingtime[stakingtime.length-1].toString());
         }
 
         let stakingbalance = {};
@@ -262,14 +266,15 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
                     stakingbalance[_user] = _amount;
                 } else {
                     stakingbalance[_user] = stakingbalance[_user].add(_amount);
-                    //console.log(_user, _amount.toString());
                 }
             }
         }
 
         //test data
-        pushStakingData(ac1, toUnit(10), newStartTime + oneDay);
-        pushStakingData(ac2, toUnit(20), newStartTime + oneDay);
+        let ac1OldStaking = toUnit(10);
+        let ac2OldStaking = toUnit(20);
+        pushStakingData(ac1, ac1OldStaking, oldStartTime.add(toBN(oneDay+1)).toNumber() );
+        pushStakingData(ac2, ac2OldStaking, oldStartTime.add(toBN(oneDay+2)).toNumber() );
 
         await lina.mint(staking.address, totalOld, { from: admin });
         
@@ -281,17 +286,37 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         }
         
         let arrayTotal = await kLnLinearStakingStorage.weekTotalStaking();
+        let oldStakingAddress = kLnLinearStakingStorage.address; // 用来记录旧staking方法的分配
+        let oldStakingAmount = arrayTotal[7];
+        let oldStakingBlockNumber = startRewardBn;
+        //console.log(totalOld.toString(), oldStakingAmount.toString()); 
+        assert.equal(totalOld.toString(), oldStakingAmount.toString());
+        await staking.migrationsOldStaking(oldStakingAddress, oldStakingAmount, oldStakingBlockNumber);
         let blockNumber = await curBlockNumber();
+        let passBlock = blockNumber - oldStakingBlockNumber;
+        let curOldReward = await staking.calcReward(blockNumber, oldStakingAddress);
+        //console.log("calcReward oldStakingAddress", (await staking.calcReward(blockNumber, oldStakingAddress)).toString(), "passBlock", passBlock );
+        //console.log("rewardPerBlock", rewardPerBlock.toString());
+        let calcOldReward = rewardPerBlock.mul(new BN(passBlock));
+        let delta = calcOldReward.sub( curOldReward );
+        assert.equal( delta.cmp(toUnit(0)), 1 );
+        console.log("total old reward delta.abs()", delta.abs().toString());
+        assert.equal( delta.abs().cmp(toUnit("0.000001")), -1);
 
-        // LnLinearStaking.address, 
-        await staking.migrationsOldStaking(kLnLinearStakingStorage.address, arrayTotal[7], blockNumber);
-        
+        let ac1Reward = await staking.getTotalReward(blockNumber, ac1);
+        let ac2Reward = await staking.getTotalReward(blockNumber, ac2);
+        //console.log( [ac1OldStaking, oldStakingAmount, calcOldReward].map( x=>x.toString()) );
+        let calcReward1 = ac1OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20)); // 提高精度
+        let calcReward2 = ac2OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20));
+        //console.log([ac1Reward, ac2Reward, calcReward1, calcReward2].map( x=>x.toString()));
+
+        assert.equal( ac1Reward.sub( calcReward1 ).abs().cmp(toUnit("0.000001")), -1 ); /// errr
+        assert.equal( ac2Reward.sub( calcReward2 ).abs().cmp(toUnit("0.000001")), -1 );
+
         let stakinger = Object.keys(stakingbalance);
-        //...
+        //... check push old staking data
         assert.equal(await staking.stakingBalanceOf(stakinger[2]), stakingbalance[stakinger[2]].toString());
         assert.equal(await staking.stakingBalanceOf(stakinger[7]), stakingbalance[stakinger[7]].toString());
-
-        //console.log(stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString()); //6000000000000000000000000
         // address for log file.
         assert.equal(await staking.stakingBalanceOf("0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"), stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString());
 
@@ -303,6 +328,9 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(10).toString());
         assert.equal(await staking.stakingBalanceOf(ac1), toUnit(20).toString());
         
+        // reward check.
+        
+
         v = await linaproxy.balanceOf(ac1);
         await staking.cancelStaking( toUnit(5), { from: ac1 } );
         assert.equal(await linaproxy.balanceOf(ac1), v.add(toUnit(5)).toString() );
@@ -400,6 +428,13 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
   '1010003431421014999999',
   '1020005452670740000000',
   '1000001378835320000000'
+]
+
+[ '3431424239999999', '5452675880000000', '20001378836620000000' ]
+[
+  '1010003431424239999999',
+  '1020005452675880000000',
+  '1000001378836620000000'
 ]
          */
     });

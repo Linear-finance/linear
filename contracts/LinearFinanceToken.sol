@@ -13,6 +13,7 @@ contract LinearFinance is LnErc20Handler {
     string public constant TOKEN_NAME = "Linear Token";
     string public constant TOKEN_SYMBOL = "LINA";
     uint8 public constant DECIMALS = 18;
+    uint256 public constant MAX_SUPPLY = 10000000000e18;
 
     constructor(
         address payable _proxy,
@@ -28,6 +29,7 @@ contract LinearFinance is LnErc20Handler {
     //
     function _mint(address account, uint256 amount) private  {
         require(account != address(0), "ERC20: mint to the zero address");
+        require(totalSupply.add(amount) < MAX_SUPPLY, "Can not mint over max supply");
         _beforeTokenTransfer(address(0), account, amount);
 
         tokenStorage.setBalanceOf(account, tokenStorage.balanceOf(account).add(amount));
