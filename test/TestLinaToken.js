@@ -3,7 +3,10 @@ const LnLinearStakingStorage = artifacts.require("LnLinearStakingStorage");
 const LnAccessControl = artifacts.require("LnAccessControl");
 const LnLinearStaking = artifacts.require("LnLinearStaking");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
-//const testAddressCache = artifacts.require("testAddressCache");
+const LnTokenStorageLock = artifacts.require("LnTokenStorageLock");
+const LnTokenStorage = artifacts.require("LnTokenStorage");
+const LnProxyERC20 = artifacts.require("LnProxyERC20");
+const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 const {CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 
 const w3utils = require('web3-utils');
@@ -277,6 +280,81 @@ contract('test LinearFinance', async (accounts)=> {
         assert.equal(v, toUnit(0).toString());
 
         //await staking.cancelStaking(toUnit(1).toString(), {from:ac1});
+    });
+    
+    it('LnTokenStorageLock test', async ()=> {
+        let tokenstorage = await LnTokenStorage.new(admin, admin);
+        let proxyErc20 = await LnProxyERC20.new(admin);
+    
+        await LinearFinance.link(SafeDecimalMath);
+        let lina = await LinearFinance.new(proxyErc20.address, tokenstorage.address, admin, "0");
+    
+        await tokenstorage.setOperator(lina.address);
+        await proxyErc20.setTarget(lina.address);
+        await lina.setProxy(proxyErc20.address);
+
+        //---------------------
+        await lina.mint(ac1, toUnit(3000));
+        await proxyErc20.transfer(ac2, toUnit(1000), {from:ac1});
+
+        //--------------------- new lock storage
+        let kLnTokenStorageLock = await LnTokenStorageLock.new(admin, lina.address, tokenstorage.address);
+        await tokenstorage.setOperator(kLnTokenStorageLock.address); // Note: importance
+
+        await lina.setTokenStorage(kLnTokenStorageLock.address);
+
+        //---------------------
+        await lina.approve(ac3, toUnit(1000), {from:ac1});
+
+        let v = await lina.allowance(ac1, ac3);
+        assert.equal( (v).cmp(toUnit(1000)), 0 );
+
+        await lina.transferFrom(ac1, ac3, toUnit(1000), {from:ac3});
+
+        assert.equal( (await lina.balanceOf(ac1)).cmp(toUnit(1000)), 0 );
+        assert.equal( (await lina.balanceOf(ac2)).cmp(toUnit(1000)), 0 );
+        assert.equal( (await lina.balanceOf(ac3)).cmp(toUnit(1000)), 0 );
+
+        await proxyErc20.transfer(ac1, toUnit(1), {from:ac3});
+        await proxyErc20.transfer(ac3, toUnit(1), {from:ac1});
+        await lina.mint(ac3, toUnit(1000));
+        assert.equal( (await lina.balanceOf(ac3)).cmp(toUnit(2000)), 0 );
+        await lina.burn(ac3, toUnit(1000));
+        assert.equal( (await lina.balanceOf(ac3)).cmp(toUnit(1000)), 0 );
+
+        // no operater access
+        let linaFake = await LinearFinance.new(proxyErc20.address, tokenstorage.address, admin, "0");
+        await linaFake.setProxy(proxyErc20.address);
+
+        await exceptionEqual(
+            linaFake.transfer(ac2, toUnit(500), { from: ac1 }),
+            "Only operator can perform this action"
+        );
+        await exceptionEqual(
+            linaFake.approve(ac2, toUnit(500), { from: ac1 }),
+            "Only operator can perform this action"
+        );
+
+        await exceptionEqual(
+            kLnTokenStorageLock.setAllowance(ac1, ac2, toUnit(0), {from:admin}),
+            "Only operator can perform this action 2"
+        );
+        await exceptionEqual(
+            kLnTokenStorageLock.setBalanceOf(ac1, toUnit(0), {from:admin}),
+            "Only operator can perform this action 2"
+        );
+
+        let linaFake2 = await LinearFinance.new(proxyErc20.address, kLnTokenStorageLock.address, admin, "0");
+        await linaFake2.setProxy(proxyErc20.address);
+
+        await exceptionEqual(
+            linaFake2.transfer(ac2, toUnit(500), { from: ac1 }),
+            "Only operator can perform this action 2"
+        );
+        await exceptionEqual(
+            linaFake2.approve(ac2, toUnit(500), { from: ac1 }),
+            "Only operator can perform this action 2"
+        );
     });
 });
 
