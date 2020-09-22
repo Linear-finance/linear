@@ -20,3 +20,47 @@ contract LnTokenStorage is LnAdmin, LnOperatorModifier {
     }
 }
 
+
+// add storage lock
+contract LnTokenStorageLock   is LnAdmin {
+    constructor(address _admin, address _operator, LnTokenStorage  store ) public LnAdmin(_admin) {
+        mStorage = store;
+        operator = _operator;
+    }
+
+    address public operator;
+
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Only operator can perform this action");
+        _;
+    }
+
+    address mOpNew;
+    uint mLock;
+    LnTokenStorage mStorage;
+
+    function setOperator( address op, uint time ) public {
+        mLock = time;
+        mOpNew = op;
+    }
+
+    function setAllowance(address tokenOwner, address spender, uint value) external onlyOperator {
+        if( mOpNew != address(0) ){
+            if( now > mLock ){
+                operator = mOpNew;
+                mOpNew = address(0);
+            }
+        }
+        mStorage.setAllowance( tokenOwner, spender, value );        
+    }
+
+    function setBalanceOf(address account, uint value) external onlyOperator {
+        if( mOpNew != address(0) ){
+            if( now > mLock ){
+                operator = mOpNew;
+                mOpNew = address(0);
+            }
+        }
+        mStorage.setBalanceOf( account, value );        
+    }
+}
