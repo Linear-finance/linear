@@ -50,9 +50,9 @@ contract LnRewardCalculator  {
         if (curBlock > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = curBlock.sub( pool.lastRewardBlock, "cr curBlock sub overflow" );
             uint256 curReward = multiplier.mul(rewardPerBlock);
-            accRewardPerShare = accRewardPerShare.add(curReward.mul(1e12).div(lpSupply));
+            accRewardPerShare = accRewardPerShare.add(curReward.mul(1e20).div(lpSupply));
         }
-        uint newReward = user.amount.mul(accRewardPerShare).div(1e12).sub(user.rewardDebt, "cr newReward sub overflow");
+        uint newReward = user.amount.mul(accRewardPerShare).div(1e20).sub(user.rewardDebt, "cr newReward sub overflow");
         return newReward.add( user.reward );
     }
 
@@ -94,7 +94,7 @@ contract LnRewardCalculator  {
         remainReward = remainReward.add( curReward );
         accReward = accReward.add( curReward );
 
-        pool.accRewardPerShare = pool.accRewardPerShare.add(curReward.mul(1e12).div(lpSupply));
+        pool.accRewardPerShare = pool.accRewardPerShare.add(curReward.mul(1e20).div(lpSupply));
         pool.lastRewardBlock = curBlock;
     }
 
@@ -103,7 +103,7 @@ contract LnRewardCalculator  {
         UserInfo storage user = userInfo[ _addr];
         _update( curBlock );
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt, "_deposit pending sub overflow");
+            uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e20).sub(user.rewardDebt, "_deposit pending sub overflow");
             if(pending > 0) {
                 reward( user, pending );
             }
@@ -112,7 +112,7 @@ contract LnRewardCalculator  {
             user.amount = user.amount.add(_amount);
             pool.amount = pool.amount.add(_amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e20);
     }
 
     function _withdraw( uint256 curBlock, address _addr, uint256 _amount) internal {
@@ -120,7 +120,7 @@ contract LnRewardCalculator  {
         UserInfo storage user = userInfo[_addr];
         require(user.amount >= _amount, "_withdraw: not good");
         _update( curBlock );
-        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt, "_withdraw pending sub overflow");
+        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e20).sub(user.rewardDebt, "_withdraw pending sub overflow");
         if(pending > 0) {
             reward( user, pending );
         }
@@ -128,7 +128,7 @@ contract LnRewardCalculator  {
             user.amount = user.amount.sub(_amount, "_withdraw user.amount sub overflow");
             pool.amount = pool.amount.sub(_amount, "_withdraw pool.amount sub overflow");
         }
-        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e20);
     }
 
     function reward( UserInfo storage user, uint256 _amount) internal {
@@ -272,7 +272,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         super._withdraw( blockNb, mOldStaking, amount );
         // sub already withraw reward, then cal portion 
         uint reward = super.rewardOf( mOldStaking).sub( mWidthdrawRewardFromOldStaking, "_widthdrawFromOldStaking reward sub overflow" )
-            .mul( amount ).div( oldStakingAmount );
+            .mul( amount ).mul(1e20).div( oldStakingAmount ).div(1e20);
         mWidthdrawRewardFromOldStaking = mWidthdrawRewardFromOldStaking.add( reward );
         mOldReward[ _addr ] = mOldReward[_addr].add( reward );
     }
@@ -332,7 +332,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         return true;
     }
 
-    function getTotalReward( uint blockNb, address _user ) internal view returns ( uint256 total ){
+    function getTotalReward( uint blockNb, address _user ) public view returns ( uint256 total ){
         if( blockNb > mEndBlock ){
             blockNb = mEndBlock;
         }
