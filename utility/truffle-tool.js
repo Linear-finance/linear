@@ -67,12 +67,12 @@ async function SaveContractAddress(contactObj, newContract) {
     let recordName = contactObj.contractName;
     if (recordName == "LnAsset") {
         let symbol = await newContract.symbol();
-        recordName = recordName + "-" + symbol;
+        recordName = recordName + "_" + symbol;
     }
     if (deployedContracts[recordName] != null) {
         let timestamp = Date.now();
         console.log("contact has in deployed log file", timestamp);
-        deployedContracts[recordName+"-"+timestamp] = {address: newContract.address}
+        deployedContracts[recordName+"_"+timestamp] = {address: newContract.address}
     } else {
         deployedContracts[recordName] = {address: newContract.address}
     }
