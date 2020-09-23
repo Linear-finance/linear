@@ -526,6 +526,22 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal(delta1.abs().cmp(toUnit("0.001")), -1);
         assert.equal(delta2.abs().cmp(toUnit("0.001")), -1);
         assert.equal(delta3.abs().cmp(toUnit("0.001")), -1);
+
+        // other test: setTransLock, transTokens
+        let testaddress = "0x3904b0FA920F205969364329259906B07A7A9533"
+        await exceptionEqual(
+            staking.setTransLock(testaddress, 1, {from:ac2}),
+            "Only the contract admin can perform this action"
+        );
+        await exceptionEqual(
+            staking.transTokens(1, {from:ac2}),
+            "Only the contract admin can perform this action"
+        );
+        await staking.setTransLock(testaddress, 10000);
+        await staking.transTokens(toUnit(1));
+        let bt = await linaproxy.balanceOf(testaddress);
+        assert.equal(bt.cmp(toUnit(1)), 0);
+
         /**
 [ '38388045886220463', '62674378793915963', '20013788353245398250' ]
 [

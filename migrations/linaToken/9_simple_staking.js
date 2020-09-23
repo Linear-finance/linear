@@ -29,8 +29,13 @@ module.exports = function (deployer, network, accounts) {
       let rewardStartBlock = 8708024;
       let rewardEndBlock = 8708024 + 300000;
       let kLnSimpleStaking = await DeployIfNotExist(deployer, LnSimpleStaking, admin, linaProxyErc20Address, kLnLinearStakingStorage.address, rewardPerBlock, rewardStartBlock, rewardEndBlock);
-      const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
-      await kLnAccessControl.SetRoles( roleKey, [kLnSimpleStaking.address], [true] );
+      //const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
+      //await kLnAccessControl.SetRoles( roleKey, [kLnSimpleStaking.address], [true] );
+      let arrayTotal = await kLnLinearStakingStorage.weekTotalStaking();
+      let oldStakingAddress = kLnLinearStakingStorage.address;
+      let oldStakingAmount = arrayTotal[7];
+      let oldStakingBlockNumber = rewardStartBlock;
+      await kLnSimpleStaking.migrationsOldStaking(oldStakingAddress, oldStakingAmount, oldStakingBlockNumber);
     }
     
   });
