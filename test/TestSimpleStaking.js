@@ -206,7 +206,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         const kHelperPushStakingData = await HelperPushStakingData.new(admin);
 
         let cur_block = await time.latestBlock();
-        let rewardPerBlock = toUnit(100);
+        const rewardPerBlock = toUnit(1000);
         let startRewardBn = cur_block;
         let endRewardBn = startRewardBn.add(toBN(100));
         const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, rewardPerBlock, startRewardBn, endRewardBn);
@@ -234,6 +234,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         await staking.setRewardLockTime(startclaimtime);
         
         console.log("set starttime, endtime", newStartTime, newEndTime);
+        console.log("startRewardBn, endRewardBn", startRewardBn.toString(), endRewardBn.toString());
 
         await staking.setMinStakingAmount( 0 );
 
@@ -284,7 +285,14 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
             let t = stakingtime.splice(0,50);
             await kHelperPushStakingData.pushStakingData(kLnLinearStakingStorage.address, u, a, t);
         }
+        let stakinger = Object.keys(stakingbalance);
+        //... check push old staking data
+        assert.equal(await staking.stakingBalanceOf(stakinger[2]), stakingbalance[stakinger[2]].toString());
+        assert.equal(await staking.stakingBalanceOf(stakinger[7]), stakingbalance[stakinger[7]].toString());
+        // address for log file.
+        assert.equal(await staking.stakingBalanceOf("0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"), stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString());
         
+        // calc old staking reward
         let arrayTotal = await kLnLinearStakingStorage.weekTotalStaking();
         let oldStakingAddress = kLnLinearStakingStorage.address; // 用来记录旧staking方法的分配
         let oldStakingAmount = arrayTotal[7];
@@ -292,8 +300,24 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         //console.log(totalOld.toString(), oldStakingAmount.toString()); 
         assert.equal(totalOld.toString(), oldStakingAmount.toString());
         await staking.migrationsOldStaking(oldStakingAddress, oldStakingAmount, oldStakingBlockNumber);
+
+        //
+        let rewardCalcHelper = {
+            stakingLine : []
+        }
+        rewardCalcHelper.RegStaking = function(user, amount, blockheight, staking) {
+            this.stakingLine.push({user:user, amount:amount, blockheight:blockheight, staking: staking});
+            let l = this.stakingLine.length;
+            assert.ok(blockheight >= this.stakingLine[l-1].blockheight, "test case error, blockheight");
+        }
+        let tonumber = oldStakingBlockNumber.toNumber();
+        rewardCalcHelper.RegStaking("others", oldStakingAmount.sub(ac1OldStaking).sub(ac2OldStaking), tonumber, true);
+        rewardCalcHelper.RegStaking(ac1, ac1OldStaking, tonumber, true);
+        rewardCalcHelper.RegStaking(ac2, ac2OldStaking, tonumber, true);
+
+        //
         let blockNumber = await curBlockNumber();
-        let passBlock = blockNumber - oldStakingBlockNumber;
+        let passBlock = blockNumber - oldStakingBlockNumber.toNumber();
         let curOldReward = await staking.calcReward(blockNumber, oldStakingAddress);
         //console.log("calcReward oldStakingAddress", (await staking.calcReward(blockNumber, oldStakingAddress)).toString(), "passBlock", passBlock );
         //console.log("rewardPerBlock", rewardPerBlock.toString());
@@ -303,46 +327,62 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         console.log("total old reward delta.abs()", delta.abs().toString());
         assert.equal( delta.abs().cmp(toUnit("0.000001")), -1);
 
+        // calc old reward.
         let ac1Reward = await staking.getTotalReward(blockNumber, ac1);
         let ac2Reward = await staking.getTotalReward(blockNumber, ac2);
         //console.log( [ac1OldStaking, oldStakingAmount, calcOldReward].map( x=>x.toString()) );
-        let calcReward1 = ac1OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20)); // 提高精度
-        let calcReward2 = ac2OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20));
-        //console.log([ac1Reward, ac2Reward, calcReward1, calcReward2].map( x=>x.toString()));
+        let calcAc1Reward1 = ac1OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20)); // 提高精度
+        let calcAc2Reward1 = ac2OldStaking.mul(toBN(1e20)).div(oldStakingAmount).mul(calcOldReward).div(toBN(1e20));
+        //console.log([ac1Reward, ac2Reward, calcAc1Reward1, calcAc2Reward1].map( x=>x.toString()));
 
-        assert.equal( ac1Reward.sub( calcReward1 ).abs().cmp(toUnit("0.000001")), -1 ); /// errr
-        assert.equal( ac2Reward.sub( calcReward2 ).abs().cmp(toUnit("0.000001")), -1 );
-
-        let stakinger = Object.keys(stakingbalance);
-        //... check push old staking data
-        assert.equal(await staking.stakingBalanceOf(stakinger[2]), stakingbalance[stakinger[2]].toString());
-        assert.equal(await staking.stakingBalanceOf(stakinger[7]), stakingbalance[stakinger[7]].toString());
-        // address for log file.
-        assert.equal(await staking.stakingBalanceOf("0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"), stakingbalance["0x749bd6B114bA2e7A9092d4a293250e1f432Ebc8A"].toString());
+        assert.equal( ac1Reward.sub( calcAc1Reward1 ).abs().cmp(toUnit("0.000001")), -1 ); /// errr
+        assert.equal( ac2Reward.sub( calcAc2Reward1 ).abs().cmp(toUnit("0.000001")), -1 );
 
         // staking and cancel staking test
+        let ac1NewStakingHeight1 = await curBlockNumber();
+        let ac1Staking1 = toUnit(10);
         let v = await linaproxy.balanceOf(ac1);
-        await staking.staking( toUnit(10), { from: ac1 });
-        assert.equal(await linaproxy.balanceOf(ac1), v.sub(toUnit(10)).toString() );
-        assert.equal(await staking.amountOf(ac1), toUnit(10).toString());
-        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(10).toString());
-        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(20).toString());
+        await staking.staking( ac1Staking1, { from: ac1 });
+        rewardCalcHelper.RegStaking(ac1, ac1Staking1, ac1NewStakingHeight1, true);
+        assert.equal(await linaproxy.balanceOf(ac1), v.sub(ac1Staking1).toString() );
+        assert.equal(await staking.amountOf(ac1), ac1Staking1.toString());
+        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), ac1OldStaking.toString());
+        assert.equal(await staking.stakingBalanceOf(ac1), ac1Staking1.add(ac1OldStaking).toString());
         
         // reward check.
         
-
         v = await linaproxy.balanceOf(ac1);
-        await staking.cancelStaking( toUnit(5), { from: ac1 } );
-        assert.equal(await linaproxy.balanceOf(ac1), v.add(toUnit(5)).toString() );
-        assert.equal(await staking.amountOf(ac1), toUnit(5).toString());
-        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(10).toString());
-        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(15).toString());
+        let ac1CancelHeight1 = await curBlockNumber();
+        let ac1Cancel1 = toUnit(5);
+        await staking.cancelStaking( ac1Cancel1, { from: ac1 } );
+        rewardCalcHelper.RegStaking(ac1, ac1Cancel1, ac1CancelHeight1, false);
+        assert.equal(await linaproxy.balanceOf(ac1), v.add(ac1Cancel1).toString() );
+        assert.equal(await staking.amountOf(ac1), ac1Cancel1.toString());
+        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), ac1OldStaking.toString());
+        assert.equal(await staking.stakingBalanceOf(ac1), ac1Staking1.add(ac1OldStaking).sub(ac1Cancel1).toString());
 
-        await staking.cancelStaking( toUnit(15), { from: ac1 } );
+        // ac1 cancel reward 1
+        let rewardTotalstaking = totalOld.add(ac1Staking1); // percentage
+        let ac1CancelReward1 = ac1Cancel1.mul(toBN(1e20)).div(rewardTotalstaking).mul( toBN(ac1CancelHeight1-ac1NewStakingHeight1).mul(rewardPerBlock) ).div(toBN(1e20));
+
+        let ac1CancelHeight2 = await curBlockNumber();
+        let ac1Cancel2 = toUnit(15);
+        let ac1stakingbalance = ac1Staking1.add(ac1OldStaking).sub(ac1Cancel1).sub(ac1Cancel2);
+        if (ac1stakingbalance.cmp(toBN(0)) == -1)
+            ac1stakingbalance = toBN(0);
+        let ac1oldstakingbalance = ac1stakingbalance.cmp(ac1OldStaking) == 1? ac1OldStaking: ac1stakingbalance;
+        await staking.cancelStaking( ac1Cancel2, { from: ac1 } );
+        rewardCalcHelper.RegStaking(ac1, ac1Cancel2, ac1CancelHeight2, false);
         assert.equal(await staking.amountOf(ac1), toUnit(0).toString());
-        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), toUnit(0).toString());
-        assert.equal(await staking.stakingBalanceOf(ac1), toUnit(0).toString());
-        // now: totalOld = totalOld - 10
+        assert.equal(await kLnLinearStakingStorage.stakingBalanceOf(ac1), ac1oldstakingbalance.toString());
+        assert.equal(await staking.stakingBalanceOf(ac1), ac1stakingbalance.toString());
+        
+        // ac1 cancel reward 2
+        rewardTotalstaking = totalOld.add(ac1Staking1).sub(ac1Cancel1);
+        let ac1CancelReward2 = toUnit(5).mul(toBN(1e20)).div(rewardTotalstaking).mul( toBN(ac1CancelHeight2-ac1NewStakingHeight1).mul(rewardPerBlock) ).div(toBN(1e20));
+        let ac1CancelReward3 = toUnit(10).mul(toBN(1e20)).div(totalOld).mul( toBN(ac1CancelHeight2-oldStakingBlockNumber).mul(rewardPerBlock) ).div(toBN(1e20));
+
+        totalOld = totalOld.sub(toUnit(10));// sub ac1 cancel2
 
         // reward test
         blocktime = await currentTime();
@@ -352,11 +392,15 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
         await time.advanceBlockTo( start_block.add(toBN(30)));
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay]}, rpcCallback);
+        let ac1NewStakingHeight2 = await curBlockNumber();
         await staking.staking( toUnit(20), { from: ac1 });
+        rewardCalcHelper.RegStaking(ac1, toUnit(20), ac1NewStakingHeight2, true);
 
         await time.advanceBlockTo( start_block.add(toBN(60)));
         await web3.currentProvider.send({method: "evm_increaseTime", params: [oneDay]}, rpcCallback);
+        let ac3StakingHeight1 = await curBlockNumber();
         await staking.staking( toUnit(20), { from: ac3 });
+        rewardCalcHelper.RegStaking(ac3, toUnit(20), ac3StakingHeight1, true);
 
         //set time to end
         blocktime = await currentTime();
@@ -370,6 +414,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         // cancel on staking end, ac1
         let beforecsb = await linaproxy.balanceOf(ac1);
         await staking.cancelStaking( toUnit(30), { from: ac1 } );
+        rewardCalcHelper.RegStaking(ac1, toUnit(20), endRewardBn.toNumber(), false);
         assert.equal( (await linaproxy.balanceOf(ac1)).sub(beforecsb), toUnit(20).toString() );
 
         let newclaimtime = await staking.claimRewardLockTime();
@@ -385,6 +430,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         await staking.cancelStaking( toUnit(30), { from: ac2 } );
         assert.equal( (await linaproxy.balanceOf(ac2)).sub(beforecsb).cmp(toUnit(20)), 0);
 
+        // ac1 claim
         let balance1 = await linaproxy.balanceOf(ac1);
         await staking.claim( {from: ac1} );
         let balance1AfterClaim1 = await linaproxy.balanceOf(ac1);
@@ -396,6 +442,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let balance1AfterClaim11 = await linaproxy.balanceOf(ac1);
         assert.equal(balance1AfterClaim1.cmp(balance1AfterClaim11), 0);
 
+        // ac2 claim
         let balance2 = await linaproxy.balanceOf(ac2);
         await staking.claim( {from: ac2} );
         let balance1AfterClaim2 = await linaproxy.balanceOf(ac2);
@@ -403,14 +450,20 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         assert.equal(claim2.cmp(0), 1);
         assert.equal(claim2.cmp(claim1), 1);
         
+        // ac3 claim
         let balance3 = await linaproxy.balanceOf(ac3);
         await staking.claim( {from: ac3} );
         let balance1AfterClaim3 = await linaproxy.balanceOf(ac3);
         let claim3 = balance1AfterClaim3.sub(balance3);
         assert.equal(claim3.cmp(0), 1);
         assert.equal(claim3.sub(toUnit(20)).cmp(claim1), -1);
-        console.log([claim1,claim2, claim3].map(x=>x.toString()));
+
+        console.log("claims", [claim1,claim2,claim3].map(x=>x.toString()));
         console.log([balance1AfterClaim1,balance1AfterClaim2, balance1AfterClaim3].map(x=>x.toString()));
+        
+        let ac1reward = claim1;
+        let ac2reward = claim2;
+        let ac3reward = claim3.sub(toUnit(20));
 
         //
         async function reclaim(ac) {
@@ -422,20 +475,68 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         await reclaim(ac1);
         await reclaim(ac2);
         await reclaim(ac3);
-        /**
-[ '3431421014999999', '5452670740000000', '20001378835320000000' ]
-[
-  '1010003431421014999999',
-  '1020005452670740000000',
-  '1000001378835320000000'
-]
 
-[ '3431424239999999', '5452675880000000', '20001378836620000000' ]
+        //console.log("ac1CancelReward1,ac1CancelReward2,ac1CancelReward3"); // no use any more.
+        //console.log([ac1CancelReward1,ac1CancelReward2,ac1CancelReward3].map(x=>x.toString()));
+        //console.log("sum:",[ac1CancelReward1,ac1CancelReward2,ac1CancelReward3].reduce((a,x)=>a.add(x)).toString());
+
+//        console.log("rewardCalcHelper.stakingLine", rewardCalcHelper.stakingLine);
+        let stakingAmounts = {};
+        let rewards = {};
+        let lastTotal = toBN(0);
+        let lastHeight = 0;
+        for (let i=0; i < rewardCalcHelper.stakingLine.length; i++) {
+            let stakingItem = rewardCalcHelper.stakingLine[i];
+            let user = stakingItem.user;
+            if (stakingAmounts[user] == null) {
+                stakingAmounts[user] = toBN(0);
+            }
+            if (i > 0 && stakingItem.blockheight > lastHeight) {
+                let totalDeltaRewards = toBN(stakingItem.blockheight - lastHeight).mul(rewardPerBlock);
+                let allUser = Object.keys(stakingAmounts);
+                for (let j=0; j < allUser.length; j++) {
+                    let _user = allUser[j];
+                    if (rewards[_user] == null) {
+                        rewards[_user] = toBN(0);
+                    }
+                    let r = stakingAmounts[_user].mul(toBN(1e20)).div(lastTotal).mul(totalDeltaRewards).div(toBN(1e20));
+                    rewards[_user] = rewards[_user].add(r);
+                }
+            }
+            
+            let stakingAmount = stakingItem.amount;
+            lastTotal = stakingItem.staking ? lastTotal.add(stakingAmount) : lastTotal.sub(stakingAmount);
+            stakingAmounts[user] = stakingItem.staking ? stakingAmounts[user].add(stakingAmount) : stakingAmounts[user].sub(stakingAmount);
+            lastHeight = stakingItem.blockheight;
+
+            //console.log("+", user, stakingAmount.toString());
+        }
+
+        console.log("rewards others", rewards["others"].toString());
+        console.log("rewards ac1", rewards[ac1].toString());
+        console.log("rewards ac2", rewards[ac2].toString());
+        console.log("rewards ac3", rewards[ac3].toString());
+
+        console.log("reward delta");
+        let delta1 = rewards[ac1].sub(ac1reward);
+        let delta2 = rewards[ac2].sub(ac2reward);
+        let delta3 = rewards[ac3].sub(ac3reward);
+
+        console.log("delta1, delta2, delta3", [delta1, delta2, delta3].map(x=> x.toString()));
+        assert.equal(delta1.abs().cmp(toUnit("0.001")), -1);
+        assert.equal(delta2.abs().cmp(toUnit("0.001")), -1);
+        assert.equal(delta3.abs().cmp(toUnit("0.001")), -1);
+        /**
+[ '38388045886220463', '62674378793915963', '20013788353245398250' ]
 [
-  '1010003431424239999999',
-  '1020005452675880000000',
-  '1000001378836620000000'
+  '1010038388045886220463',
+  '1020062674378793915963',
+  '1000013788353245398250'
 ]
+rewards others 99999884209107964277200
+rewards ac1    38701417256282660
+rewards ac2    62674378204704320
+rewards ac3    14415096574734440
          */
     });
 });

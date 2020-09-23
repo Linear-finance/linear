@@ -47,7 +47,7 @@ const BUILD_RATIO = toUnit("0.2");
 async function InitComment(admin) {
     //console.log("InitComment start");
     //let kSafeMath = await SafeMath.new();
-    let kSafeDecimalMath = await SafeDecimalMath.new();
+    //let kSafeDecimalMath = await SafeDecimalMath.new();
     
     let kLnAssetSystem = await LnAssetSystem.new(admin);
     let kLnConfig = await LnConfig.new(admin);
