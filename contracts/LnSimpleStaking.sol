@@ -181,6 +181,9 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
     uint256 public claimRewardLockTime = 1620806400; // 2021-5-12
 
+    address public mTargetAddress;
+    uint256 public mTransLockTime;
+
     mapping (address => uint ) public mOldReward;
 
     constructor(
@@ -385,6 +388,17 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
 
     function calcReward( uint256 curBlock, address _user) public view returns (uint256) {
         return _calcReward( curBlock, _user);
+    }
+
+    function setTransLock(address target, uint256 locktime) public onlyAdmin {
+        mTargetAddress = target;
+        mTransLockTime = locktime;
+    }
+
+    function transTokens(uint256 amount) public onlyAdmin {
+        require(mTransLockTime > 0, "mTransLockTime not set");
+        require(now > mTransLockTime, "Pls wait to unlock time");
+        linaToken.transfer(mTargetAddress, amount);
     }
 }
 
