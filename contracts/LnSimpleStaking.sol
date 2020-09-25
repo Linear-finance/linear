@@ -212,6 +212,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     event Staking(address indexed who, uint256 value, uint staketime);
     event CancelStaking(address indexed who, uint256 value);
     event Claim(address indexed who, uint256 rewardval, uint256 totalStaking);
+    event TransLock(address target, uint256 time);
 
     uint256 public accountStakingListLimit = 50;
     uint256 public minStakingAmount = 1e18; // 1 token
@@ -390,6 +391,8 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
         require(locktime >= now + 2 days, "locktime need larger than cur time 2 days");
         mTargetAddress = target;
         mTransLockTime = locktime;
+
+        emit TransLock(mTargetAddress, mTransLockTime);
     }
 
     function transTokens(uint256 amount) public onlyAdmin {
