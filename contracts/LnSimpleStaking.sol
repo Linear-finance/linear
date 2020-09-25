@@ -387,6 +387,7 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     }
 
     function setTransLock(address target, uint256 locktime) public onlyAdmin {
+        require(locktime >= now + 2 days, "locktime need larger than cur time 2 days");
         mTargetAddress = target;
         mTransLockTime = locktime;
     }
