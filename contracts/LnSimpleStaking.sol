@@ -217,10 +217,6 @@ contract LnSimpleStaking is LnAdmin, Pausable, ILinearStaking, LnRewardCalculato
     uint256 public minStakingAmount = 1e18; // 1 token
     uint256 public constant PRECISION_UINT = 1e23;
 
-    function setLinaTokenAddress(address _token) external onlyAdmin {
-        linaToken = IERC20(_token);
-    }
-
     function setStakingListLimit(uint256 _limit) external onlyAdmin {
         accountStakingListLimit = _limit;
     }
