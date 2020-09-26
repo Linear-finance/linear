@@ -1,10 +1,80 @@
 {
-    "LnFundVault":{"address":"0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9"},
-    "LnTokenStorage":{"address":"0xf1A16D778fE004c495dF8d3C46d2ABe71eCF6CfE"},
-    "LnProxyERC20":{"address":"0x3E9BC21C9b189C09dF3eF1B824798658d5011937"},
-    "LinearFinance":{"address":"0xC0D8B58EDcA5628b121aDb3F7011791716EEb2DC"},
-    "LnTokenLocker":{"address":"0x6c4803280D98D3fBe768aD64e176d6a081D3CB33"},
-    "LnAccessControl":{"address":"0x7853A8f40eA2e8D471c25eEE5D7d6cc35cC27280"}, 
-    "LnLinearStakingStorage":{"address":"0x0FbB62a15e4dddd2d7330821C386f81E994b1f04"}, 
-    "LnLinearStaking":{"address":"0x410903Bff34f4d7DC510FbFd15E5Ba68C7218130"}
+  "LnFundVault": {
+    "address": "0x736273F50d3Bd68de33Fc2Ed5e345a1bE2D175B9"
+  },
+  "LnTokenStorage": {
+    "address": "0xf1A16D778fE004c495dF8d3C46d2ABe71eCF6CfE"
+  },
+  "LnProxyERC20": {
+    "address": "0x3E9BC21C9b189C09dF3eF1B824798658d5011937"
+  },
+  "LinearFinance": {
+    "address": "0xC0D8B58EDcA5628b121aDb3F7011791716EEb2DC"
+  },
+  "LnTokenLocker": {
+    "address": "0x6c4803280D98D3fBe768aD64e176d6a081D3CB33"
+  },
+  "LnAccessControl": {
+    "address": "0x7853A8f40eA2e8D471c25eEE5D7d6cc35cC27280"
+  },
+  "LnLinearStakingStorage": {
+    "address": "0x0FbB62a15e4dddd2d7330821C386f81E994b1f04"
+  },
+  "LnLinearStaking": {
+    "address": "0x410903Bff34f4d7DC510FbFd15E5Ba68C7218130"
+  },
+  "LnTokenCliffLocker_1": {
+    "address": "0x073882b743a3a1E134E8c765bc294f29cFa76b3F"
+  },
+  "LnTokenCliffLocker_2": {
+    "address": "0x10872CFbbD289fEf1Ae359fA68b3bBE824d9D071"
+  },
+  "LnTokenCliffLocker_3": {
+    "address": "0x0d11249D03cfedc309aac189dd2609F9354aE65e"
+  },
+  "LnTokenCliffLocker_4": {
+    "address": "0xA36f6E6d50b88f715A40EA29DF9B64bf04e6DE91"
+  },
+  "LnTokenCliffLocker_5": {
+    "address": "0x26c86A1E780Ac70DCd7a034D39E988627d1a46a4"
+  },
+  "LnTokenCliffLocker_6": {
+    "address": "0x6aEd4faE4A19f0312c2c1236f5974195E3D1f258"
+  },
+  "LnTokenCliffLocker_7": {
+    "address": "0xA425dc6db122B6Ae5214109D213d80C76D3619ab"
+  },
+  "LnTokenCliffLocker_8": {
+    "address": "0xe42a84577B6cc949bf6a965235B956334d357A41"
+  },
+  "LnSimpleStaking": {
+    "address": "0xeEA988387700dB4e163cd72D8d4A6994af31EeB1"
+  },
+  "LinearFinance_1601113184628": {
+    "address": "0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA"
+  },
+  "LnTokenCliffLocker_1601117000710": {
+    "address": "0x59C02617C9DB4a2a77176A3DE771f280027F4b50"
+  },
+  "LnTokenCliffLocker_1601117000712": {
+    "address": "0x834a21D15EC6c2479A39c6b4b9Db3BA9598A1169"
+  },
+  "LnTokenCliffLocker_1601117055190": {
+    "address": "0x2662c886969DE43F70A9509A6CE23DbeB00d53Ac"
+  },
+  "LnTokenCliffLocker_1601117093058": {
+    "address": "0x3638B11ce641432Eb28B1F5264b61133C8618c1c"
+  },
+  "LnTokenCliffLocker_1601117149560": {
+    "address": "0x94191c407f22F4e975069a78021B44c0ACa2C7fd"
+  },
+  "LnTokenCliffLocker_1601117213179": {
+    "address": "0xcfFb48Ddd13bB6D19CF832888F3c55F5e3673a63"
+  },
+  "LnTokenCliffLocker_1601117259385": {
+    "address": "0x289CefD0C5ff738307c2e555dfe36e0dd68d3beb"
+  },
+  "LnTokenCliffLocker_1601117314230": {
+    "address": "0xd2bA0F0FbBecFe3b2330127971048E2B9285F526"
+  }
 }
