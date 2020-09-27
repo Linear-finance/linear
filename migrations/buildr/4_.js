@@ -1,5 +1,8 @@
-const {DeployIfNotExist, CallWithEstimateGas} = require("../utility/truffle-tool");
-const {newAssetToken} = require("./helpers");
+const {DeployIfNotExist, CallWithEstimateGas} = require("../../utility/truffle-tool");
+const {newAssetToken} = require("../helpers");
+
+const w3utils = require('web3-utils');
+const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
@@ -11,6 +14,7 @@ const LnAssetSystem = artifacts.require("LnAssetSystem");
 
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
+    const admin = accounts[0];
 
     let kLinearFinance = await LinearFinance.deployed();
     let linaProxyErc20Address = await kLinearFinance.proxy();
