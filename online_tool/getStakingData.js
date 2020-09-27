@@ -34,7 +34,7 @@ async function get_staking_logs() {
     let writeTo = "stakingBlock.log";
     kLnLinearStaking.on(
         "Staking", (who, value, staketime, event) => {
-            let msg = '["Staking", "' + who.toString() + '", "' + value.toString() + '", "' + staketime.toString() + '", ' + event.blockNumber + '],\n';
+            let msg = '["Staking", "' + who.toString() + '", "' + value.toString() + '", "' + staketime.toString() + '","' + event.transactionHash + '", ' + event.blockNumber + '],\n';
             console.log(msg);
             const data = new Uint8Array(Buffer.from(msg));
             fs.appendFileSync(writeTo, data);
@@ -42,7 +42,7 @@ async function get_staking_logs() {
     );
     kLnLinearStaking.on(
         "CancelStaking", (who, value, event) => {
-            let msg = '["CancelStaking", "' + who.toString() + '", "' + value.toString() + '", ' + event.blockNumber + '],\n';
+            let msg = '["CancelStaking", "' + who.toString() + '", "' + value.toString() + '", "' + event.transactionHash + '", ' + event.blockNumber + '],\n';
             console.log(msg);
             const data = new Uint8Array(Buffer.from(msg));
             fs.appendFileSync(writeTo, data);
@@ -75,9 +75,9 @@ async function get_lina_transfer_logs() {
   }
 }
 
-//get_staking_logs();
+get_staking_logs();
 
-get_lina_transfer_logs();
+//get_lina_transfer_logs();
 
 setInterval(() => {
     //console.log('Infinite Loop Test interval n:', i++);
