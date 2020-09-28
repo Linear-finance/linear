@@ -76,5 +76,8 @@
   },
   "LnTokenCliffLocker_1601117314230": {
     "address": "0xd2bA0F0FbBecFe3b2330127971048E2B9285F526"
+  },
+  "LnEndAdmin": {
+    "address":"0x38d47d313e70d0Cbcf618ADBB84b0dA66d35ED5E"
   }
 }
