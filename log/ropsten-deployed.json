@@ -64,5 +64,14 @@
   },
   "LinearFinance_1601112825825": {
     "address": "0x405f2189FAc0508b7FF37dC7B82C95394c30277c"
+  },
+  "LnTokenCliffLocker": {
+    "address": "0x18F351E0632693Ab9AA2C6f4003f6C71a7885Da0"
+  },
+  "LnTokenCliffLocker_1601280838249": {
+    "address": "0x8b2819EAE8E7B0efD7F0a49CE5438bc75b8Eb449"
+  },
+  "LnTokenCliffLocker_1601281224410": {
+    "address": "0xBbecd0ad5C0Bf17F30ED287AD0119804d44938d3"
   }
 }
