@@ -30,13 +30,14 @@ module.exports = function (deployer, network, accounts) {
     }
     
     let kLnTokenCliffLocker = await DeployWithEstimate(deployer, LnTokenCliffLocker, linaProxyErc20Address, admin);
+    // mainnet 0x36cd1B5e4F4F2C4978Ec5D4253458bEe971e841b
 
     let jsonObj = JSON.parse(fs.readFileSync("./migrations/linaToken/oldStakingLockReward.json"));
     if (network == "ropsten") {
       jsonObj.push(["0x27f12994A218B1649FE185D19aAC00310aB198C5", toUnit(1000)]);
     }
     let maxList = 40;
-    let lockTo = 1605168000;
+    let lockTo = 1620806400;
     if (network == "ropsten") {
       lockTo = 1601287507;
     }
