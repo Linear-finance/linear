@@ -6,7 +6,7 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
-const {InitComment, newAssetToken, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
+const {InitComment, CreateLina, exceptionEqual, exceptionNotEqual} = require ("./common.js");
 const { ethers } = require('ethers');
 
 contract('test LnCollateralSystem', async (accounts)=> {
@@ -174,6 +174,8 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
         assert.equal(v.valueOf(), 200*1e18);
 
+        //TODO: CollateralEth 重入测试，
+
     });
 
     it('Pausable', async function () {
@@ -215,5 +217,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
             kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1}),
             "Pausable: paused");
     });
+
+    // RedeemETH contract call this function test
 });
 
