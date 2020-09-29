@@ -41,6 +41,12 @@ function getDeployedAddress(contract) {
     return null
 }
 
+function getDeployedByName(name) {
+    let file = getDeployedFileName();
+    let deployed = readJson(file);
+    return deployed[name].address;
+}
+
 async function GetDeployed(contract, deployedAddress) {
     try {
         var deployed = await contract.deployed();
@@ -63,18 +69,22 @@ async function GetDeployed(contract, deployedAddress) {
     return null
 }
 
-async function SaveContractAddress(contactObj, newContract) {
+async function SaveContractAddress(contactObj, newContract, suffix) {
     let recordName = contactObj.contractName;
+    if (suffix != null) {
+        recordName = recordName + "_" + suffix;
+    }
     if (recordName == "LnAsset") {
         let symbol = await newContract.symbol();
         recordName = recordName + "_" + symbol;
     }
     if (deployedContracts[recordName] != null) {
         let timestamp = Date.now();
-        console.log("contact has in deployed log file", timestamp);
+        console.log("save contract address", contactObj.contractName, recordName);
         deployedContracts[recordName+"_"+timestamp] = {address: newContract.address}
     } else {
         deployedContracts[recordName] = {address: newContract.address}
+        console.log("save contract address", contactObj.contractName, recordName);
     }
     let file = getDeployedFileName();
     fs.writeFileSync(file, JSON.stringify(deployedContracts, null, 2));
@@ -82,9 +92,17 @@ async function SaveContractAddress(contactObj, newContract) {
 
 async function DeployWithEstimate(deployer, contactObj, ...manyMoreArgs) {
     let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
-    console.log("estimate gaslimit:", contactObj.contractName, gaslimit);
+    console.log("new gaslimit:", contactObj.contractName, gaslimit);
     let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
     await SaveContractAddress(contactObj, newContract);
+    return newContract;
+}
+
+async function DeployWithEstimateSuffix(deployer, suffix, contactObj, ...manyMoreArgs) {
+    let gaslimit = await contactObj.new.estimateGas(...manyMoreArgs);
+    console.log("new gaslimit:", contactObj.contractName, gaslimit);
+    let newContract = await deployer.deploy(contactObj, ...manyMoreArgs, {gas: gaslimit});
+    await SaveContractAddress(contactObj, newContract, suffix);
     return newContract;
 }
 
@@ -115,6 +133,8 @@ exports.GetDeployed = GetDeployed
 exports.DeployIfNotExist = DeployIfNotExist
 exports.toBytes32 = toBytes32
 exports.DeployWithEstimate = DeployWithEstimate
+exports.DeployWithEstimateSuffix = DeployWithEstimateSuffix
 exports.getDeployedAddress = getDeployedAddress
+exports.getDeployedByName = getDeployedByName
 exports.CallWithEstimateGas = CallWithEstimateGas
 

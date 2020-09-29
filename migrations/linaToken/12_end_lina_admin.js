@@ -13,7 +13,12 @@ module.exports = function (deployer, network, accounts) {
     const admin = accounts[0];
     let gaslimit = 0;
  
-    let kLinearFinance = await LinearFinance.at("0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA");
+    let kLinearFinance;
+    if (network == "mainnet") {
+      kLinearFinance = await LinearFinance.at("0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA");
+    } else {
+      kLinearFinance = await LinearFinance.deployed();
+    }
     let linaProxyErc20Address = await kLinearFinance.proxy();
     let storageAddress = await kLinearFinance.tokenStorage();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
@@ -25,8 +30,8 @@ module.exports = function (deployer, network, accounts) {
       assert.ok(storageAddress == "0xf1A16D778fE004c495dF8d3C46d2ABe71eCF6CfE");
     }
 
-    //let kLnEndAdmin = await DeployIfNotExist(deployer, LnEndAdmin);
-    let kLnEndAdmin = await LnEndAdmin.at("0x38d47d313e70d0Cbcf618ADBB84b0dA66d35ED5E");
+    let kLnEndAdmin = await DeployIfNotExist(deployer, LnEndAdmin);
+    //let kLnEndAdmin = await LnEndAdmin.at("0x38d47d313e70d0Cbcf618ADBB84b0dA66d35ED5E");
     
     //await CallWithEstimateGas(kLinearFinance.setCandidate, kLnEndAdmin.address);
     //await CallWithEstimateGas(kLnProxyERC20.setCandidate, kLnEndAdmin.address);

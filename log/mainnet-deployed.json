@@ -9,7 +9,7 @@
     "address": "0x3E9BC21C9b189C09dF3eF1B824798658d5011937"
   },
   "LinearFinance": {
-    "address": "0xC0D8B58EDcA5628b121aDb3F7011791716EEb2DC"
+    "address": "0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA"
   },
   "LnTokenLocker": {
     "address": "0x6c4803280D98D3fBe768aD64e176d6a081D3CB33"
@@ -49,9 +49,6 @@
   },
   "LnSimpleStaking": {
     "address": "0xeEA988387700dB4e163cd72D8d4A6994af31EeB1"
-  },
-  "LinearFinance_1601113184628": {
-    "address": "0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA"
   },
   "LnTokenCliffLocker_1601117000710": {
     "address": "0x59C02617C9DB4a2a77176A3DE771f280027F4b50"

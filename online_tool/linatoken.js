@@ -6,12 +6,12 @@ const assert = require('assert')
 const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
-
+const {getDeployedByName} = require("../utility/truffle-tool");
 
 let gasPrice = process.env.ETH_GAS_PRICE == null ? 10000000000 : process.env.ETH_GAS_PRICE;
 let network = process.env.NETWORK;
 const privatekey = process.env.WALLET_PRIVATE_KEY;
-const providerURL = "https://"+network+".infura.io/v3/" + process.env.INFURA_PROJECT_ID;
+let providerURL = "https://"+network+".infura.io/v3/" + process.env.INFURA_PROJECT_ID;
 
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 
@@ -99,14 +99,25 @@ async function getTotalReward(blocknumber) {
     }
 }
 
+async function getLiquidsInUsd(adddress) {
+    let assetSysAddress = getDeployedByName("LnAssetSystem");
+    let assetSystem = new ethers.Contract(assetSysAddress, getAbi("LnAssetSystem"), provider);
+    
+    let assetAddress = await assetSystem.getAssetAddresses();
+    console.log(assetAddress);
+    let total = toBN(0); // BigNumber
+    for(let i=0; i<assetAddress.lenght; i++) {
+        let asset = new ethers.Contract(assetAddress[i], getAbi("LnAsset"), provider);
+        let balance = await asset.balanceOf(adddress);
+        total = total == null ? balance : total.add(balance);
+    }
+    console.log("getLiquidsInUsd", adddress, total.toString());
+    return total;
+}
+
 //increment.then((value) => {
 //    console.log(value);
 //});
 
-// run only one async func 
 
-//mint();
-//setTimePeriod();
-getPoolInfo();
-getTotalReward(8752234);
-getTotalReward(8752235);
+getLiquidsInUsd("0x81de13D9749cEb529638353bD5086D6CBb942fDd");

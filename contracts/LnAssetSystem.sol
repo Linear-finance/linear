@@ -66,6 +66,14 @@ contract LnAssetSystem is LnAddressStorage {
         }
     }
 
+    function getAssetAddresses() external view returns(address[] memory) {
+        address[] memory addr = new address[](mAssetList.length);
+        for (uint256 i=0; i<mAssetList.length; i++) {
+            addr[i] = address(mAssetList[i]);
+        }
+        return addr;
+    }
+
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
 }

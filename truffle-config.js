@@ -117,10 +117,21 @@ module.exports = {
       provider: () => CreateHDWallet(privatekey, "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
         network_id: "*",       // Ropsten's id
         gas: 5500000,        // Ropsten has a lower block limit than mainnet
+        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000,
         confirmations: 0,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
         networkCheckTimeout: 50000,
         skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    },
+    kovan: {
+      provider: () => CreateHDWallet(privatekey, "https://kovan.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
+        network_id: "*",
+        gas: 5500000, 
+        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000,
+        confirmations: 0,
+        timeoutBlocks: 2000,
+        networkCheckTimeout: 50000,
+        skipDryRun: true
     }
   },
 

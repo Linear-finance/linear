@@ -17,6 +17,9 @@ module.exports = function (deployer, network, accounts) {
     let kLinearFinance = await LinearFinance.deployed();
     if (network == "mainnet") {
       kLinearFinance = await LinearFinance.at("0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA");
+    } else {
+      console.log("Byebye, jump over.");
+      return;
     }
     let linaProxyErc20Address = await kLinearFinance.proxy();
     let storageAddress = await kLinearFinance.tokenStorage();

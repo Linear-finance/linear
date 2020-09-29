@@ -19,7 +19,12 @@ module.exports = function (deployer, network, accounts) {
     const admin = accounts[0];
     let gaslimit = 0;
  
-    let kLinearFinance = await LinearFinance.at("0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA");
+    let kLinearFinance;
+    if (network == "mainnet") {
+      kLinearFinance = await LinearFinance.at("0xA7e9dA4851992b424BAb4c8AE97689AF69C654FA");
+    } else {
+      kLinearFinance = await LinearFinance.deployed();
+    }
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
     let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);

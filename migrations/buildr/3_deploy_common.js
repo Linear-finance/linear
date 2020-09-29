@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {DeployIfNotExist, DeployWithEstimate, CallWithEstimateGas} = require("../../utility/truffle-tool");
+const {DeployIfNotExist, DeployWithEstimate, DeployWithEstimateSuffix, CallWithEstimateGas} = require("../../utility/truffle-tool");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -24,9 +24,12 @@ const LnRewardCalculator = artifacts.require("LnRewardCalculator");
 
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
-    let kLnProxyERC20 = await DeployWithEstimate(deployer, LnProxyERC20, admin);
-    let kLnTokenStorage = await DeployWithEstimate(deployer, LnTokenStorage, admin, admin);
-    let kAsset = await DeployWithEstimate(deployer, LnAsset, keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
+    let kLnProxyERC20 = await DeployWithEstimateSuffix(deployer, name, 
+      LnProxyERC20, admin);
+    let kLnTokenStorage = await DeployWithEstimateSuffix(deployer, name, 
+      LnTokenStorage, admin, admin);
+    let kAsset = await DeployWithEstimateSuffix(deployer, name, 
+      LnAsset, keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
 
     await CallWithEstimateGas(kLnTokenStorage.setOperator, kAsset.address);
     await CallWithEstimateGas(kLnProxyERC20.setTarget, kAsset.address);
