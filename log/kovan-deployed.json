@@ -17,12 +17,6 @@
   "LnLinearStakingStorage": {
     "address": "0x24B36B210d0A3Ed619Dae017D62a4A7738b2F5FD"
   },
-  "LnAccessControl_1601364736372": {
-    "address": "0x53a14E7E12a2FE7bc208bf944A5192714805a92a"
-  },
-  "LnLinearStakingStorage_1601364772307": {
-    "address": "0x245CD4E89329Be70e855053C24ef3D5dB7E10029"
-  },
   "LnLinearStaking": {
     "address": "0x7aDf0e91A5f3eDB3cd1771a0957955f09e454305"
   },
