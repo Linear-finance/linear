@@ -61,5 +61,17 @@
   },
   "LnTokenCliffLocker_1601281224410": {
     "address": "0xBbecd0ad5C0Bf17F30ED287AD0119804d44938d3"
+  },
+  "LnAssetSystem": {
+    "address": "0x6fC22E72025f3aF13cB9115F424C596cB7A58CB1"
+  },
+  "LnProxyERC20_lUSD": {
+    "address": "0x1171dB6a1d2539256C5234b36d0BE2C3c75BFC59"
+  },
+  "LnTokenStorage_lUSD": {
+    "address": "0xF3eb0E37C4CA8211d6c295ab9238D54c9D266Be4"
+  },
+  "LnAsset_lUSD": {
+    "address": "0x72d369772c316D0a9F002A00C10588a4cbadd388"
   }
 }

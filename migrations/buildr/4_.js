@@ -1,4 +1,4 @@
-const {DeployIfNotExist, CallWithEstimateGas, getDeployedByName} = require("../../utility/truffle-tool");
+const {DeployIfNotExist, CallWithEstimateGas, getDeployedByName, getDeployedAddress} = require("../../utility/truffle-tool");
 const {newAssetToken} = require("../helpers");
 
 const w3utils = require('web3-utils');
