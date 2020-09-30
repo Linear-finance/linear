@@ -432,6 +432,8 @@ contract MultiSigForTransferFunds {
     uint mAmount;
     LnSimpleStaking mStaking;
     address[] mAdminArr;
+    uint mTransLockTime;
+
 
     constructor(address[] memory _addr, uint iConfirmNumb,  LnSimpleStaking _staking ) public {
         for( uint i = 0; i < _addr.length; ++i ){
@@ -454,6 +456,8 @@ contract MultiSigForTransferFunds {
         mAmount = amount;
         mProposalNumb = 1;
         mAdmins[ msg.sender] = 2; // 
+
+        mTransLockTime = locktime;
     }
 
     // call this when the locktime expired
@@ -464,6 +468,9 @@ contract MultiSigForTransferFunds {
     }
 
     function doTransfer() public {
+        require(mTransLockTime > 0, "mTransLockTime not set");
+        require(now > mTransLockTime, "Pls wait to unlock time");
+
         if( mProposalNumb >= mConfirmNumb ){
             mStaking.transTokens( mAmount );
             _reset();
@@ -473,6 +480,7 @@ contract MultiSigForTransferFunds {
 
     function _reset() internal {
         mProposalNumb = 0; 
+        mTransLockTime = 0;
         // reset
         for( uint i = 0; i < mAdminArr.length; ++i ){
             mAdmins[ mAdminArr[i]] = 1;
