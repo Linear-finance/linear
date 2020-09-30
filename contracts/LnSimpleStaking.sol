@@ -427,13 +427,12 @@ contract HelperPushStakingData is LnAdmin {
 
 contract MultiSigForTransferFunds {
     mapping (address => uint ) public mAdmins;
-    uint mConfirmNumb;
-    uint mProposalNumb;
-    uint mAmount;
-    LnSimpleStaking mStaking;
-    address[] mAdminArr;
-    uint mTransLockTime;
-
+    uint public mConfirmNumb;
+    uint public mProposalNumb;
+    uint public mAmount;
+    LnSimpleStaking public mStaking;
+    address[] public mAdminArr;
+    uint public mTransLockTime;
 
     constructor(address[] memory _addr, uint iConfirmNumb,  LnSimpleStaking _staking ) public {
         for( uint i = 0; i < _addr.length; ++i ){
@@ -450,7 +449,7 @@ contract MultiSigForTransferFunds {
     }
 
     function setTransLock(address target, uint256 locktime, uint amount ) public {
-        require( mAdmins[ msg.sender] == 1 );
+        require( mAdmins[ msg.sender] == 1, "not in admin list or set state" );
         _reset();
         mStaking.setTransLock( target, locktime );
         mAmount = amount;
@@ -462,7 +461,7 @@ contract MultiSigForTransferFunds {
 
     // call this when the locktime expired
     function confirmTransfer() public {
-        require( mAdmins[ msg.sender] == 1 );
+        require( mAdmins[ msg.sender] == 1, "not in admin list or set state" );
         mProposalNumb = mProposalNumb + 1;
         mAdmins[ msg.sender ] = 2;
     }
@@ -470,11 +469,10 @@ contract MultiSigForTransferFunds {
     function doTransfer() public {
         require(mTransLockTime > 0, "mTransLockTime not set");
         require(now > mTransLockTime, "Pls wait to unlock time");
+        require(mProposalNumb >= mConfirmNumb, "need more confirm");
 
-        if( mProposalNumb >= mConfirmNumb ){
-            _reset();
-            mStaking.transTokens( mAmount );
-        }
+        _reset();
+        mStaking.transTokens( mAmount );
     }
 
 

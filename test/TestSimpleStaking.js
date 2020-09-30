@@ -9,6 +9,7 @@ const LnAccessControl = artifacts.require("LnAccessControl");
 const LnLinearStaking = artifacts.require("LnLinearStaking");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const HelperPushStakingData = artifacts.require("HelperPushStakingData");
+const MultiSigForTransferFunds = artifacts.require("MultiSigForTransferFunds");
 
 const fs = require('fs');
 
@@ -39,7 +40,7 @@ const curBlockNumber = async () => {
 }
 
 contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
-
+/**
     it('reward calc test', async () => {
         // 100 per block farming rate starting at block 300 with bonus until block 1000
         let calculator = await LnRewardCalculatorTest.new('1000', '300', { from: alice });
@@ -542,17 +543,113 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let bt = await linaproxy.balanceOf(testaddress);
         assert.equal(bt.cmp(toUnit(1)), 0);
 
-        /**
-[ '38388045886220463', '62674378793915963', '20013788353245398250' ]
-[
-  '1010038388045886220463',
-  '1020062674378793915963',
-  '1000013788353245398250'
-]
-rewards others 99999884209107964277200
-rewards ac1    38701417256282660
-rewards ac2    62674378204704320
-rewards ac3    14415096574734440
-         */
+        
+// [ '38388045886220463', '62674378793915963', '20013788353245398250' ]
+// [
+//   '1010038388045886220463',
+//   '1020062674378793915963',
+//   '1000013788353245398250'
+// ]
+// rewards others 99999884209107964277200
+// rewards ac1    38701417256282660
+// rewards ac2    62674378204704320
+// rewards ac3    14415096574734440
+         
+    });
+*/
+    // MultiSigForTransferFunds
+    it('MultiSigForTransferFunds', async () => {
+        let [ admin, ac1, ac2, ac3 ] = [alice,bob,carol,dev];
+        const [lina,linaproxy] = await CreateLina(admin);
+        const kLnAccessControl = await LnAccessControl.new(admin);
+        const kLnLinearStakingStorage = await LnLinearStakingStorage.new(admin, kLnAccessControl.address);
+        const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
+
+        let cur_block = await time.latestBlock();
+        const rewardPerBlock = toUnit(1000);
+        let startRewardBn = cur_block;
+        let endRewardBn = startRewardBn.add(toBN(10));
+        const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, rewardPerBlock, startRewardBn, endRewardBn);
+        await kLnAccessControl.SetRoles( roleKey, [staking.address], [true] );
+
+        await lina.mint(staking.address, toUnit(10000), { from: admin });
+
+        let admins = [ac1,ac2,ac3];
+
+        const kMultiSigForTransferFunds = await MultiSigForTransferFunds.new(admins, 3, staking.address);
+
+        await staking.setCandidate(kMultiSigForTransferFunds.address);
+        await kMultiSigForTransferFunds.becomeAdmin(staking.address);
+
+        let blocktime = await currentTime();
+        
+        async function exceptionRevert(p) {
+            try {
+                await p;
+            } catch(e) {
+                assert.equal(e.toString().includes("VM Exception while processing transaction: revert"), true);
+            }
+        }
+
+        // not in multi admin
+        await exceptionRevert( kMultiSigForTransferFunds.setTransLock(admin, blocktime+3*oneDay, toBN(1)));
+
+        await kMultiSigForTransferFunds.setTransLock(admin, blocktime+3*oneDay, toBN(1), {from:ac1});
+        
+        // ac1 need to wait 
+        let transLockTime = blocktime+3*oneDay;
+        await exceptionRevert(kMultiSigForTransferFunds.setTransLock(admin, transLockTime, toBN(1), {from:ac1}));
+        await exceptionRevert(kMultiSigForTransferFunds.confirmTransfer({from:ac1}));
+
+        await kMultiSigForTransferFunds.confirmTransfer({from:ac2});
+        assert.equal((await kMultiSigForTransferFunds.mProposalNumb()).cmp(toBN(2)), 0);
+        await exceptionRevert(kMultiSigForTransferFunds.confirmTransfer({from:ac2}));
+
+        blocktime = await currentTime();
+        if (blocktime < transLockTime) {
+            console.log("not unlock time");
+            await exceptionEqual(kMultiSigForTransferFunds.doTransfer(),
+                "Pls wait to unlock time"
+            );
+
+            await web3.currentProvider.send({method: "evm_increaseTime", params: [transLockTime-blocktime+1]}, rpcCallback);
+        }
+
+        await exceptionEqual(
+            kMultiSigForTransferFunds.doTransfer(),
+            "need more confirm"
+        );
+        
+        await (kMultiSigForTransferFunds.confirmTransfer({from:ac3}));
+
+        await kMultiSigForTransferFunds.doTransfer();
+        
+        assert.equal( (await linaproxy.balanceOf(admin)).cmp(toBN(1)), 0 );
+
+        blocktime = await currentTime();
+        transLockTime = blocktime+3*oneDay;
+        await exceptionEqual(
+            kMultiSigForTransferFunds.setTransLock(admin, transLockTime, toBN(1), {from: admin}),
+            "not in admin list or set state"
+        );
+
+        await kMultiSigForTransferFunds.setTransLock(admin, transLockTime, toBN(1), {from: ac3});
+        await exceptionEqual(
+            kMultiSigForTransferFunds.setTransLock(admin, transLockTime, toBN(1), {from: ac3}),
+            "not in admin list or set state"
+        );
+        await kMultiSigForTransferFunds.confirmTransfer({from:ac1});
+        await kMultiSigForTransferFunds.confirmTransfer({from:ac2});
+
+        blocktime = await currentTime();
+        if (blocktime < transLockTime) {
+            await exceptionEqual(kMultiSigForTransferFunds.doTransfer(),
+                "Pls wait to unlock time"
+            );
+
+            await web3.currentProvider.send({method: "evm_increaseTime", params: [transLockTime-blocktime+1]}, rpcCallback);
+        }
+        await kMultiSigForTransferFunds.doTransfer();
+        assert.equal( (await linaproxy.balanceOf(admin)).cmp(toBN(2)), 0 );
     });
 });

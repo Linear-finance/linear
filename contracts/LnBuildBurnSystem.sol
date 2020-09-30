@@ -65,14 +65,14 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     event UpdateLusdToken(address oldAddr, address newAddr);
 
-    function MaxCanBuildAsset(address user) external view returns(uint256) {
+    function MaxCanBuildAsset(address user) public view returns(uint256) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).mul(buildRatio).div(SafeDecimalMath.unit());
         return maxCanBuild;
     }
 
     // build lusd
-    function BuildAsset(uint256 amount) external whenNotPaused returns(bool) {
+    function BuildAsset(uint256 amount) public whenNotPaused returns(bool) {
         address user = msg.sender;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
@@ -98,6 +98,12 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         lUSDToken.mint(user, amount);
 
         return true;
+    }
+
+    function BuildMaxAsset() external whenNotPaused {
+        address user = msg.sender;
+        uint256 max = MaxCanBuildAsset(user);
+        BuildAsset(max);
     }
 
     // burn
