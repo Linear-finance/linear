@@ -422,3 +422,60 @@ contract HelperPushStakingData is LnAdmin {
 
     //unstaking.
 }
+
+
+
+contract MultiSigForTransferFunds {
+    mapping (address => uint ) public mAdmins;
+    uint mConfirmNumb;
+    uint mProposalNumb;
+    uint mAmount;
+    LnSimpleStaking mStaking;
+    address[] mAdminArr;
+
+    constructor(address[] memory _addr, uint iConfirmNumb,  LnSimpleStaking _staking ) public {
+        for( uint i = 0; i < _addr.length; ++i ){
+            mAdmins[ _addr[i] ] = 1;
+        }
+        mConfirmNumb = iConfirmNumb;
+        mProposalNumb = 0;
+        mStaking = _staking;
+        mAdminArr = _addr;
+    }
+
+    function becomeAdmin(address target) external {
+        LnAdmin(target).becomeAdmin();
+    }
+
+    function setTransLock(address target, uint256 locktime, uint amount ) public {
+        require( mAdmins[ msg.sender] == 1 );
+        _reset();
+        mStaking.setTransLock( target, locktime );
+        mAmount = amount;
+        mProposalNumb = 1;
+        mAdmins[ msg.sender] = 2; // 
+    }
+
+    // call this when the locktime expired
+    function confirmTransfer() public {
+        require( mAdmins[ msg.sender] == 1 );
+        mProposalNumb = mProposalNumb + 1;
+        mAdmins[ msg.sender ] = 2;
+    }
+
+    function doTransfer() public {
+        if( mProposalNumb >= mConfirmNumb ){
+            mStaking.transTokens( mAmount );
+            _reset();
+        }
+    }
+
+
+    function _reset() internal {
+        mProposalNumb = 0; 
+        // reset
+        for( uint i = 0; i < mAdminArr.length; ++i ){
+            mAdmins[ mAdminArr[i]] = 1;
+        }
+    }
+}
