@@ -472,8 +472,8 @@ contract MultiSigForTransferFunds {
         require(now > mTransLockTime, "Pls wait to unlock time");
 
         if( mProposalNumb >= mConfirmNumb ){
-            mStaking.transTokens( mAmount );
             _reset();
+            mStaking.transTokens( mAmount );
         }
     }
 
