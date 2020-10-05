@@ -231,15 +231,25 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
-    // payable eth receive, 
-    function CollateralEth() external payable whenNotPaused returns (bool) {
+    receive() external whenNotPaused payable {
         address user = msg.sender;
         uint256 ethAmount = msg.value;
+        _CollateralEth(user, ethAmount);
+    }
+
+    function _CollateralEth(address user, uint256 ethAmount) internal {
         require(ethAmount > 0, "ETH amount need more than zero");
         
         userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.add(ethAmount);
 
         emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
+    }
+
+    // payable eth receive, 
+    function CollateralEth() external payable whenNotPaused returns (bool) {
+        address user = msg.sender;
+        uint256 ethAmount = msg.value;
+        _CollateralEth(user, ethAmount);
         return true;
     }
 

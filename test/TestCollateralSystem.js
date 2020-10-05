@@ -14,6 +14,8 @@ contract('test LnCollateralSystem', async (accounts)=> {
     const ac0 = accounts[0];
     const ac1 = accounts[1];
     const ac2 = accounts[2];
+    const ac3 = accounts[3];
+    const ac4 = accounts[4];
     
     // don't call any await async funtions here
 
@@ -174,8 +176,26 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
         assert.equal(v.valueOf(), 200*1e18);
 
-        //TODO: CollateralEth 重入测试，
+        let preBalance = await web3.eth.getBalance(kLnCollateralSystem.address);
+        let ac3Balance = await web3.eth.getBalance(ac3);
+        let retSendTx = await kLnCollateralSystem.sendTransaction({from:ac3, value:toUnit(1)});
+        //console.log(retSendTx);
+        v = await web3.eth.getBalance(kLnCollateralSystem.address);
+        assert.equal(v-preBalance, toUnit(1).toString());
+        let goneamount = ac3Balance-(await web3.eth.getBalance(ac3)-retSendTx.receipt.gasUsed);
+        console.log("goneamount", goneamount);
+        assert.ok(goneamount >= 1e18); // ?? why bigger then 1 eth
 
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v.cmp(toUnit(200)), 0);
+
+        await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac3});
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
+        assert.equal(v.cmp(toUnit(0)), 0);
+        //revert
+        //await kLnCollateralSystem.sendTransaction({from:ac3, value:toUnit(1), data:"0x1234567890"});
+        
+        //TODO: CollateralEth 重入测试，
     });
 
     it('Pausable', async function () {
@@ -211,6 +231,10 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         await exceptionNotEqual(
             kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)}),
+            "Pausable: paused");
+
+        await exceptionNotEqual(
+            kLnCollateralSystem.sendTransaction({from:ac1, value:toUnit(1)}),
             "Pausable: paused");
 
         await exceptionNotEqual(

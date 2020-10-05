@@ -48,7 +48,8 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         priceGetter =    LnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
         debtSystem = LnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
         assetSys =  LnAssetSystem( _addressStorage.getAddressWithRequire( "LnAssetSystem","LnAssetSystem address not valid" ) );
-        collaterSys = LnCollateralSystem( _addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ) );
+        address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
+        collaterSys = LnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
 
         emit updateCachedAddress( "LnPrices",           address(priceGetter) );
