@@ -36,12 +36,22 @@ module.exports = function (deployer, network, accounts) {
       let testaddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa";
       let testamount = toUnit(1000000000);
       //await CallWithEstimateGas(kLinearFinance.mint, testaddress, testamount);
+
+      const linaBytes32 = toBytes32("LINA");
+      const ETHBytes32 = toBytes32("ETH");
+      const lUSDBytes32 = toBytes32("lUSD");
+      await CallWithEstimateGas(kLnChainLinkPrices.updateAll, 
+        [linaBytes32, ETHBytes32, lUSDBytes32],
+        [toUnit(0.02), toUnit(351), toUnit(1)],
+        Math.floor(Date.now()/1000).toString()
+      );
     }
 
     let kLnCollateralSystem = await LnCollateralSystem.deployed();
     // 添加抵押物信息
-    let linaAddress = getDeployedByName("LnProxyERC20");
-    await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, toBytes32("LINA"), linaAddress, toBN(0), false);
+    await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, 
+        toBytes32("LINA"), linaProxyErc20Address, toBN(0), false
+    );
     
   });
 };

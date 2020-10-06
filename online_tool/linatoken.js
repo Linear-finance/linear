@@ -7,6 +7,7 @@ const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 const {getDeployedByName} = require("../utility/truffle-tool");
+const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 let gasPrice = process.env.ETH_GAS_PRICE == null ? 10000000000 : process.env.ETH_GAS_PRICE;
 let network = process.env.NETWORK;
@@ -115,9 +116,42 @@ async function getLiquidsInUsd(adddress) {
     return total;
 }
 
+async function collaLina() {
+    let collaAddress = getDeployedByName("LnCollateralSystem");
+    let collaSystem = new ethers.Contract(collaAddress, getAbi("LnCollateralSystem"), provider);
+    
+    let linaProxyAddress = getDeployedByName("LnProxyERC20");
+    let linaProxy = new ethers.Contract(linaProxyAddress, getAbi("LnProxyERC20"), provider);
+    try {
+        const amount = ethers.utils.parseEther("10.0");        ;
+        let allowance = await linaProxy.allowance(wallet.address, collaAddress);
+        console.log(allowance, amount, allowance.gte(amount));
+        if (allowance.gte(amount) == false) {
+            console.log("approve");
+            let estimateGas = await linaProxy.connect(wallet).estimateGas.approve(collaAddress, amount);
+            await linaProxy.connect(wallet).approve(collaAddress, amount, {gasLimit:estimateGas});    
+        }
+        
+        console.log("Collateral start");
+        const linaBytes32 = toBytes32("LINA");
+        let estimateGas = await collaSystem.connect(wallet).estimateGas.Collateral(linaBytes32, amount);
+        console.log("estimateGas",estimateGas);
+        await collaSystem.connect(wallet).Collateral(linaBytes32, amount, {gasLimit:estimateGas});
+    } catch(e) {
+        console.log(e);
+    }
+}
+
+async function revertWallet() {
+    let tx = await wallet.sendTransaction({to:wallet.address, value:ethers.utils.parseEther("0.0")});
+    console.log(tx);
+}
+
 //increment.then((value) => {
 //    console.log(value);
 //});
 
 
-getLiquidsInUsd("0x81de13D9749cEb529638353bD5086D6CBb942fDd");
+//getLiquidsInUsd("0x81de13D9749cEb529638353bD5086D6CBb942fDd");
+//collaLina();
+revertWallet();

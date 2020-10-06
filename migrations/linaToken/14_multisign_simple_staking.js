@@ -19,9 +19,9 @@ module.exports = function (deployer, network, accounts) {
     console.log("kLnSimpleStaking at",kLnSimpleStaking.address);
   
     let admins = [
-      "​0xdf8Dd0ffF2B4EAe87bAD683E66A25522c237766e​",
-      "0xfB2d8d4Eed33e58505A2CC82fc17c439F051ed0c​",
-      "0x4Ff7c0810F4EEebe7Cba15f1517d4910966df237​"
+      "0xdf8Dd0ffF2B4EAe87bAD683E66A25522c237766e",
+      "0xfB2d8d4Eed33e58505A2CC82fc17c439F051ed0c",
+      "0x4Ff7c0810F4EEebe7Cba15f1517d4910966df237"
     ];
 
     let iConfirmNumb = 2; // TODO?
@@ -30,8 +30,19 @@ module.exports = function (deployer, network, accounts) {
     assert.ok(iConfirmNumb > 0);
 
     let kMultiSigForTransferFunds = await DeployIfNotExist(deployer, MultiSigForTransferFunds, admins, iConfirmNumb, kLnSimpleStaking.address);
-    //await kLnSimpleStaking.setCandidate(kMultiSigForTransferFunds.address);
-    //await kMultiSigForTransferFunds.becomeAdmin(kLnSimpleStaking.address);
+    
+    if (network == "mainnet") {
+      console.log("check deployed");
+      assert.ok(kMultiSigForTransferFunds.address== "0x32423a4c53cFB980264F804DF4500340Ca3318A8");// add after deployed
+    }
+    //check
+    for (let i=0; i<admins.length; i++) {
+      let v = await kMultiSigForTransferFunds.mAdminArr(i);
+      assert.ok(v == admins[i]);
+    }
+    
+    await CallWithEstimateGas(kLnSimpleStaking.setCandidate, kMultiSigForTransferFunds.address);
+    await CallWithEstimateGas(kMultiSigForTransferFunds.becomeAdmin, kLnSimpleStaking.address);
 
     console.log((await kLnSimpleStaking.candidate()));
     console.log((await kLnSimpleStaking.admin()));

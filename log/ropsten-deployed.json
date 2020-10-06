@@ -6,7 +6,7 @@
     "address": "0x908B56f016233E84c391eebe52Ee4d461fD8fb87"
   },
   "LinearFinance": {
-    "address": "0x8e3FB2Eb50EFED1cEd03FD290EC6829b43999A7C"
+    "address": "0x405f2189FAc0508b7FF37dC7B82C95394c30277c"
   },
   "LnTokenLocker": {
     "address": "0x7e8ae0F245B867A34Fdbf63f11414D0BbF004182"
@@ -41,18 +41,6 @@
   "LnSimpleStaking": {
     "address": "0x21e7A26b1eF76845DEa8b93b23501c54f1c6BBd4"
   },
-  "LinearFinance_1601111611811": {
-    "address": "0xBB2768Fd622D8179E8554908E1e6fE5b757018b4"
-  },
-  "LinearFinance_1601112244074": {
-    "address": "0x1D5578E4146dF3148354eD31Fd96A09c21d15323"
-  },
-  "LinearFinance_1601112431886": {
-    "address": "0xd4296c3Ca01A4a33Ae882Ff24dEf6E73Da70077b"
-  },
-  "LinearFinance_1601112825825": {
-    "address": "0x405f2189FAc0508b7FF37dC7B82C95394c30277c"
-  },
   "LnTokenCliffLocker": {
     "address": "0x18F351E0632693Ab9AA2C6f4003f6C71a7885Da0"
   },
@@ -73,5 +61,8 @@
   },
   "LnAsset_lUSD": {
     "address": "0x72d369772c316D0a9F002A00C10588a4cbadd388"
+  },
+  "MultiSigForTransferFunds": {
+    "address": "0x66d8C69fB72cFE424484455d6E2E1a3910Cd510d"
   }
 }
