@@ -107,9 +107,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         BuildAsset(max);
     }
 
-    // burn
-    function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
-        address user = msg.sender;
+    function _buildAsset(address user, uint256 amount) internal {
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
 
         // calc debt
@@ -137,7 +135,33 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         // burn asset
         lUSDToken.burn(user, burnAmount);
 
+    }
+
+    // burn
+    function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
+        address user = msg.sender;
+        _buildAsset(user, amount);
         return true;
     }
 
+    //所有
+    // function MaxAssetToTarget(address user) external view returns(uint256) {
+    //     uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+    //     uint256 totalCollateral = collaterSys.GetUserTotalCollateralInUsd(user);
+    // }
+
+    // burn to target ratio
+    function BurnAssetToTarget() external whenNotPaused returns(bool) {
+        address user = msg.sender;
+
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 totalCollateral = collaterSys.GetUserTotalCollateralInUsd(user);
+        uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
+        (uint256 debtAsset,) = debtSystem.GetUserDebtBalanceInUsd(user);
+        require(debtAsset > maxBuildAssetToTarget, "You maybe want build to target");
+
+        uint256 needBurn = debtAsset.sub(maxBuildAssetToTarget);
+        _buildAsset(user, needBurn);
+        return true;
+    }
 }

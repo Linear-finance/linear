@@ -388,5 +388,54 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
             kLnBuildBurnSystem.BurnAsset(toUnit(1)),
             "Pausable: paused");
     });
+
+    it('test build burn toTarget', async ()=> {
+        const linaBytes32 = toBytes32("lina");
+        const ETHBytes32 = toBytes32("ETH");
+        const lusdBytes32 = toBytes32("lUSD");
+
+        let InitContracts = await InitComment(ac0);
+
+        kLnBuildBurnSystem = InitContracts.kLnBuildBurnSystem;
+        kLnDebtSystem = InitContracts.kLnDebtSystem;
+        kLnCollateralSystem = InitContracts.kLnCollateralSystem;
+        kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
+        lUSD = InitContracts.lUSD;
+
+        const [lina,linaproxy] = await CreateLina(ac0);
+
+        await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
+        
+        // set price
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        
+        // mint lina
+        lina.mint(ac1, toUnit(1000) ); // ac1 mint lina
+        
+        // ac1 collateral
+        await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac1});
+
+        await kLnBuildBurnSystem.BuildMaxAsset({from:ac1});
+
+        async function checkDebtBalance(ac, amount) {
+            let ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac);
+            let debtbalance = ret[0];
+            assert.equal( debtbalance.cmp(amount), 0 );
+        }
+
+        checkDebtBalance(ac1, toUnit(200));
+
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit("0.5"), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnBuildBurnSystem.BurnAssetToTarget({from:ac1});
+
+        checkDebtBalance(ac1, toUnit(100));
+
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit("1"), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await exceptionEqual(
+            kLnBuildBurnSystem.BurnAssetToTarget({from:ac1}),
+            "You maybe want build to target"
+        );
+    });
 });
 
