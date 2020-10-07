@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {DeployIfNotExist, DeployWithEstimate, DeployWithEstimateSuffix, CallWithEstimateGas} = require("../../utility/truffle-tool");
+const {DeployIfNotExist, DeployWithEstimate, DeployWithEstimateSuffix, CallWithEstimateGas, getDeployedByName} = require("../../utility/truffle-tool");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -24,6 +24,7 @@ const LnRewardCalculator = artifacts.require("LnRewardCalculator");
 
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
+    console.log("newAssetToken", name);
     let kLnProxyERC20 = await DeployWithEstimateSuffix(deployer, name, 
       LnProxyERC20, admin);
     let kLnTokenStorage = await DeployWithEstimateSuffix(deployer, name, 
@@ -108,8 +109,13 @@ module.exports = function (deployer, network, accounts) {
   
     await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
 
-    let lUSD = await newAssetToken(deployer, toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
-    await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, lUSD.address);
+    let LnAsset_lUSDAddress = getDeployedByName("LnAsset_lUSD");
+    if (LnAsset_lUSDAddress == null) {
+      let lUSD = await newAssetToken(deployer, toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
+      LnAsset_lUSDAddress = lUSD.address;
+    }
+    
+    await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, LnAsset_lUSDAddress);
 
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);

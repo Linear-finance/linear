@@ -35,9 +35,6 @@
   "LnCollateralSystem": {
     "address": "0x84Dfa3C2056d4A42e409b4Edda0b7C78EE3B1eB7"
   },
-  "LnBuildBurnSystem": {
-    "address": "0x807BDD38b469cdbB99b2293448b1F1cE6B3d3Fa5"
-  },
   "LnSimpleStaking": {
     "address": "0x21e7A26b1eF76845DEa8b93b23501c54f1c6BBd4"
   },
@@ -64,5 +61,8 @@
   },
   "MultiSigForTransferFunds": {
     "address": "0x66d8C69fB72cFE424484455d6E2E1a3910Cd510d"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0xdF20DB37F4422fC5920a5299D86Ce76108639442"
   }
 }
