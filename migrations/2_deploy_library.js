@@ -1,5 +1,5 @@
 
-const {DeployIfNotExist} = require("../utility/truffle-tool");
+const {DeployIfNotExist, DeployWithEstimate} = require("../utility/truffle-tool");
 const fs = require("fs");
 const w3utils = require('web3-utils');
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
@@ -135,7 +135,11 @@ async function testCalcStakingReward() {
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     //await DeployIfNotExist(deployer, SafeMath);
-    await DeployIfNotExist(deployer, SafeDecimalMath);
+    if (network == "development") { // testnet always new SafeDecimalMath
+      await DeployWithEstimate(deployer, SafeDecimalMath);
+    } else {
+      await DeployIfNotExist(deployer, SafeDecimalMath);
+    }
 
     await deployer.link(SafeDecimalMath, LnChainLinkPrices);
 
