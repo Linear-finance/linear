@@ -109,12 +109,14 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     function _buildAsset(address user, uint256 amount) internal {
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
-
+        require(amount > 0, "amount need > 0");
         // calc debt
         (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user);
         require(oldUserDebtBalance > 0, "no debt, no burn");
         uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
-        
+        // burn asset
+        lUSDToken.burn(user, burnAmount);
+
         uint newTotalDebtIssued = totalAssetSupplyInUsd.sub(burnAmount);
 
         uint oldTotalProportion = 0;
@@ -131,10 +133,6 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
         // update debt
         debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
-
-        // burn asset
-        lUSDToken.burn(user, burnAmount);
-
     }
 
     // burn
@@ -161,6 +159,10 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         require(debtAsset > maxBuildAssetToTarget, "You maybe want build to target");
 
         uint256 needBurn = debtAsset.sub(maxBuildAssetToTarget);
+        uint balance = lUSDToken.balanceOf(user); // burn as many as possible
+        if (balance < needBurn) {
+            needBurn = balance;
+        }
         _buildAsset(user, needBurn);
         return true;
     }
