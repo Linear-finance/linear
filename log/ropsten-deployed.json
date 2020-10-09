@@ -64,5 +64,14 @@
   },
   "LnBuildBurnSystem": {
     "address": "0xdF20DB37F4422fC5920a5299D86Ce76108639442"
+  },
+  "LnExchangeSystem": {
+    "address": "0xC74F97E0f3006Ff4D3DE49Dcc46760af677345EF"
+  },
+  "LnRewardLocker": {
+    "address": "0x71192594A101Bf69672E41B49cfeBd7aA3E3042B"
+  },
+  "LnFeeSystem": {
+    "address": "0x48A62562EbB0CFe59F29d40870BBD3183A886eB3"
   }
 }

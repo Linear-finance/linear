@@ -89,7 +89,7 @@ module.exports = function (deployer, network, accounts) {
 
     await deployer.link(SafeDecimalMath, LnExchangeSystem);
     let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
-    let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin);
+    let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin, linaProxyErc20Address);
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
 
     await CallWithEstimateGas(kLnRewardLocker.Init, kLnFeeSystem.address);
@@ -98,8 +98,14 @@ module.exports = function (deployer, network, accounts) {
 
     // access role setting
 
-    await CallWithEstimateGas(kLnAccessControl.SetIssueAssetRole, [kLnBuildBurnSystem.address], [true]);
-    await CallWithEstimateGas(kLnAccessControl.SetBurnAssetRole, [kLnBuildBurnSystem.address], [true]);
+    await CallWithEstimateGas(kLnAccessControl.SetIssueAssetRole, 
+        [kLnBuildBurnSystem.address, kLnExchangeSystem.address, kLnFeeSystem.address], 
+        [true, true, true]
+    );
+    await CallWithEstimateGas(kLnAccessControl.SetBurnAssetRole, 
+        [kLnBuildBurnSystem.address, kLnExchangeSystem.address, kLnFeeSystem.address], 
+        [true, true, true]
+    );
 
     await CallWithEstimateGas(kLnAccessControl.SetDebtSystemRole, [kLnBuildBurnSystem.address, admin], [true, true]); // admin to test
 
@@ -118,6 +124,7 @@ module.exports = function (deployer, network, accounts) {
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
     registContract("LnFeeSystem", kLnFeeSystem);
+    registContract("LnRewardLocker", kLnRewardLocker);
   
     await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
 

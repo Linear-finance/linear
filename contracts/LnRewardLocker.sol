@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
+import "./IERC20.sol";
 import "./LnAdmin.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -14,15 +15,20 @@ contract LnRewardLocker is LnAdmin {
     }
 
     mapping (address => RewardData[]) public userRewards; // RewardData[0] is claimable
-    mapping(address => uint256) public balanceOf;
+    mapping (address => uint256) public balanceOf;
     uint256 public totalNeedToReward;
 
     uint256 public constant maxRewardArrayLen = 100;
 
     address feeSysAddr;
+    IERC20 public linaToken;
 
-    constructor(address _admin) public LnAdmin(_admin ) {
-    
+    constructor(address _admin, address linaAddress) public LnAdmin(_admin ) {
+        linaToken = IERC20(linaAddress);
+    }
+
+    function setLinaAddress(address _token) external onlyAdmin {
+        linaToken = IERC20(_token);
     }
 
     function Init(address _feeSysAddr) external onlyAdmin {
@@ -83,16 +89,29 @@ contract LnRewardLocker is LnAdmin {
 
     // if lock lina is collateral, claimable need calc to fix target ratio
     function ClaimMaxable() public {
+        address user = msg.sender;
+        Slimming(user);
+        _claim(user, userRewards[user][0].amount);
+    }
 
+    function _claim(address _user, uint256 _amount) internal {
+        userRewards[_user][0].amount = userRewards[_user][0].amount.sub(_amount);
+
+        balanceOf[_user] = balanceOf[_user].sub(_amount);
+        totalNeedToReward = totalNeedToReward.sub(_amount);
+        
+        linaToken.transfer(_user, _amount);
+        emit ClaimLog(_user, _amount);
     }
 
     function Claim(uint256 _amount) public {
         address user = msg.sender;
         Slimming(user);
-        //balanceOf[_user] = balanceOf[_user].sub(_amount);
-        //totalNeedToReward = totalNeedToReward.sub(_amount);
+        require( _amount <= userRewards[user][0].amount, "Claim amount invalid");
+        _claim(user, _amount);
     }
 
     event AppendReward(address user, uint256 amount, uint64 lockTo);
+    event ClaimLog(address user, uint256 amount);
 }
 

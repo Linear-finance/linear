@@ -8,6 +8,8 @@ import "./LnAddressCache.sol";
 import "./LnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
 import "./LnRewardLocker.sol";
+import "./LnAssetSystem.sol";
+import "./LnAsset.sol";
 
 contract LnFeeSystem is LnAdmin, LnAddressCache {
     using SafeMath for uint256;
@@ -15,13 +17,14 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 
     address public constant FEE_DUMMY_ADDRESS = address(0x2048); 
 
-    struct DebtData {
+    struct UserDebtData {
+        uint256 PeriodID; // Period id
         uint256 debtProportion;
         uint256 debtFactor; // PRECISE_UNIT
     }
 
     struct RewardPeriod {
-        uint256 id;
+        uint256 id; // Period id
         uint256 startingDebtFactor;
         uint256 startTime;
         uint256 feesToDistribute; // 要分配的费用
@@ -36,10 +39,13 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 
     mapping (address => uint256) public userLastClaimedId;
 
+    mapping (address => UserDebtData[2]) public userPeriodDebt; // one for current period, one for pre period
+
     //
     LnDebtSystem public debtSystem;
     LnCollateralSystem public collateralSystem;
     LnRewardLocker public rewardLocker;
+    LnAssetSystem mAssets;
 
     address public exchangeSystemAddress;
     address public rewardDistributer;
@@ -47,9 +53,12 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     constructor(address _admin ) public LnAdmin(_admin ) {
     }
 
+    // Note: before start run need call this func to init.
     function Init(address _exchangeSystem, address _rewardDistri) public onlyAdmin {
         exchangeSystemAddress = _exchangeSystem;
         rewardDistributer = _rewardDistri;
+
+        switchPeriod();
     }
 
     function setExchangeSystemAddress(address _address) public onlyAdmin {
@@ -80,21 +89,18 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     event ExchangeFee( uint feeUsd );
     event RewardCollateral( uint reward );
 
-    // Note: before start run need call this func to init.
-    function Init() public {
-        switchPeriod();
-    }
-
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
         debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
         collateralSystem = LnCollateralSystem( collateralAddress );
         rewardLocker =   LnRewardLocker(     _addressStorage.getAddressWithRequire( "LnRewardLocker",      "LnRewardLocker address not valid" ));
+        mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( "LnAssetSystem",      "LnAssetSystem address not valid" ));
 
         emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
         emit updateCachedAddress( "LnCollateralSystem",address(collateralSystem) );
         emit updateCachedAddress( "LnRewardLocker",address(rewardLocker) );
+        emit updateCachedAddress( "LnAssetSystem",address(mAssets) );
      }
 
     function switchPeriod() public {
@@ -151,22 +157,104 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         );
     }
 
-    function isFeesClaimable(address account) external view returns (bool feesClaimable) {
+    modifier onlyDebtSystem() {
+        require(msg.sender == address(debtSystem), "Only Debt system call");
+        _;
+    }
+
+    // build record
+    function RecordUserDebt(address user, uint256 debtProportion, uint256 debtFactor) public onlyDebtSystem {
+        uint256 curId = curRewardPeriod.id;
+        uint256 minPos = 0;
+        if (userPeriodDebt[user][0].PeriodID > userPeriodDebt[user][1].PeriodID) {
+            minPos = 1;
+        }
+        uint256 pos = minPos;
+        for (uint64 i = 0; i < userPeriodDebt[user].length; i++) {
+            if (userPeriodDebt[user][i].PeriodID == curId) {
+                pos = i;
+                break;
+            }
+        }
+        userPeriodDebt[user][pos].PeriodID = curId;
+        userPeriodDebt[user][pos].debtProportion = debtProportion;
+        userPeriodDebt[user][pos].debtFactor = debtFactor;
+    }
+
+    function isFeesClaimable(address account) public view returns (bool feesClaimable) {
         if (collateralSystem.IsSatisfyTargetRatio(account) == false) {
             return false;
         }
-        // other condition
+
+        if (userLastClaimedId[account] == preRewardPeriod.id) {
+            return false;
+        }
+
+        // TODO: other condition?
         return true;
     }
 
     // total fee and total reward
-    function feesAvailable(address account) public view returns (uint, uint) {
-        return (123, 456);
+    function feesAvailable(address user) public view returns (uint, uint) {
+        if (preRewardPeriod.feesToDistribute == 0 && preRewardPeriod.rewardsToDistribute == 0) {
+            return (0,0);
+        }
+        // close factor
+        uint256 pos = 0;
+        if (userPeriodDebt[user][0].PeriodID < userPeriodDebt[user][1].PeriodID) {
+            pos = 1;
+        }
+        for (uint64 i = 0; i < userPeriodDebt[user].length; i++) {
+            if (userPeriodDebt[user][i].PeriodID == curRewardPeriod.id) {
+                pos = i;
+                break;
+            }
+        }
+
+        uint256 debtFactor = userPeriodDebt[user][pos].debtFactor;
+        uint256 debtProportion = userPeriodDebt[user][pos].debtProportion;
+        if (debtFactor == 0) {
+            return (0,0);
+        }
+
+        uint256 lastPeriodDebtFactor = curRewardPeriod.startingDebtFactor;
+        uint256 userDebtProportion = lastPeriodDebtFactor
+                .divideDecimalRoundPrecise(debtFactor)
+                .multiplyDecimalRoundPrecise(debtProportion);
+
+        uint256 fee = preRewardPeriod.feesToDistribute
+                .decimalToPreciseDecimal()
+                .multiplyDecimalRoundPrecise(userDebtProportion)
+                .preciseDecimalToDecimal();
+
+        uint256 reward = preRewardPeriod.rewardsToDistribute
+                .decimalToPreciseDecimal()
+                .multiplyDecimalRoundPrecise(userDebtProportion)
+                .preciseDecimalToDecimal();
+        return (fee, reward);
     }
 
     // claim fee and reward.
     function claimFees() external returns (bool) {
-        return false;
+        address user = msg.sender;
+        require( isFeesClaimable(user), "User is not claimable" );
+
+        userLastClaimedId[user] = preRewardPeriod.id;
+        // fee reward: mint lusd
+        // : rewardLocker.appendReward(use, reward, now + 1 years);
+        (uint256 fee, uint256 reward) = feesAvailable(user);
+        require(fee > 0 || reward > 0, "Nothing to claim");
+
+        if (fee > 0) {
+            LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( "LINA", "get lina asset address fail" ));
+            lusd.burn( FEE_DUMMY_ADDRESS, fee );
+            lusd.mint(user, fee);
+        }
+
+        if (reward > 0) {
+
+        }
+        return true;
     }
 }
 

@@ -9,6 +9,7 @@ import "./LnAddressCache.sol";
 import "./LnAccessControl.sol";
 import "./LnAssetSystem.sol";
 import "./LnConfig.sol";
+import "./LnFeeSystem.sol";
 
 contract LnDebtSystem is LnAdmin, LnAddressCache {
     using SafeMath for uint;
@@ -19,6 +20,7 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
     // need set before system running value.
     LnAccessControl private accessCtrl;
     LnAssetSystem private assetSys;
+    LnFeeSystem public feeSystem;
     // -------------------------------------------------------
     struct DebtData {
         uint256 debtProportion;
@@ -48,9 +50,11 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
     {
         accessCtrl = LnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
         assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
+        feeSystem = LnFeeSystem( _addressStorage.getAddressWithRequire( "LnFeeSystem",   "LnFeeSystem address not valid" ));
 
         emit updateCachedAddress( "LnAccessControl", address(accessCtrl) );
         emit updateCachedAddress( "LnAssetSystem",   address(assetSys) );
+        emit updateCachedAddress( "LnFeeSystem",   address(feeSystem) );
     }
     
     // -----------------------------------------------
@@ -94,6 +98,8 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
         userDebtState[_user].debtProportion = _debtProportion;
         userDebtState[_user].debtFactor = _lastSystemDebtFactor();
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
+
+        feeSystem.RecordUserDebt(_user, userDebtState[_user].debtProportion, userDebtState[_user].debtFactor);
     }
 
     // need update lastDebtFactors first
