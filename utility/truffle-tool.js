@@ -48,9 +48,13 @@ function getDeployedByName(name) {
 }
 
 async function GetDeployed(contract, deployedAddress) {
+    var deployed
     try {
-        var deployed = await contract.deployed();
-        if (deployed == null) {
+        deployed = await contract.deployed();
+        return deployed;
+    }
+    catch (e) {
+        try{
             if (deployedAddress != null) {
                 deployed = await contract.at(deployedAddress);
                 console.log("GetDeployed", contract.contractName, "from build", deployedAddress);
@@ -61,10 +65,10 @@ async function GetDeployed(contract, deployedAddress) {
                     console.log("GetDeployed", contract.contractName, "from config", deployedaddr);
                 }
             }
+            return deployed;
+        } catch (e) { 
+            
         }
-        return deployed;
-    }
-    catch (e) {
     }
     return null
 }

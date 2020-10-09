@@ -98,7 +98,10 @@ contract('LnExchangeSystem', async (accounts)=> {
                 [ assets.address, clPrices.address, accessCtrl.address, config.address, feeSys.address ]);
 
             await LnExchangeSystem.link(SafeDecimalMath);
-            const exchangeSys = await LnExchangeSystem.new( admin, assets.address );
+            const exchangeSys = await LnExchangeSystem.new( admin );
+
+            let distributeAddres = admin;
+            await feeSys.Init(exchangeSys.address, distributeAddres);
 
             await accessCtrl.SetBurnAssetRole( [admin, exchangeSys.address], [true,true]);
             await accessCtrl.SetIssueAssetRole( [admin, exchangeSys.address], [true,true]);
@@ -106,6 +109,7 @@ contract('LnExchangeSystem', async (accounts)=> {
             await Btc.updateAddressCache(assets.address);
             await cny.updateAddressCache(assets.address);
             await lusd.updateAddressCache(assets.address);
+            await exchangeSys.updateAddressCache(assets.address);
 
             // build
             await Btc.mint( trader, toUnit(10) );

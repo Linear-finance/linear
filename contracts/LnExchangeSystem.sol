@@ -23,8 +23,8 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     LnConfig mConfig;
     LnFeeSystem mFeeSys;
 
-    constructor(address _admin, LnAddressStorage _addressStorage ) public LnAdmin(_admin ) {
-        updateAddressCache( _addressStorage );
+    constructor(address _admin) public LnAdmin(_admin ) {
+        
     }
 
 

@@ -7,7 +7,6 @@ const { BN, toBN, toWei, fromWei, hexToAscii } = w3utils;
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
-const LnAddressStorage = artifacts.require("LnAddressStorage");
 const LnAccessControl = artifacts.require("LnAccessControl");
 const LnConfig = artifacts.require("LnConfig");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
@@ -21,6 +20,9 @@ const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 const LinearFinance = artifacts.require("LinearFinance");
 const LnRewardCalculator = artifacts.require("LnRewardCalculator");
+const LnExchangeSystem = artifacts.require("LnExchangeSystem");
+const LnRewardLocker = artifacts.require("LnRewardLocker");
+const LnFeeSystem = artifacts.require("LnFeeSystem");
 
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
@@ -85,6 +87,15 @@ module.exports = function (deployer, network, accounts) {
     let lUSDTokenAddress = emptyAddr;
     let kLnBuildBurnSystem = await DeployIfNotExist(deployer, LnBuildBurnSystem, admin, lUSDTokenAddress);
 
+    await deployer.link(SafeDecimalMath, LnExchangeSystem);
+    let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
+    let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin);
+    let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+
+    await CallWithEstimateGas(kLnRewardLocker.Init, kLnFeeSystem.address);
+    let rewardDistributer = admin; // TODO: need a contract?
+    await CallWithEstimateGas(kLnFeeSystem.Init, kLnExchangeSystem.address, rewardDistributer);
+
     // access role setting
 
     await CallWithEstimateGas(kLnAccessControl.SetIssueAssetRole, [kLnBuildBurnSystem.address], [true]);
@@ -106,6 +117,7 @@ module.exports = function (deployer, network, accounts) {
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
+    registContract("LnFeeSystem", kLnFeeSystem);
   
     await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
 
@@ -120,5 +132,7 @@ module.exports = function (deployer, network, accounts) {
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
   });
 };

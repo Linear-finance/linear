@@ -30,7 +30,7 @@ module.exports = function (deployer, network, accounts) {
     // 创建合成资产 lBTC
     //let kLnAssetSystem = await LnAssetSystem.deployed();
     //let lBTCAsset = await newAssetToken(deployer, toBytes32("lBTC"), "lBTC", "lBTC", admin, kLnAssetSystem);
-
+/*
     if (network == "ropsten") {
       console.log("mint to ropsten test address");
       let testaddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa";
@@ -52,6 +52,7 @@ module.exports = function (deployer, network, accounts) {
     await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, 
         toBytes32("LINA"), linaProxyErc20Address, toBN(0), false
     );
-    
+    */
+   
   });
 };

@@ -12,6 +12,7 @@ import "./LnAddressCache.sol";
 import "./LnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
 import "./LnConfig.sol";
+import "./LnRewardLocker.sol";
 
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
@@ -22,12 +23,14 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnPrices private priceGetter;
-    LnDebtSystem private debtSystem;
-    LnBuildBurnSystem private buildBurnSystem;
-    LnConfig private mConfig;
+    LnPrices public priceGetter;
+    LnDebtSystem public debtSystem;
+    LnBuildBurnSystem public buildBurnSystem;
+    LnConfig public mConfig;
+    LnRewardLocker public mRewardLocker;
 
-    bytes32 constant Currency_ETH = "ETH";
+    bytes32 constant public Currency_ETH = "ETH";
+    bytes32 constant public Currency_LINA = "LINA";
     
     // -------------------------------------------------------
     uint256 public uniqueId; // use log
@@ -67,11 +70,13 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
         buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
         mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
+        mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
         emit updateCachedAddress( "LnPrices",          address(priceGetter) );
         emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
         emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
         emit updateCachedAddress( "LnConfig",          address(mConfig) );
+        emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
     }
 
     function SetPause(bool pause) external onlyAdmin {
@@ -121,7 +126,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (tokenInfos[currency].totalCollateral > 0) { // this check for avoid calling getPrice when collateral is zero
-                rTotal = rTotal.add( tokenInfos[currency].totalCollateral.multiplyDecimal(priceGetter.getPrice(currency)) );
+                if (Currency_LINA == currency) {
+                    uint256 totallina = tokenInfos[currency].totalCollateral.add(mRewardLocker.totalNeedToReward());
+                    rTotal = rTotal.add( totallina.multiplyDecimal(priceGetter.getPrice(currency)) );
+                } else {
+                    rTotal = rTotal.add( tokenInfos[currency].totalCollateral.multiplyDecimal(priceGetter.getPrice(currency)) );
+                }
             }
         }
 
@@ -134,7 +144,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             if (userCollateralData[_user][currency].collateral > 0) {
-                rTotal = rTotal.add( userCollateralData[_user][currency].collateral.multiplyDecimal(priceGetter.getPrice(currency)) );
+                if (Currency_LINA == currency) {
+                    uint256 totallina = userCollateralData[_user][currency].collateral.add(mRewardLocker.balanceOf(_user));
+                    rTotal = rTotal.add( totallina.multiplyDecimal(priceGetter.getPrice(currency)) );
+                } else {
+                    rTotal = rTotal.add( userCollateralData[_user][currency].collateral.multiplyDecimal(priceGetter.getPrice(currency)) );
+                }
             }
         }
 
@@ -144,9 +159,13 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     function GetUserCollateral(address _user, bytes32 _currency) external view returns (uint256) {
-        return userCollateralData[_user][_currency].collateral;
+        if (Currency_LINA != _currency) {
+            return userCollateralData[_user][_currency].collateral;
+        }
+        return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
     }
 
+    // NOTO: LINA collateral not include reward in locker
     function GetUserCollaterals(address _user) external view returns (bytes32[] memory, uint256[] memory) {
         bytes32[] memory rCurrency = new bytes32[](tokenSymbol.length + 1);
         uint256[] memory rAmount = new uint256[](tokenSymbol.length + 1);
@@ -190,6 +209,18 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
+    function IsSatisfyTargetRatio(address _user) public view returns(bool) {
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
+        if (debtBalance == 0) {
+            return true;
+        }
+
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
+        uint256 myratio = debtBalance.divideDecimal(totalCollateralInUsd);
+        return myratio <= buildRatio;
+    }
+
     // 满足最低抵押率的情况下可最大赎回的资产 TODO: return multi value
     function MaxRedeemableInUsd(address _user) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
@@ -208,15 +239,33 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return totalCollateralInUsd.sub(minCollateral);
     }
 
-    // 1. After redeem, collateral ratio need bigger than target ratio.
-    // 2. Cannot redeem more than collateral.
-    function Redeem(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
+    function MaxRedeemable(address user, bytes32 _currency) public view returns(uint256) {
+        uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
+        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(_currency));
+        if (maxRedeem > userCollateralData[user][_currency].collateral) {
+            maxRedeem = userCollateralData[user][_currency].collateral;
+        }
+        if (Currency_LINA != _currency) {
+            return maxRedeem;
+        }
+        uint256 lockedLina = mRewardLocker.balanceOf(user);
+        if (maxRedeem <= lockedLina) {
+            return 0;
+        }
+        return maxRedeem.sub(lockedLina);
+    }
+
+    function RedeemMax(bytes32 _currency) external whenNotPaused {
         address user = msg.sender;
+        uint256 maxRedeem = MaxRedeemable(user, _currency);
+        _Redeem(user, _currency, maxRedeem);
+    }
+
+    function _Redeem(address user, bytes32 _currency, uint256 _amount) internal {
         require(_amount <= userCollateralData[user][_currency].collateral, "Can not redeem more than collateral");
         require(_amount > 0, "Redeem amount need larger than zero");
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-        
         uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(_currency));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
@@ -228,6 +277,13 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         IERC20(tokenInfos[_currency].tokenAddr).transfer(user, _amount);
 
         emit RedeemCollateral(user, _currency, _amount, userCollateralData[user][_currency].collateral);
+    }
+
+    // 1. After redeem, collateral ratio need bigger than target ratio.
+    // 2. Cannot redeem more than collateral.
+    function Redeem(bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
+        address user = msg.sender;
+        _Redeem(user, _currency, _amount);
         return true;
     }
 
