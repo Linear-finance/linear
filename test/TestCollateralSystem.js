@@ -25,6 +25,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
     const linaBytes32 = toBytes32("lina");
     const ETHBytes32 = toBytes32("ETH");
+    const lusdBytes32 = toBytes32("lUSD");
 
     it('collateral and redeem', async ()=> {
         
@@ -34,6 +35,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         const [lina,linaproxy] = await CreateLina(ac0);
 
         let kLnCollateralSystem = InitContracts.kLnCollateralSystem;
+        let kLnDebtSystem = InitContracts.kLnDebtSystem;
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
 
@@ -196,6 +198,42 @@ contract('test LnCollateralSystem', async (accounts)=> {
         //await kLnCollateralSystem.sendTransaction({from:ac3, value:toUnit(1), data:"0x1234567890"});
         
         //TODO: CollateralEth 重入测试，
+    });
+
+    it('IsSatisfyTargetRatio kLnRewardLocker', async function () {
+        let InitContracts = await InitComment(ac0);
+        const [lina,linaproxy] = await CreateLina(ac0);
+
+        let kLnCollateralSystem = InitContracts.kLnCollateralSystem;
+        let kLnDebtSystem = InitContracts.kLnDebtSystem;
+        let kLnRewardLocker = InitContracts.kLnRewardLocker;
+        let kLnBuildBurnSystem = InitContracts.kLnBuildBurnSystem;
+        let kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
+        let lUSD = InitContracts.lUSD;
+
+        await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
+        await kLnChainLinkPrices.updateAll([linaBytes32, lusdBytes32], [toUnit(1), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+
+        let v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
+        assert.equal(v.valueOf(), 0);
+
+        // mint lina
+        lina.mint(ac2, toUnit(1000) ); // ac1 mint lina
+        await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac2});
+        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac2});
+
+        v = await kLnBuildBurnSystem.MaxCanBuildAsset(ac2);
+        //console.log("MaxCanBuildAsset", v.toString());
+        await kLnBuildBurnSystem.BuildMaxAsset({from:ac2});
+
+        v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
+        //console.log("MaxRedeemableInUsd", v.toString());
+        assert.equal(v.cmp(toBN(0)), 0);
+
+        assert.equal( (await kLnCollateralSystem.IsSatisfyTargetRatio(ac2)), true );
+        await kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(0.9)], Math.floor(Date.now()/1000).toString() );
+        assert.equal( (await kLnCollateralSystem.IsSatisfyTargetRatio(ac2)), false );
+
     });
 
     it('Pausable', async function () {

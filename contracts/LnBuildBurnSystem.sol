@@ -107,7 +107,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         BuildAsset(max);
     }
 
-    function _buildAsset(address user, uint256 amount) internal {
+    function _burnAsset(address user, uint256 amount) internal {
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         require(amount > 0, "amount need > 0");
         // calc debt
@@ -138,7 +138,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     // burn
     function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
         address user = msg.sender;
-        _buildAsset(user, amount);
+        _burnAsset(user, amount);
         return true;
     }
 
@@ -163,7 +163,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         if (balance < needBurn) {
             needBurn = balance;
         }
-        _buildAsset(user, needBurn);
+        _burnAsset(user, needBurn);
         return true;
     }
 }

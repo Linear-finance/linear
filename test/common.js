@@ -14,6 +14,10 @@ const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 
 const LinearFinance = artifacts.require("LinearFinance");
+const LnRewardCalculator = artifacts.require("LnRewardCalculator");
+const LnExchangeSystem = artifacts.require("LnExchangeSystem");
+const LnRewardLocker = artifacts.require("LnRewardLocker");
+const LnFeeSystem = artifacts.require("LnFeeSystem");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -57,6 +61,8 @@ async function InitComment(admin) {
     // regist contract address
     let kLnAccessControl = await LnAccessControl.new(admin);
   
+    await LnRewardCalculator.link(SafeDecimalMath);
+
     let emptyAddr = "0x0000000000000000000000000000000000000000";
     let oracleAddress = admin;//"0x0000000000000000000000000000000000000000";
     //let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
@@ -72,6 +78,13 @@ async function InitComment(admin) {
     await LnBuildBurnSystem.link(SafeDecimalMath);
     let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, emptyAddr);
 
+    await LnExchangeSystem.link(SafeDecimalMath);
+    let kLnExchangeSystem = await LnExchangeSystem.new(admin);
+    let kLnRewardLocker = await LnRewardLocker.new(admin, emptyAddr); //TODO: set linaAddress later
+    let kLnFeeSystem = await LnFeeSystem.new(admin);
+    await kLnRewardLocker.Init(kLnFeeSystem.address);
+    let rewardDistributer = admin; // TODO: need a contract?
+    await kLnFeeSystem.Init(kLnExchangeSystem.address, rewardDistributer);
     // access role setting
 
     await kLnAccessControl.SetIssueAssetRole([kLnBuildBurnSystem.address],[true]);
@@ -86,6 +99,8 @@ async function InitComment(admin) {
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
+    registContract("LnFeeSystem", kLnFeeSystem);
+    registContract("LnRewardLocker", kLnRewardLocker);
   
     await kLnAssetSystem.updateAll(contractNames, contractAddrs);
 
@@ -95,6 +110,8 @@ async function InitComment(admin) {
     await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnBuildBurnSystem.updateAddressCache(kLnAssetSystem.address);
+    await kLnExchangeSystem.updateAddressCache(kLnAssetSystem.address);
+    await kLnFeeSystem.updateAddressCache(kLnAssetSystem.address);
 
     //console.log("InitComment finish");
     return {
@@ -104,7 +121,10 @@ async function InitComment(admin) {
         kLnAssetSystem:kLnAssetSystem,
         kLnCollateralSystem:kLnCollateralSystem,
         kLnBuildBurnSystem:kLnBuildBurnSystem,
-        kLnDebtSystem:kLnDebtSystem, 
+        kLnDebtSystem:kLnDebtSystem,
+        kLnExchangeSystem:kLnExchangeSystem,
+        kLnRewardLocker:kLnRewardLocker,
+        kLnFeeSystem:kLnFeeSystem,
         // asset tokens
         lUSD:lUSD
     }

@@ -57,8 +57,6 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     function Init(address _exchangeSystem, address _rewardDistri) public onlyAdmin {
         exchangeSystemAddress = _exchangeSystem;
         rewardDistributer = _rewardDistri;
-
-        switchPeriod();
     }
 
     function setExchangeSystemAddress(address _address) public onlyAdmin {

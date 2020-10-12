@@ -217,6 +217,9 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
+        if (totalCollateralInUsd == 0) {
+            return false;
+        }
         uint256 myratio = debtBalance.divideDecimal(totalCollateralInUsd);
         return myratio <= buildRatio;
     }
