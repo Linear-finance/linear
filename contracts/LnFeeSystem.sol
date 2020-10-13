@@ -114,6 +114,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         
         curRewardPeriod.id = curRewardPeriod.id + 1;
         curRewardPeriod.startingDebtFactor = debtSystem.LastSystemDebtFactor();
+        curRewardPeriod.startTime = now;
         curRewardPeriod.feesToDistribute = 0;
         curRewardPeriod.feesClaimed = 0;
         curRewardPeriod.rewardsToDistribute = 0;
