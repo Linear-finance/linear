@@ -12,6 +12,7 @@ const LnAccessControl = artifacts.require("LnAccessControl");
 const LinearFinance = artifacts.require("LinearFinance");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const LnCollateralSystem = artifacts.require("LnCollateralSystem");
+const LnFeeSystem = artifacts.require("LnFeeSystem");
 
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
@@ -26,6 +27,9 @@ module.exports = function (deployer, network, accounts) {
 
     let kLnAccessControl = await LnAccessControl.deployed();
     //console.log(kLnAccessControl);
+    
+    let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+    await kLnFeeSystem.switchPeriod();
 
     // 创建合成资产 lBTC
     //let kLnAssetSystem = await LnAssetSystem.deployed();

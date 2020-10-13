@@ -32,9 +32,6 @@
   "LnDebtSystem": {
     "address": "0xE9D86F9f32C79d017F39Ed4661a32D65b7A2F804"
   },
-  "LnCollateralSystem": {
-    "address": "0x84Dfa3C2056d4A42e409b4Edda0b7C78EE3B1eB7"
-  },
   "LnSimpleStaking": {
     "address": "0x21e7A26b1eF76845DEa8b93b23501c54f1c6BBd4"
   },
@@ -62,9 +59,6 @@
   "MultiSigForTransferFunds": {
     "address": "0x66d8C69fB72cFE424484455d6E2E1a3910Cd510d"
   },
-  "LnBuildBurnSystem": {
-    "address": "0xdF20DB37F4422fC5920a5299D86Ce76108639442"
-  },
   "LnExchangeSystem": {
     "address": "0xC74F97E0f3006Ff4D3DE49Dcc46760af677345EF"
   },
@@ -73,5 +67,11 @@
   },
   "LnFeeSystem": {
     "address": "0x48A62562EbB0CFe59F29d40870BBD3183A886eB3"
+  },
+  "LnCollateralSystem": {
+    "address": "0x47Cf6eeBed0EB0aa8bFCa46e97606a84C094b5b9"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x2fb1eFCAE7A4Cc2058Dd2038c320aEF176cC0D10"
   }
 }
