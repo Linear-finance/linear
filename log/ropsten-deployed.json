@@ -65,13 +65,13 @@
   "LnRewardLocker": {
     "address": "0x71192594A101Bf69672E41B49cfeBd7aA3E3042B"
   },
-  "LnFeeSystem": {
-    "address": "0x48A62562EbB0CFe59F29d40870BBD3183A886eB3"
-  },
   "LnCollateralSystem": {
     "address": "0x47Cf6eeBed0EB0aa8bFCa46e97606a84C094b5b9"
   },
   "LnBuildBurnSystem": {
     "address": "0x2fb1eFCAE7A4Cc2058Dd2038c320aEF176cC0D10"
+  },
+  "LnFeeSystem": {
+    "address": "0xd4Ad973df56b0b4633ad0b21471b5d0599027FD3"
   }
 }
