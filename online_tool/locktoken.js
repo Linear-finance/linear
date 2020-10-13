@@ -13,7 +13,7 @@ const providerURL = "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT
 
 const provider = new ethers.providers.JsonRpcProvider(providerURL);
 
-const wallet = new ethers.Wallet(privatekey, provider)
+const wallet = new ethers.Wallet(privatekey, provider);
 
 function getAbi(tokenname) {
     var abiPath = path.join(__dirname, '../', "build/", process.env.NETWORK, tokenname + ".json");
@@ -22,9 +22,9 @@ function getAbi(tokenname) {
     return abi;
 }
 
-function newContract(contractname) {
+function newContract(contractname, ataddress) {
     let abi = getAbi(contractname);
-    let address = getDeployedByName(contractname);
+    let address = ataddress == null? getDeployedByName(contractname) : ataddress;
     
     let ct = new ethers.Contract(address, abi, provider);
     console.log("contract", contractname, "at", address);
@@ -64,13 +64,21 @@ async function collateralSys() {
 
     let cs = newContract("LnCollateralSystem");
     let db = newContract("LnDebtSystem");
+    let fp = newContract("LnFeeSystem");
 
+    let oldbbSys = newContract("LnBuildBurnSystem", "0xdf20db37f4422fc5920a5299d86ce76108639442");
     try {
+        /*
         let b = await db.GetUserDebtBalanceInUsd(zhao);
         console.log("b", b.toString());//
         let v = await cs.GetUserTotalCollateralInUsd(zhao);
         console.log("v", v.toString());
         //await cs.IsSatisfyTargetRatio(zhao);
+        v = await fp.feesAvailable(zhao);
+        console.log(v[0].toString(), v[1].toString());
+        */
+        let v = await oldbbSys.MaxCanBuildAsset("0x71ceb4e97f21eff999e7943d0e2e296971ac793a");
+        console.log("max can", v.toString());
     }
     catch(err) {
         console.log("exception :", err)

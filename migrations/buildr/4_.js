@@ -31,6 +31,10 @@ module.exports = function (deployer, network, accounts) {
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
     await kLnFeeSystem.switchPeriod();
 
+    if (network == "ropsten") {
+     // await CallWithEstimateGas(kLnChainLinkPrices.setOracle, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
+    }
+
     // 创建合成资产 lBTC
     //let kLnAssetSystem = await LnAssetSystem.deployed();
     //let lBTCAsset = await newAssetToken(deployer, toBytes32("lBTC"), "lBTC", "lBTC", admin, kLnAssetSystem);

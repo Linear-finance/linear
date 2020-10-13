@@ -44,7 +44,9 @@ function getDeployedAddress(contract) {
 function getDeployedByName(name) {
     let file = getDeployedFileName();
     let deployed = readJson(file);
-    return deployed[name].address;
+    if (deployed[name] != null)
+        return deployed[name].address;
+    return null;
 }
 
 async function GetDeployed(contract, deployedAddress) {

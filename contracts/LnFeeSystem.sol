@@ -257,3 +257,8 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     }
 }
 
+contract LnFeeSystemTest is LnFeeSystem {
+    constructor(address _admin ) public LnFeeSystem(_admin ) {
+        OnePeriodSecs = 6 hours;
+    }
+}

@@ -29,9 +29,6 @@
   "LnChainLinkPrices": {
     "address": "0xEF92cF6721DB4D35009f036C43fea69Cf4e82ae5"
   },
-  "LnDebtSystem": {
-    "address": "0xE9D86F9f32C79d017F39Ed4661a32D65b7A2F804"
-  },
   "LnSimpleStaking": {
     "address": "0x21e7A26b1eF76845DEa8b93b23501c54f1c6BBd4"
   },
@@ -44,18 +41,6 @@
   "LnTokenCliffLocker_1601281224410": {
     "address": "0xBbecd0ad5C0Bf17F30ED287AD0119804d44938d3"
   },
-  "LnAssetSystem": {
-    "address": "0x6fC22E72025f3aF13cB9115F424C596cB7A58CB1"
-  },
-  "LnProxyERC20_lUSD": {
-    "address": "0x1171dB6a1d2539256C5234b36d0BE2C3c75BFC59"
-  },
-  "LnTokenStorage_lUSD": {
-    "address": "0xF3eb0E37C4CA8211d6c295ab9238D54c9D266Be4"
-  },
-  "LnAsset_lUSD": {
-    "address": "0x72d369772c316D0a9F002A00C10588a4cbadd388"
-  },
   "MultiSigForTransferFunds": {
     "address": "0x66d8C69fB72cFE424484455d6E2E1a3910Cd510d"
   },
@@ -65,13 +50,28 @@
   "LnRewardLocker": {
     "address": "0x71192594A101Bf69672E41B49cfeBd7aA3E3042B"
   },
-  "LnCollateralSystem": {
-    "address": "0x47Cf6eeBed0EB0aa8bFCa46e97606a84C094b5b9"
-  },
-  "LnBuildBurnSystem": {
-    "address": "0x2fb1eFCAE7A4Cc2058Dd2038c320aEF176cC0D10"
-  },
   "LnFeeSystem": {
     "address": "0xCC7CDcF45A9cC941983470Bb841ECC32cf5eB4AB"
+  },
+  "LnAssetSystem": {
+    "address": "0x23D0C5cb40F3f1447adB35a1Fc7245C6b454F071"
+  },
+  "LnDebtSystem": {
+    "address": "0xc17650b3ECC76ba6cc8236C41Ed1b6A48Ea3cff5"
+  },
+  "LnCollateralSystem": {
+    "address": "0x3e6cE54259886720F41e6d25973570835e3eef20"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x7B213c34C4cB1C8A7e75f1Eb9f93f0276D7078A5"
+  },
+  "LnProxyERC20_lUSD": {
+    "address": "0xEA53e2cfC9f8cd022f68e15C6bAB9466bd1EF4A5"
+  },
+  "LnTokenStorage_lUSD": {
+    "address": "0x2E0dc262B25f45ae4EbC5fB2A630ABB3A27F211C"
+  },
+  "LnAsset_lUSD": {
+    "address": "0x04Bf20165174Ebd282c735E88124A5CC716C3eb2"
   }
 }
