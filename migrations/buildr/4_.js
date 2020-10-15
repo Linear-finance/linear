@@ -12,6 +12,7 @@ const LnAccessControl = artifacts.require("LnAccessControl");
 const LinearFinance = artifacts.require("LinearFinance");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const LnCollateralSystem = artifacts.require("LnCollateralSystem");
+const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
 const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
 
@@ -33,13 +34,17 @@ module.exports = function (deployer, network, accounts) {
     if (network == "ropsten") {
       kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
     }
+
     try {
-      await CallWithEstimateGas(kLnFeeSystem.switchPeriod);
+      //await CallWithEstimateGas(kLnFeeSystem.switchPeriod);
+      //reset rewardDistributer address
     } catch(e) {
       console.log(e);
     }
     
     if (network == "ropsten") {
+      let exchangeAddress = getDeployedAddress(LnExchangeSystem);
+      await CallWithEstimateGas(kLnFeeSystem.Init, exchangeAddress, "0x224ae8c61f31a0473dff4afb3da279acdca9a8fa");
      // await CallWithEstimateGas(kLnChainLinkPrices.setOracle, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
     }
 
@@ -63,7 +68,7 @@ module.exports = function (deployer, network, accounts) {
       );
     }*/
 
-    let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);
+    //let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);
     // 添加抵押物信息
     //await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, 
     //    toBytes32("LINA"), linaProxyErc20Address, toBN(0), false
