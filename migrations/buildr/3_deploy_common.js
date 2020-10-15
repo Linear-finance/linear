@@ -23,6 +23,7 @@ const LnRewardCalculator = artifacts.require("LnRewardCalculator");
 const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnRewardLocker = artifacts.require("LnRewardLocker");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
+const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
 
 
 async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
@@ -91,6 +92,9 @@ module.exports = function (deployer, network, accounts) {
     let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
     let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin, linaProxyErc20Address);
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+    if (network == "ropsten") {
+      kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
+    }
 
     await CallWithEstimateGas(kLnRewardLocker.Init, kLnFeeSystem.address);
     let rewardDistributer = admin; // TODO: need a contract?

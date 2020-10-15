@@ -36,6 +36,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     RewardPeriod public curRewardPeriod;
     RewardPeriod public preRewardPeriod;
     uint256 public OnePeriodSecs = 1 weeks;
+    uint64 public LockTime = uint64(52 weeks);
 
     mapping (address => uint256) public userLastClaimedId;
 
@@ -86,6 +87,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 
     event ExchangeFee( uint feeUsd );
     event RewardCollateral( uint reward );
+    event FeesClaimed(address user, uint lUSDAmount, uint linaRewards);
 
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
@@ -251,8 +253,10 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         }
 
         if (reward > 0) {
-
+            uint64 totime = uint64(now + LockTime);
+            rewardLocker.appendReward(user, reward, totime);
         }
+        emit FeesClaimed(user, fee, reward);
         return true;
     }
 }
@@ -260,5 +264,6 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 contract LnFeeSystemTest is LnFeeSystem {
     constructor(address _admin ) public LnFeeSystem(_admin ) {
         OnePeriodSecs = 6 hours;
+        LockTime = 1 hours;
     }
 }

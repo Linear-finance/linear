@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert')
 const w3utils = require('web3-utils');
+const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 const { BN, toBN, toWei, fromWei, hexToAscii } = require('web3-utils');
 const toUnit = amount => toBN(toWei(amount.toString(), 'ether'));
 const {getDeployedByName} = require("../utility/truffle-tool");
@@ -77,8 +78,10 @@ async function collateralSys() {
         v = await fp.feesAvailable(zhao);
         console.log(v[0].toString(), v[1].toString());
         */
-        let v = await oldbbSys.MaxCanBuildAsset("0x71ceb4e97f21eff999e7943d0e2e296971ac793a");
-        console.log("max can", v.toString());
+        //let v = await oldbbSys.MaxCanBuildAsset("0x71ceb4e97f21eff999e7943d0e2e296971ac793a");
+        //console.log("max can", v.toString());
+        let tokeninfo = await cs.tokenInfos(toBytes32("LINA"));
+        console.log(tokeninfo);
     }
     catch(err) {
         console.log("exception :", err)

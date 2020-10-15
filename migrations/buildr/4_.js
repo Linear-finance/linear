@@ -1,4 +1,4 @@
-const {DeployIfNotExist, CallWithEstimateGas, getDeployedByName, getDeployedAddress} = require("../../utility/truffle-tool");
+const {DeployIfNotExist, CallWithEstimateGas, getDeployedByName, getDeployedAddress, GetDeployed} = require("../../utility/truffle-tool");
 const {newAssetToken} = require("../helpers");
 
 const w3utils = require('web3-utils');
@@ -13,6 +13,7 @@ const LinearFinance = artifacts.require("LinearFinance");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const LnCollateralSystem = artifacts.require("LnCollateralSystem");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
+const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
 
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
@@ -29,8 +30,15 @@ module.exports = function (deployer, network, accounts) {
     //console.log(kLnAccessControl);
     
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
-    await kLnFeeSystem.switchPeriod();
-
+    if (network == "ropsten") {
+      kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
+    }
+    try {
+      await CallWithEstimateGas(kLnFeeSystem.switchPeriod);
+    } catch(e) {
+      console.log(e);
+    }
+    
     if (network == "ropsten") {
      // await CallWithEstimateGas(kLnChainLinkPrices.setOracle, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
     }
@@ -53,14 +61,12 @@ module.exports = function (deployer, network, accounts) {
         [toUnit(0.02), toUnit(351), toUnit(1)],
         Math.floor(Date.now()/1000).toString()
       );
-    }
+    }*/
 
-    let kLnCollateralSystem = await LnCollateralSystem.deployed();
+    let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);
     // 添加抵押物信息
-    await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, 
-        toBytes32("LINA"), linaProxyErc20Address, toBN(0), false
-    );
-    */
-   
+    //await CallWithEstimateGas(kLnCollateralSystem.UpdateTokenInfo, 
+    //    toBytes32("LINA"), linaProxyErc20Address, toBN(0), false
+    //);
   });
 };

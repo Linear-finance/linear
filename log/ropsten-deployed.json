@@ -50,9 +50,6 @@
   "LnRewardLocker": {
     "address": "0x71192594A101Bf69672E41B49cfeBd7aA3E3042B"
   },
-  "LnFeeSystem": {
-    "address": "0xCC7CDcF45A9cC941983470Bb841ECC32cf5eB4AB"
-  },
   "LnAssetSystem": {
     "address": "0x23D0C5cb40F3f1447adB35a1Fc7245C6b454F071"
   },
@@ -73,5 +70,11 @@
   },
   "LnAsset_lUSD": {
     "address": "0x04Bf20165174Ebd282c735E88124A5CC716C3eb2"
+  },
+  "LnFeeSystem": {
+    "address": "0x6b91027Ea587301544B88971D55D2bABf7007F9F"
+  },
+  "LnFeeSystemTest": {
+    "address": "0x8657f180611Ba12F9D2620FC9066aD1E866e0460"
   }
 }
