@@ -44,7 +44,7 @@ module.exports = function (deployer, network, accounts) {
     
     if (network == "ropsten") {
       let exchangeAddress = getDeployedAddress(LnExchangeSystem);
-      await CallWithEstimateGas(kLnFeeSystem.Init, exchangeAddress, "0x224ae8c61f31a0473dff4afb3da279acdca9a8fa");
+      await CallWithEstimateGas(kLnFeeSystem.Init, exchangeAddress, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
      // await CallWithEstimateGas(kLnChainLinkPrices.setOracle, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
     }
 
