@@ -29,7 +29,7 @@ async function Update() {
         if (curtime > nextPeriodTime) {
             console.log("switchPeriod", curtime);
             let estimateGas = await feesystem.connect(wallet).estimateGas.switchPeriod();
-            let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
+            let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+10000 }
             await feesystem.connect(wallet).switchPeriod( options );
 
             periodid = periodid+1;
@@ -40,7 +40,7 @@ async function Update() {
             if (periodid != curRewardPeriod.id.toNumber() || curRewardPeriod.rewardsToDistribute.eq( ZERO_BN )) {
                 console.log("reward", curtime );
                 let estimateGas = await feesystem.connect(wallet).estimateGas.addCollateralRewards(rewards); // onlyDistributer
-                let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
+                let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+20000 }
                 await feesystem.connect(wallet).addCollateralRewards( rewards, options );
                 lastRewardPeriodId = periodid;
                 console.log("reward id", lastRewardPeriodId );
@@ -51,7 +51,7 @@ async function Update() {
             // transfer lina
             console.log("transfer lina", curtime );
             let estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(feesystem.address, rewards);
-            let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
+            let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+10000 }
             await linaProxy.connect(wallet).transfer(feesystem.address, rewards, options);
             lastTransferId = lastRewardPeriodId;
             console.log("transfer id", lastTransferId );

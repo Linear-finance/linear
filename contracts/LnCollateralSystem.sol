@@ -165,7 +165,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
     }
 
-    // NOTO: LINA collateral not include reward in locker
+    // NOTE: LINA collateral not include reward in locker
     function GetUserCollaterals(address _user) external view returns (bytes32[] memory, uint256[] memory) {
         bytes32[] memory rCurrency = new bytes32[](tokenSymbol.length + 1);
         uint256[] memory rAmount = new uint256[](tokenSymbol.length + 1);

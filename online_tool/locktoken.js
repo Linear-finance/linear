@@ -23,7 +23,7 @@ function getAbi(tokenname) {
     return abi;
 }
 
-function newContract(contractname, ataddress) {
+function getContract(contractname, ataddress) {
     let abi = getAbi(contractname);
     let address = ataddress == null? getDeployedByName(contractname) : ataddress;
     
@@ -63,11 +63,11 @@ async function getdata() {
 async function collateralSys() {
     let zhao = "0x27f12994A218B1649FE185D19aAC00310aB198C5";
 
-    let cs = newContract("LnCollateralSystem");
-    let db = newContract("LnDebtSystem");
-    let fp = newContract("LnFeeSystem");
+    let cs = getContract("LnCollateralSystem");
+    let db = getContract("LnDebtSystem");
+    let fp = getContract("LnFeeSystem");
 
-    let oldbbSys = newContract("LnBuildBurnSystem", "0xdf20db37f4422fc5920a5299d86ce76108639442");
+    let oldbbSys = getContract("LnBuildBurnSystem", "0xdf20db37f4422fc5920a5299d86ce76108639442");
     try {
         /*
         let b = await db.GetUserDebtBalanceInUsd(zhao);
@@ -80,8 +80,11 @@ async function collateralSys() {
         */
         //let v = await oldbbSys.MaxCanBuildAsset("0x71ceb4e97f21eff999e7943d0e2e296971ac793a");
         //console.log("max can", v.toString());
-        let tokeninfo = await cs.tokenInfos(toBytes32("LINA"));
-        console.log(tokeninfo);
+        
+        let v = await cs.mRewardLocker();
+        console.log("mRewardLocker", v);
+
+
     }
     catch(err) {
         console.log("exception :", err)
