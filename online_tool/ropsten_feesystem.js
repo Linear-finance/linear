@@ -12,6 +12,7 @@ let OnePeriodSecs = null;
 
 const rewards = ethers.utils.parseEther("1000"); 
 let lastRewardPeriodId;
+let lastTransferId;
 
 async function Update() {
     try {
@@ -38,28 +39,22 @@ async function Update() {
         if (lastRewardPeriodId != periodid) {
             if (periodid != curRewardPeriod.id.toNumber() || curRewardPeriod.rewardsToDistribute.eq( ZERO_BN )) {
                 console.log("reward", curtime );
-                estimateGas = await feesystem.connect(wallet).estimateGas.addCollateralRewards(rewards); // onlyDistributer
+                let estimateGas = await feesystem.connect(wallet).estimateGas.addCollateralRewards(rewards); // onlyDistributer
                 let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
                 await feesystem.connect(wallet).addCollateralRewards( rewards, options );
-    
-                // transfer lina
-                console.log("transfer lina", curtime );
-                estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(feesystem.address, rewards);
-                options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
-                await linaProxy.connect(wallet).transfer(feesystem.address, rewards, options);
+                lastRewardPeriodId = periodid;
+                console.log("reward id", lastRewardPeriodId );
             }
+        }
 
-            lastRewardPeriodId = periodid;
-
-            /* re send fix missing
-            let balance = await linaProxy.balanceOf(feesystem.address);
-            if (balance.eq( ZERO_BN )) {
-                console.log("re-transfer lina", curtime );
-                let estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(feesystem.address, rewards);
-                let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
-                await linaProxy.connect(wallet).transfer(feesystem.address, rewards, options);
-            }
-            */
+        if (lastTransferId != lastRewardPeriodId) {
+            // transfer lina
+            console.log("transfer lina", curtime );
+            let estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(feesystem.address, rewards);
+            let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+100 }
+            await linaProxy.connect(wallet).transfer(feesystem.address, rewards, options);
+            lastTransferId = lastRewardPeriodId;
+            console.log("transfer id", lastTransferId );
         }
     } catch(e) {
         console.error("error:", e);
@@ -70,4 +65,4 @@ Update();
 
 setInterval(() => {
     Update();
-}, 600000);
+}, 60000);
