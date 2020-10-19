@@ -1,15 +1,14 @@
+安装truffle
+
+```bash
+npm install -g truffle
+```
+
+安装依赖库
+
+```
 yarn
-
-truffle migrate --network ropsten
-
-truffle migrate --network ropsten -f
-
-use ganache network
-truffle migrate --network development 
-
-
-
-truffle test test/TestAccessControl.js  --network local
+```
 
 
 
@@ -19,7 +18,9 @@ npx truffle xxxx
 
 
 
-openzeppelin是要用控制台交互的方式去deploy合约？它的文档是这样。
+# openzeppelin
+
+它的文档：
 
 https://docs.openzeppelin.com/cli/2.8/getting-started
 
@@ -33,39 +34,7 @@ npm install @openzeppelin/upgrades --save #这个好像没什么用
 npm install --save-dev @openzeppelin/contracts 
 ```
 
-其它
-
-yarn
-
-npx oz --help
-
-npx oz compile
-
-可以为openzeppelin在根目录建network.js配置文件如下，但是它默认也可以用truffle-config.js的（即不用额外的配置）。我们用了truffle,network.js就不用了。
-
-```
-module.exports = { 
- networks: { 
- development: { 
- protocol: 'http', 
- host: 'localhost', 
- port: 8545, 
- gas: 5000000, 
- gasPrice: 5e9, 
- networkId: '*', 
- }, 
- test: { 
- protocol: 'http', 
- host: 'localhost', 
- port: 9555, 
- gas: 5000000, 
- gasPrice: 5e9, 
- networkId: '4447', 
- }, 
- }, 
- }; 
-
-```
+其它openzeppelin命令没用到。
 
 
 
@@ -111,4 +80,32 @@ export ETH_GAS_PRICE=650000000000
 
 truffle migrate --network $network 
 ```
+
+# 文件说明：
+
+| build       | 部署合约时，abi文件输出目录                                  |
+| ----------- | ------------------------------------------------------------ |
+| contracts   | 合约代码目录                                                 |
+| log         | 记录部署合约地址。truffle也会记录合约地址到abi文件，当migrations中某step失败就没记录下来 |
+| migrations  | 部署合约脚本。下面的子目录： buildr 主要部署buildr相关合约，测试网用到了； fundVault 没用到；linaToken 主网部署lina一系列操作；tokenLocker 没有用到。 |
+| online_tool | 合约调用，查询脚本．**ropsten_feesystem.js** 用定时开启feesystem的下一阶段。**linearPriceUpdater** 定时更新lina价格。 |
+| test        | 合约测试代码，本地可以配置 ganache 结点，然后用命令 truffle test 跑测试 |
+| utility     | 辅组部署合约脚本                                             |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
+|             |                                                              |
 
