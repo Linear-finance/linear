@@ -147,6 +147,50 @@ async function revertWallet() {
     console.log(tx);
 }
 
+async function calcDebt() {
+    let debtAddress = getDeployedByName("LnDebtSystem");
+    let debtSystem = new ethers.Contract(debtAddress, getAbi("LnDebtSystem"), provider);
+
+    let xiaoqiang = "0xaaa2288d854Bc83ceB289ce3522443DC3A897084";
+    let lastfactor = await debtSystem.LastSystemDebtFactor();
+    let userCurDP = await debtSystem.GetUserCurrentDebtProportion(xiaoqiang);
+    let debtstate = await debtSystem.userDebtState(xiaoqiang);
+    let debtProportion = debtstate.debtProportion;
+    let debtFactor = debtstate.debtFactor;
+    console.log("LastSystemDebtFactor", lastfactor.toString());
+    console.log("debtProportion", debtProportion.toString());
+    console.log("debtFactor", debtFactor.toString());
+    console.log("GetUserCurrentDebtProportion", userCurDP.toString());
+    
+    let calcv = lastfactor.div(debtFactor).mul(debtProportion);
+    console.log("calcv", calcv.toString());
+    let PUNIT =  ethers.utils.parseEther("1000000000"); 
+    calcv = lastfactor.mul(PUNIT).div(debtFactor).mul(debtProportion).div(PUNIT);
+    console.log("calcv2", calcv.toString());
+
+    let ret = await debtSystem.GetUserDebtBalanceInUsd(xiaoqiang);
+    let userDebtBalance = ret[0];
+    let totalAssetSupplyInUsd = ret[1];
+    console.log("userDebtBalance", userDebtBalance.toString());
+    console.log("totalAssetSupplyInUsd", totalAssetSupplyInUsd.toString());
+
+    let HALF = ethers.utils.parseEther("0.000000001")
+    let calcdebtb = totalAssetSupplyInUsd.mul(HALF).mul(calcv).div(PUNIT).div(HALF);
+    console.log("calcdebtb", calcdebtb.toString());
+}
+
+/**
+LastSystemDebtFactor 5345809166518357898827
+debtProportion 38506296160749946285504369
+debtFactor 1315922156035616935069575
+GetUserCurrentDebtProportion 156428182351567779699794
+calcv 0
+calcv2 156428182351567779699794
+userDebtBalance 5559748528426227510
+totalAssetSupplyInUsd 35541859816096659411749
+calcdebtb 5559748528426227509
+*/
+
 //increment.then((value) => {
 //    console.log(value);
 //});
@@ -154,4 +198,6 @@ async function revertWallet() {
 
 //getLiquidsInUsd("0x81de13D9749cEb529638353bD5086D6CBb942fDd");
 //collaLina();
-revertWallet();
+//revertWallet();
+
+calcDebt();

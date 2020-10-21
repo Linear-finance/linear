@@ -24,27 +24,7 @@ const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnRewardLocker = artifacts.require("LnRewardLocker");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
 const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
-
-
-async function newAssetToken(deployer, keyname, name, symbol, admin, kLnAssetSystem) {
-    console.log("newAssetToken", name);
-    let kLnProxyERC20 = await DeployWithEstimateSuffix(deployer, name, 
-      LnProxyERC20, admin);
-    let kLnTokenStorage = await DeployWithEstimateSuffix(deployer, name, 
-      LnTokenStorage, admin, admin);
-    let kAsset = await DeployWithEstimateSuffix(deployer, name, 
-      LnAsset, keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
-
-    await CallWithEstimateGas(kLnTokenStorage.setOperator, kAsset.address);
-    await CallWithEstimateGas(kLnProxyERC20.setTarget, kAsset.address);
-    await CallWithEstimateGas(kAsset.setProxy, kLnProxyERC20.address);
-    await CallWithEstimateGas(kAsset.updateAddressCache, kLnAssetSystem.address);
-
-    await CallWithEstimateGas(kLnAssetSystem.addAsset, kAsset.address);
-
-    //record kAsset.address by sp name
-    return kAsset;
-}
+const {newAssetToken} = require("../helpers");
 
 const BUILD_RATIO = toUnit("0.2");
 

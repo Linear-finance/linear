@@ -76,5 +76,23 @@
   },
   "LnFeeSystemTest": {
     "address": "0x8657f180611Ba12F9D2620FC9066aD1E866e0460"
+  },
+  "LnProxyERC20_lBTC": {
+    "address": "0x5B9361fFdBB357eEeC2900803226cC13d3002B7F"
+  },
+  "LnTokenStorage_lBTC": {
+    "address": "0xBcC90Acd3c8Ec4C2228eC8eF99CA3D28252C23E4"
+  },
+  "LnAsset_lBTC": {
+    "address": "0x50fA065993e78A962E6db74Ab842245B81cD06AB"
+  },
+  "LnProxyERC20_lETH": {
+    "address": "0x75F2c4275E98c9884e150e48991102a7b306ac88"
+  },
+  "LnTokenStorage_lETH": {
+    "address": "0xb039E226C730E2eA6cD249BD77A7f07B40bc725A"
+  },
+  "LnAsset_lETH": {
+    "address": "0xc16955bB7dC759152FF3c9f8c7729A5087d3C09C"
   }
 }

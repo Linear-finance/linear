@@ -109,3 +109,34 @@ truffle migrate --network $network
 |             |                                                              |
 |             |                                                              |
 
+# 债务占比数据
+
+在LnDebtSystem.sol里，用户的债务数据 userDebtState，数据结构
+
+```
+    struct DebtData {
+        uint256 debtProportion;// 因个人主动操作引起债务变化时，债务占比
+        uint256 debtFactor; //单位 PRECISE_UNIT， 全局因子
+    }
+```
+
+全局债务因子 lastDebtFactors
+
+计算用户当前债务占比
+
+```
+    function GetUserCurrentDebtProportion(address _user) public view returns(uint256) {
+        uint256 debtProportion = userDebtState[_user].debtProportion;
+        uint256 debtFactor = userDebtState[_user].debtFactor;
+
+        if (debtProportion == 0) {
+            return 0;
+        }
+
+        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
+                .divideDecimalRoundPrecise(debtFactor)
+                .multiplyDecimalRoundPrecise(debtProportion);
+        return currentUserDebtProportion;
+    }
+```
+

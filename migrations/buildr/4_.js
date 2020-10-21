@@ -43,14 +43,15 @@ module.exports = function (deployer, network, accounts) {
     }
     
     if (network == "ropsten") {
-      let exchangeAddress = getDeployedAddress(LnExchangeSystem);
-      await CallWithEstimateGas(kLnFeeSystem.Init, exchangeAddress, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
+      //let exchangeAddress = getDeployedAddress(LnExchangeSystem);
+      //await CallWithEstimateGas(kLnFeeSystem.Init, exchangeAddress, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
      // await CallWithEstimateGas(kLnChainLinkPrices.setOracle, "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd");
     }
 
     // 创建合成资产 lBTC
-    //let kLnAssetSystem = await LnAssetSystem.deployed();
-    //let lBTCAsset = await newAssetToken(deployer, toBytes32("lBTC"), "lBTC", "lBTC", admin, kLnAssetSystem);
+    let kLnAssetSystem = await GetDeployed(LnAssetSystem);
+    let lBTCAsset = await newAssetToken(deployer, toBytes32("lBTC"), "lBTC", "lBTC", admin, kLnAssetSystem);
+    let lETHAsset = await newAssetToken(deployer, toBytes32("lETH"), "lETH", "lETH", admin, kLnAssetSystem);
 /*
     if (network == "ropsten") {
       console.log("mint to ropsten test address");
