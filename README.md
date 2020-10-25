@@ -1,225 +1,156 @@
+# Linear
+Linear smart contracts implementing with Solidity
+
+![GitHub package.json version](https://img.shields.io/github/package-json/v/Linear-finance/linear) ![GitHub top language](https://img.shields.io/github/languages/top/Linear-finance/linear)
+
+### A Decentralized Delta-One Asset Protocol
+> Linear Finance is a cross-chain compatible, decentralized delta-one asset protocol to cost-effectively and instantly create, manage, and trade synthetic assets with unlimited liquidity
+
+Linear Finance (“Linear”) is a non-custodial, cross-chain compatible, delta-one asset protocol. Linear’s long term DeFi vision is to increase inclusiveness and democratize access to investment assets (digital and traditional). Tremendous value exists in the ability for investors to easily and quickly invest, save fees, and secure assets at fair market value. Linear combines substantial technical experience from numerous crypto projects with extensive financial experience in exotic and structured assets from traditional global asset management firms to bring to market one of the first DeFi projects built upon Ethereum with cross-chain compatibility. Linear will allow users to build and manage spot or portfolio exposures with a slew of innovative digital and traditional financial products.
+
+### Community
+
+[![Discord](https://img.shields.io/discord/738363983031173151?label=discord&logo=discord&style=plastic)](https://discordapp.com/channels/738363983031173151/) [![Twitter Follow](https://img.shields.io/twitter/follow/LinearFinance?label=LinearFinance&style=social)](https://twitter.com/LinearFinance) [![Chat on Telegram](https://img.shields.io/badge/Telegram-brightgreen.svg?logo=telegram&color=%234b4e52)](https://t.me/joinchat/Tb3iAhuMZsyfspxhEWQLvw)  
 
 
-安装nodejs （代码可运行在的版本： v10.19.0， 其它版本应该也没大问题，如果有再更新版本）
+# Getting Started
+You are required to have baisc smart contract and solidity knowledge to run this project.
 
-安装truffle
+To start, clone the repo and run the following command inside the project directory to install node.js required packages. If you don't already have node.js installed, click [here][NODE] 
+```sh
+$ npm install
+```
+## Prerequesites
+Intall [Truffle][TRUFFLE] and [OpenZeppelin][OZ] inside the project directory.
 
-```bash
-npm install -g truffle
+```sh
+# Install Truffle
+$ npm install truffle -g
+$ yarn
+
+#Install OpenZeppelin
+$ npm install @openzeppelin/cli
+$ npx openzeppelin init
 ```
 
-安装依赖库
+## Deployment
+You can deploy the smart contracts on currently supported networks
+-- [Ganache][GAN] (for development purpose)
+-- Ropsten - 
+-- Kovan
+-- Mainnet
 
+### Variables
+The followings are the variables required when deploy to the network.
+```sh
+$ export NETWORK=""  #development | ropsten | kovan | mainnet
+$ export WALLET_PRIVATE_KEY="" #wallet private key
+$ export BUILD_DIR="./build/$network" #build directory
+$ export ETH_GAS_PRICE=650000000000 #change gas price accordingly
+$ export MIGRATIONS_DIR="" #./migrations/linaToken | ./migrations/buildr
 ```
-yarn
-```
 
-安装 ganache 作为本地测试结点
-
-
-
-**如果上面找不到truffle command, 用**
-
-npx truffle xxxx
-
-
-
-# openzeppelin
-
-它的文档：
-
-https://docs.openzeppelin.com/cli/2.8/getting-started
-
-
-
-# Deploy
-
-## environment variable:
-
-**NETWORK** : setup truffle network.
-
-**WALLET_PRIVATE_KEY**: deploy ETH private key.
-
-**MIGRATIONS_DIR**: migrations directory.
-
-**INFURA_PROJECT_ID**: Infura project ID.
-
-**BUILD_DIR**: contract output directory.
-
-**ETH_GAS_PRICE**: gas price.
-
-## Deploy shell script
-
-run in root directory.
-
+### Example
+Deploying to Ganache, create a shell script as below and run:
 ```shell
 #!/bin/bash
-network="mainnet"
-echo "network is $network"
-
-export NETWORK=$network
+export NETWORK="development"
 
 read -s -p "input private key:" privateKey
-
 export WALLET_PRIVATE_KEY=$privateKey
 
 export MIGRATIONS_DIR="./migrations/linaToken"
-
-#set your infura id
-export INFURA_PROJECT_ID="";
-
 export BUILD_DIR="./build/$network"
-
 export ETH_GAS_PRICE=650000000000
 
-# you can use `-f number` to force run spec step.
-# as : truffle migrate --network $network -f 5
 truffle migrate --network $network 
 ```
+After successfully run, change the script `MIGRATIONS_DIR="./migrations/buildr"` and run the revised script.
 
-## 部署
+### Deployed Addresses
+you will find the created contract addresses in the log/[NETWORK]-deployed.json. In this case, log/development-deployed.json.
 
-### 1、部署LINA token
-
-修改部署shell脚本
-
-```
-export MIGRATIONS_DIR="./migrations/linaToken"
-```
-
-./migrations/linaToken 里面的step已经全部在主网运行，如果的新的环境中部署，只要完成前面两个step就好了。测试环境跑完也没问题。
-
-### 2、部署buildr
-
-修改部署shell脚本
-
-```
-export MIGRATIONS_DIR="./migrations/buildr"
-```
-
-在 3_deploy_common.js 里面包含buildr所需的合约
-
-## 运营脚本
-
-### 1、定期更新价格
-
-目录 online_tool/linearPriceUpdater 里的脚本需要后台跑起来，定期从uniswap上读取价格并更新到合约LnChainLinkPrices里。安装该目录下的package.json后，可以用下面的bash运行。
-
-```bash
-#!/bin/bash
-
-#cd ./price_updater
-
-network="ropsten"
-echo "network is $network"
-
-export NETWORK=$network
-
-read -s -p "input private key:" privateKey
-
-echo ""
-
-export WALLET_PRIVATE_KEY=$privateKey
-
-# TODO: set up infura id
-export INFURA_PROJECT_ID="";
-
-export ETH_GAS_PRICE=10000000000
-
-#node main.js
-nohup node main.js > output.log &
-```
-
-
-
-### 2、定期开启feeSystem奖励周期
-
-见 online_tool/ropsten_feesystem.js . 可以通过下面bash跑起来，需要设置INFURA_PROJECT_ID
-
-```bash
-#!/bin/bash
-
-network="ropsten"
-echo "network is $network"
-
-export NETWORK=$network
-
-read -s -p "input private key:" privateKey
-
-export WALLET_PRIVATE_KEY=$privateKey
-
-export BUILD_DIR="./build/$network"
-
-export MIGRATIONS_DIR="./migrations/$network"
-
-# TODO: set up infura id
-export INFURA_PROJECT_ID="";
-
-export ETH_GAS_PRICE=1000000000
-
-nohup node online_tool/ropsten_feesystem.js > feesystem.log &
-```
-
-
-
-
-
-# 文件说明：
-
-| build                  | 部署合约时，abi文件输出目录                                  |
-| ---------------------- | ------------------------------------------------------------ |
-| contracts              | 合约代码目录                                                 |
-| log                    | 记录部署合约地址。truffle也会记录合约地址到abi文件，当migrations中某step失败就没记录下来 |
-| migrations             | 部署合约脚本。下面的子目录： buildr 主要部署buildr相关合约，测试网用到了； fundVault 没用到；linaToken 主网部署lina一系列操作；tokenLocker 没有用到。 |
-| online_tool            | 合约调用，查询脚本．**ropsten_feesystem.js** 用定时开启feesystem的下一阶段。**linearPriceUpdater** 定时更新lina价格。 |
-| test                   | 合约测试代码，本地可以配置 ganache 结点，然后用命令 truffle test 跑测试 |
-| utility                | 辅组部署合约脚本                                             |
-| migrations/linaToken   | 里面的部署脚本已经在主网运行。                               |
-| migrations/buildr      | 里面的部署脚本还没在主网运行，只在ropsten已经部署。          |
-| LinearFinanceToken.sol | LINA token主合约 LinearFinance                               |
-| LnAccessControl.sol    | 合约权限控制                                                 |
-| LnAssetSystem.sol      | 合成资产管理合约。同时继承LnAddressStorage，记录系统中需要交互的合约地址，以方便通过名称获取合约地址。 |
-| LnCollateralSystem.sol | 抵押系统，在生成合成资产前需要做抵押。                       |
-| LnBuildBurnSystem.sol  | 生成和销毁合成资产系统。生成和销毁lUSD                       |
-| LnChainLinkPrices.sol  | 价格查询系统                                                 |
-| LnFeeSystem.sol        | exchange的手续费奖励和通胀奖励发放                           |
-| LnExchangeSystem.sol   | 合成资产交易系统                                             |
-| LnRewardLocker.sol     | LnFeeSystem 里的锁定的通胀奖励                               |
-|                        |                                                              |
-|                        |                                                              |
-|                        |                                                              |
-
-
-# 债务占比数据
-
-在LnDebtSystem.sol里，用户的债务数据 userDebtState，数据结构
-
-```
-    struct DebtData {
-        uint256 debtProportion;// 因个人主动操作引起债务变化时，债务占比
-        uint256 debtFactor; //单位 PRECISE_UNIT， 全局因子
-    }
+```json
+{
+  "LnTokenStorage": {
+    "address": "0x0FCecff4bc941d8FCEfA34d63A1881647c4b9387"
+  },
+  "LnProxyERC20": {
+    "address": "0xbbed423b067E4A7c6fe5F3dFbF8634a1A626D970"
+  },
+  "LinearFinance": {
+    "address": "0x23189B2556dA47c8950C87034BB3150DA01b5342"
+  },
+  "SafeDecimalMath": {
+    "address": "0x8e6E7795F0c32644f8b661aC89dfFef98B5F06a5"
+  },
+  "LnAssetSystem": {
+    "address": "0x46694af06838b005ef23bb8f80D1107cdd7b93Db"
+  },
+  "LnConfig": {
+    "address": "0x0e42BCF1e77eB2C73EC4d4d9c11CF0Fa3D3E8A6E"
+  },
+  "LnAccessControl": {
+    "address": "0xB2039e5e8e252CD1960621AC8689A9e3693817e5"
+  },
+  "LnChainLinkPrices": {
+    "address": "0xef8e7dfD4268D18B5beDE9F0b2A78539b26fdb95"
+  },
+  "LnDebtSystem": {
+    "address": "0x38876674482774130c26DEeA07990B0AEb0ef83E"
+  },
+  "LnCollateralSystem": {
+    "address": "0xC9DA8BaBfa60bc8CDd521C7CCe8Ccea2aB3F38BA"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x31634Db5857D80e18489063A931b8dC4e88e8435"
+  },
+  "LnExchangeSystem": {
+    "address": "0xF07E8eC6d6401Bb9f86d744603660cf7388Ab4Fa"
+  },
+  "LnRewardLocker": {
+    "address": "0xAa306439a8D3c2A495B2D216ABe4efE3DE091f77"
+  },
+  "LnFeeSystem": {
+    "address": "0x90B7e503fA2b0D2dFa74AFBC36B38b5321a6BbC3"
+  },
+  "LnProxyERC20_lUSD": {
+    "address": "0x5411292d40e73E1D4B9b053c2bD172406b637007"
+  },
+  "LnTokenStorage_lUSD": {
+    "address": "0xe22977584e8e42f639212465A41911fCC4753DF7"
+  },
+  "LnAsset_lUSD": {
+    "address": "0xa18ef0860cCDBe36cA6A066C0702D171326a6f15"
+  },
+  "LnProxyERC20_lBTC": {
+    "address": "0x846A82483Fc082E85E1b2f0C611D3FC23B5c35dd"
+  },
+  "LnTokenStorage_lBTC": {
+    "address": "0xf56512F76c81601A7b979A14684baB8E6C6AaaB2"
+  },
+  "LnAsset_lBTC": {
+    "address": "0x215B367C82b2BcC7B208b6E2a748bA5A442fCa67"
+  },
+  "LnProxyERC20_lETH": {
+    "address": "0x77B9911963Bf68419CdD967e1173D9F017B2A3Ff"
+  },
+  "LnTokenStorage_lETH": {
+    "address": "0xF6B53baB30CBBFa4FF82e9ee88449BAb9E15E15c"
+  },
+  "LnAsset_lETH": {
+    "address": "0xa8d027ad015b6601b8A300b59E14219D7076f07F"
+  },
+  "SafeDecimalMath_1603423216172": {
+    "address": "0xe7Dc8B89Dd2BBE69E29bAc97836248d941297d0D"
+  },
+  "SafeDecimalMath_1603423403903": {
+    "address": "0xbCfaA86D9e60fa4EebE46507444908d9892Ce811"
+  }
+}
 ```
 
-全局债务因子 lastDebtFactors
-
-计算用户当前债务占比
-
-```
-    function GetUserCurrentDebtProportion(address _user) public view returns(uint256) {
-        uint256 debtProportion = userDebtState[_user].debtProportion;
-        uint256 debtFactor = userDebtState[_user].debtFactor;
-
-        if (debtProportion == 0) {
-            return 0;
-        }
-
-        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
-                .divideDecimalRoundPrecise(debtFactor)
-                .multiplyDecimalRoundPrecise(debtProportion);
-        return currentUserDebtProportion;
-    }
-```
-
-
-
+[NODE]: <https://nodejs.org>
+[TRUFFLE]: <https://www.trufflesuite.com/truffle>
+[OZ]: <https://openzeppelin.com>
+[GAN]: <https://www.trufflesuite.com/ganache>
