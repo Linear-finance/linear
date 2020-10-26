@@ -15,6 +15,7 @@ const LnCollateralSystem = artifacts.require("LnCollateralSystem");
 const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
 const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
+const LnConfig = artifacts.require("LnConfig");
 
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
@@ -50,24 +51,36 @@ module.exports = function (deployer, network, accounts) {
 
     // 创建合成资产 lBTC
     let kLnAssetSystem = await GetDeployed(LnAssetSystem);
-    let lBTCAsset = await newAssetToken(deployer, toBytes32("lBTC"), "lBTC", "lBTC", admin, kLnAssetSystem);
-    let lETHAsset = await newAssetToken(deployer, toBytes32("lETH"), "lETH", "lETH", admin, kLnAssetSystem);
-/*
+    let LnAsset_lBTCAddress = getDeployedByName("LnAsset_lBTC");
+    let lBTC32 = toBytes32("lBTC");
+    let lETH32 = toBytes32("lETH");
+    if (LnAsset_lBTCAddress == null) {
+      let lBTCAsset = await newAssetToken(deployer, lBTC32, "lBTC", "lBTC", admin, kLnAssetSystem);
+    }
+    let LnAsset_lETHAddress = getDeployedByName("LnAsset_lETH");
+    if (LnAsset_lETHAddress == null) {
+      let lETHAsset = await newAssetToken(deployer, lETH32, "lETH", "lETH", admin, kLnAssetSystem);
+    }
+    
+    //set fee rate
+    let kLnConfig = await DeployIfNotExist(deployer, LnConfig, admin);
+    let lUSD32 = toBytes32("lUSD");
+    await CallWithEstimateGas(kLnConfig.setUint, lBTC32, toUnit("0.001"));
+    await CallWithEstimateGas(kLnConfig.setUint, lETH32, toUnit("0.001"));
+    await CallWithEstimateGas(kLnConfig.setUint, lUSD32, toUnit("0.001"));
+    
     if (network == "ropsten") {
-      console.log("mint to ropsten test address");
+      //console.log("mint to ropsten test address");
       let testaddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa";
       let testamount = toUnit(1000000000);
       //await CallWithEstimateGas(kLinearFinance.mint, testaddress, testamount);
 
-      const linaBytes32 = toBytes32("LINA");
-      const ETHBytes32 = toBytes32("ETH");
-      const lUSDBytes32 = toBytes32("lUSD");
-      await CallWithEstimateGas(kLnChainLinkPrices.updateAll, 
-        [linaBytes32, ETHBytes32, lUSDBytes32],
-        [toUnit(0.02), toUnit(351), toUnit(1)],
-        Math.floor(Date.now()/1000).toString()
-      );
-    }*/
+      //await CallWithEstimateGas(kLnChainLinkPrices.updateAll, 
+      //  [lBTC32, lETH32, lUSD32],
+      //  [toUnit(13140.02), toUnit(405.4), toUnit(1)],
+      //  Math.floor(Date.now()/1000).toString()
+      //);
+    }
 
     //let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);
     // 添加抵押物信息
