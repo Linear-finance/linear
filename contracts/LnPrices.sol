@@ -34,6 +34,6 @@ interface LnPrices {
 abstract contract LnBasePrices is LnPrices{
     // const name
     bytes32 public override constant LINA = "LINA";
-    bytes32 public override constant LUSD = "lUsd";
+    bytes32 public override constant LUSD = "lUSD";
 
 }
