@@ -16,6 +16,9 @@ const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
 const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
 const LnConfig = artifacts.require("LnConfig");
+const LnDebtSystem = artifacts.require("LnDebtSystem");
+const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
+const assert = require('assert');
 
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
@@ -25,16 +28,43 @@ module.exports = function (deployer, network, accounts) {
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
 
-    let kLnChainLinkPrices = await LnChainLinkPrices.deployed();
-    //console.log(kLnChainLinkPrices);
+    let kLnChainLinkPrices = await GetDeployed(LnChainLinkPrices);
+    let kLnDebtSystem = await GetDeployed(LnDebtSystem);
+    let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);
+    let kLnBuildBurnSystem = await GetDeployed(LnBuildBurnSystem);
+    let kLnExchangeSystem = await GetDeployed(LnExchangeSystem);
 
-    let kLnAccessControl = await LnAccessControl.deployed();
-    //console.log(kLnAccessControl);
+    let kLnAccessControl = await GetDeployed(LnAccessControl);
     
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
     if (network == "ropsten") {
       kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
     }
+
+    let kLnAssetSystem = await GetDeployed(LnAssetSystem);
+
+    let lusdret = await kLnChainLinkPrices.LUSD();
+    console.log("lusdret", lusdret, toBytes32("lUSD"));
+    let lusdaddress = await kLnAssetSystem.getAddressWithRequire(lusdret, "");
+    console.log(lusdaddress);
+    /*
+ // deploy a new LnChainLinkPrices and update to other referenced contract.
+    let contractNames = [];
+    let contractAddrs = [];
+    function registContract(name, contractObj) {
+        contractNames.push(toBytes32(name));
+        contractAddrs.push(contractObj.address);
+    }
+    registContract("LnPrices", kLnChainLinkPrices);
+
+    await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
+
+    await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
+    return;*/
 
     try {
       //await CallWithEstimateGas(kLnFeeSystem.switchPeriod);
@@ -50,7 +80,6 @@ module.exports = function (deployer, network, accounts) {
     }
 
     // 创建合成资产 lBTC
-    let kLnAssetSystem = await GetDeployed(LnAssetSystem);
     let LnAsset_lBTCAddress = getDeployedByName("LnAsset_lBTC");
     let lBTC32 = toBytes32("lBTC");
     let lETH32 = toBytes32("lETH");
@@ -64,22 +93,26 @@ module.exports = function (deployer, network, accounts) {
     
     //set fee rate
     let kLnConfig = await DeployIfNotExist(deployer, LnConfig, admin);
-    let lUSD32 = toBytes32("lUSD");
+    let lUSD32 = toBytes32("lUSD");/*
     await CallWithEstimateGas(kLnConfig.setUint, lBTC32, toUnit("0.001"));
     await CallWithEstimateGas(kLnConfig.setUint, lETH32, toUnit("0.001"));
     await CallWithEstimateGas(kLnConfig.setUint, lUSD32, toUnit("0.001"));
+    */
     
     if (network == "ropsten") {
       //console.log("mint to ropsten test address");
       let testaddress = "0x224ae8C61f31a0473dFf4aFB3Da279aCdcA9a8Fa";
       let testamount = toUnit(1000000000);
       //await CallWithEstimateGas(kLinearFinance.mint, testaddress, testamount);
-
-      //await CallWithEstimateGas(kLnChainLinkPrices.updateAll, 
-      //  [lBTC32, lETH32, lUSD32],
-      //  [toUnit(13140.02), toUnit(405.4), toUnit(1)],
-      //  Math.floor(Date.now()/1000).toString()
-      //);
+      
+      /* //user oracleAddress call updateAll
+      let oracle = await kLnChainLinkPrices.oracle();
+      console.log("oracle", oracle, admin);
+      await CallWithEstimateGas(kLnChainLinkPrices.updateAll, 
+        [lBTC32, lETH32],
+        [toUnit(13140.02), toUnit(405.4)],
+        Math.floor(Date.now()/1000).toString()
+      );*/
     }
 
     //let kLnCollateralSystem = await GetDeployed(LnCollateralSystem);

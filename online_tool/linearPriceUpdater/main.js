@@ -24,7 +24,7 @@ const UNISWAP_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const LINA_ADDRESS = "0x3E9BC21C9b189C09dF3eF1B824798658d5011937";
 const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7";
 
-const addressLnChainLinkPricesRopsten = "0xEF92cF6721DB4D35009f036C43fea69Cf4e82ae5";
+const addressLnChainLinkPricesRopsten = "0x508d2c2C3584E6e1e2AdFA0b7c0823846914BfFf";
 
 const UINT = ethers.utils.parseEther("1"); //parseUnits(value, "ether").
 
