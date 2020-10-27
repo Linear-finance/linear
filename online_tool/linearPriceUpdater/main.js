@@ -81,7 +81,7 @@ async function Update() {
         let keys = [linaBytes32, ethBytes32, btcBytes32];
         let prices = [linaPriceInUSDT, ethInUSDT, btcInUSDT];
         let updatetime = Math.floor(Date.now()/1000).toString();
-        console.log(updatetime, linaPriceInUSDT, ethInUSDT, btcInUSDT);
+        console.log(updatetime, linaPriceInUSDT.toString(), ethInUSDT.toString(), btcInUSDT.toString());
         let estimateGas = await kLnChainLinkPricesRopsten.connect(walletRopsten).estimateGas.updateAll(
             keys,
             prices,
