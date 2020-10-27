@@ -99,7 +99,7 @@ contract('LnDefaultPrices', async (accounts)=> {
 
             let timeSent = await currentTime();
 
-            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("lUsd")], [ 3,4 ], timeSent, { from: oracle} ) );
+            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("lUSD")], [ 3,4 ], timeSent, { from: oracle} ) );
         });
         it('not 0', async ()=> {
             // new instance of LnDefaultPrices
@@ -142,7 +142,7 @@ contract('LnDefaultPrices', async (accounts)=> {
             //console.log( roundLina);
             assert.equal( roundLina.valueOf(), 1 );
 
-            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUSD") );
             //console.log( roundLusd );
             assert.equal( roundLusd.valueOf(), 1 );
         });
@@ -153,7 +153,7 @@ contract('LnDefaultPrices', async (accounts)=> {
             let roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
             assert.equal( roundLina.valueOf(), 1 );
 
-            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            let roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUSD") );
             assert.equal( roundLusd.valueOf(), 1 );
 
             // should update all prices normally
@@ -162,7 +162,7 @@ contract('LnDefaultPrices', async (accounts)=> {
             roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
             assert.equal( roundLina.valueOf(), 2 );
 
-            roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUsd") );
+            roundLusd = await defaultPrices.getCurrentRoundId(toBytes32("lUSD") );
             assert.equal( roundLusd.valueOf(), 1 );
             
         });

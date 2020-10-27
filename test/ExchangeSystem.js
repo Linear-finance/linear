@@ -63,7 +63,7 @@ contract('LnExchangeSystem', async (accounts)=> {
 
             const lusdData = await LnTokenStorage.new( admin, op );
             const lusdProxy = await LnProxyERC20.new( admin );
-            const lusd = await LnAsset.new( toBytes32("lUsd"), lusdProxy.address, lusdData.address, "lUsd", "LUSD SYMBOL", 0, 18, admin );
+            const lusd = await LnAsset.new( toBytes32("lUSD"), lusdProxy.address, lusdData.address, "lUSD", "LUSD SYMBOL", 0, 18, admin );
             await lusdProxy.setTarget( lusd.address );    
             await lusdData.setOperator( lusd.address );
 
