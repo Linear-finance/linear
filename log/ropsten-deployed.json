@@ -94,5 +94,14 @@
   },
   "LnAsset_lETH": {
     "address": "0xc16955bB7dC759152FF3c9f8c7729A5087d3C09C"
+  },
+  "LnProxyERC20_lHB10": {
+    "address": "0x16423ec6977A02386C3444c18c1096ba8dA6eE36"
+  },
+  "LnTokenStorage_lHB10": {
+    "address": "0x77e1882c43F2867981831e91af76A5AC9c983292"
+  },
+  "LnAsset_lHB10": {
+    "address": "0xf32bCf8f1BB8aBD9D56D6F5AdC0Fb606bBBA30F1"
   }
 }

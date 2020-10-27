@@ -24,7 +24,7 @@ module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
 
-    let kLinearFinance = await LinearFinance.deployed();
+    let kLinearFinance = await GetDeployed(LinearFinance);
     let linaProxyErc20Address = await kLinearFinance.proxy();
     console.log("linaProxyErc20Address", linaProxyErc20Address);
 
@@ -83,6 +83,7 @@ module.exports = function (deployer, network, accounts) {
     let LnAsset_lBTCAddress = getDeployedByName("LnAsset_lBTC");
     let lBTC32 = toBytes32("lBTC");
     let lETH32 = toBytes32("lETH");
+    let lHB1032 = toBytes32("lHB10");
     if (LnAsset_lBTCAddress == null) {
       let lBTCAsset = await newAssetToken(deployer, lBTC32, "lBTC", "lBTC", admin, kLnAssetSystem);
     }
@@ -91,6 +92,11 @@ module.exports = function (deployer, network, accounts) {
       let lETHAsset = await newAssetToken(deployer, lETH32, "lETH", "lETH", admin, kLnAssetSystem);
     }
     
+    let LnAsset_lHB10Address = getDeployedByName("LnAsset_lHB10");
+    if (LnAsset_lHB10Address == null) {
+      let lHB10Asset = await newAssetToken(deployer, lHB1032, "lHB10", "lHB10", admin, kLnAssetSystem);
+    }
+
     //set fee rate
     let kLnConfig = await DeployIfNotExist(deployer, LnConfig, admin);
     let lUSD32 = toBytes32("lUSD");/*

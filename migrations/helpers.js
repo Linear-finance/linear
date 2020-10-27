@@ -1,4 +1,4 @@
-const {DeployWithEstimate, CallWithEstimateGas} = require("../utility/truffle-tool");
+const {DeployWithEstimate, CallWithEstimateGas, DeployWithEstimateSuffix} = require("../utility/truffle-tool");
 
 const LnAsset = artifacts.require("LnAsset");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");
