@@ -5,3 +5,4 @@ node_modules
 build/development
 log/development-deployed.json
 .openzeppelin/.session
+.DS_Store

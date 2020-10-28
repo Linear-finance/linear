@@ -5,6 +5,8 @@ const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
+const request = require('request');
 
 const privatekey = process.env.WALLET_PRIVATE_KEY;
 let gasPrice = process.env.ETH_GAS_PRICE == null ? 10000000000 : process.env.ETH_GAS_PRICE;
@@ -22,12 +24,15 @@ console.log(walletMainnet.address, walletRopsten.address);
 const linaBytes32 = toBytes32("LINA");
 const ethBytes32 = toBytes32("lETH");
 const btcBytes32 = toBytes32("lBTC");
+const hb10Bytes32 = toBytes32("lHB10");
 
 const UNISWAP_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const LINA_ADDRESS = "0x3E9BC21C9b189C09dF3eF1B824798658d5011937";
 const ETH_Wrapped = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const BTC_Wrapped = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 const USDT_ADDRESS = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+const huobiURL = "https://api.huobi.pro/market/trade?symbol=hb10usdt";
+const getPromise = util.promisify(request.get);
 
 const EACAggregatorProxyBTC2USD = "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c";
 
@@ -60,7 +65,21 @@ async function getEstimatedUSD(currencyAddress, amount) {
     
     let ret = await uniswap.getAmountsOut(amount, path);
     console.log(ret[0].toString(), ret[1].toString());
-    return ret
+    return ret;
+}
+
+async function getEstimatedHB10USDT() {
+    try {
+        let response = await getPromise(huobiURL);
+        let body = response.body;
+        let jsonBody = JSON.parse(body);
+        let price = jsonBody.tick.data[0].price;
+        let ret = ethers.utils.parseEther(price);
+        // console.log("HB10 prices : " , price);
+        return ret;
+    } catch(e) {
+        console.log("Call huobi API fails: " , e);
+    }
 }
 //getEstimatedUSD(LINA_ADDRESS, UINT);
 
@@ -71,6 +90,8 @@ async function Update() {
         let linaPriceInUSDT = ret[1].mul(1e12); // to LnChainLinkPrices unit
         ret = await getEstimatedUSD(ETH_Wrapped, UINT);
         let ethInUSDT = ret[1].mul(1e12);
+        let huobiAPIret = await getEstimatedHB10USDT();
+        let hb10InUSDT = huobiAPIret;
         //ret = await getEstimatedUSD(BTC_Wrapped, UINT);
         //let btcInUSDT = ret[1].mul(1e12);
 
@@ -88,10 +109,10 @@ async function Update() {
             console.log("same");
         }*/
 
-        let keys = [linaBytes32, ethBytes32, btcBytes32];
-        let prices = [linaPriceInUSDT, ethInUSDT, btcInUSDT];
+        let keys = [linaBytes32, ethBytes32, btcBytes32, hb10Bytes32];
+        let prices = [linaPriceInUSDT, ethInUSDT, btcInUSDT,hb10InUSDT];
         let updatetime = Math.floor(Date.now()/1000).toString();
-        console.log(updatetime, linaPriceInUSDT.toString(), ethInUSDT.toString(), btcInUSDT.toString());
+        console.log(updatetime, linaPriceInUSDT.toString(), ethInUSDT.toString(), btcInUSDT.toString(), hb10InUSDT.toString());
         let estimateGas = await kLnChainLinkPricesRopsten.connect(walletRopsten).estimateGas.updateAll(
             keys,
             prices,
@@ -105,7 +126,14 @@ async function Update() {
         console.error("error:", e);
     }
 }
+//for test
+async function getPrices(){
+    let ret = await kLnChainLinkPricesRopsten.connect(walletRopsten).getPrice(hb10Bytes32);
+    console.log(ret);
+}
 
 setInterval(() => {
     Update();
+    JSON.parse
+    // getPrices();
 }, 60000);
