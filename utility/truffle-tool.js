@@ -49,27 +49,31 @@ function getDeployedByName(name) {
     return null;
 }
 
+// 1. get from parameter; 2. get from log file; 3. get from truffle out file
 async function GetDeployed(contract, deployedAddress) {
     var deployed
+    if (deployedAddress != null) {
+        try {
+            deployed = await contract.at(deployedAddress);
+            console.log("GetDeployed", contract.contractName, "from param address", deployedAddress);
+            return deployed;
+        } catch (e) { 
+        }
+        return null;
+    }// TODO: need to continu follow code?
+    
     try {
-        deployed = await contract.deployed();
+        let deployedaddr = getDeployedAddress(contract);
+        deployed = await contract.at(deployedaddr);
+        console.log("GetDeployed", contract.contractName, "from logfile", deployedaddr);
         return deployed;
     }
     catch (e) {
         try{
-            if (deployedAddress != null) {
-                deployed = await contract.at(deployedAddress);
-                console.log("GetDeployed", contract.contractName, "from build", deployedAddress);
-            } else {
-                let deployedaddr = getDeployedAddress(contract);
-                if (deployedaddr != null) {
-                    deployed = await contract.at(deployedaddr);
-                    console.log("GetDeployed", contract.contractName, "from config", deployedaddr);
-                }
-            }
+            deployed = await contract.deployed();
+            console.log("GetDeployed", contract.contractName, "from truffle", deployed.address);
             return deployed;
         } catch (e) { 
-            
         }
     }
     return null
