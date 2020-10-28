@@ -5,7 +5,7 @@ const ZERO_BN = ethers.utils.parseEther("0");
 
 let gasPrice = process.env.ETH_GAS_PRICE == null ? 10000000000 : process.env.ETH_GAS_PRICE;
 
-const feesystem = newContract("LnFeeSystemTest", "0x8657f180611Ba12F9D2620FC9066aD1E866e0460");
+const feesystem = newContract("LnFeeSystemTest", "0xC2B3D062F995703A8Ab5B46677226dFe454B2756");
 const linaProxy = newContract("LnProxyERC20", "0x908B56f016233E84c391eebe52Ee4d461fD8fb87");
 
 let OnePeriodSecs = null;
@@ -14,11 +14,17 @@ const rewards = ethers.utils.parseEther("1000");
 let lastRewardPeriodId;
 let lastTransferId;
 
+let rewardLockerAddress;
+
 async function Update() {
     try {
         if (OnePeriodSecs == null) {
             OnePeriodSecs = (await feesystem.OnePeriodSecs()).toNumber();
             console.log("get OnePeriodSecs", OnePeriodSecs);
+        }
+        if (rewardLockerAddress == null) {
+            rewardLockerAddress = await feesystem.rewardLocker();
+            console.log("rewardLockerAddress", rewardLockerAddress);
         }
         // check if next period? switch
         let curRewardPeriod = await feesystem.curRewardPeriod();
@@ -50,9 +56,9 @@ async function Update() {
         if (lastTransferId != lastRewardPeriodId) {
             // transfer lina
             console.log("transfer lina", curtime );
-            let estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(feesystem.address, rewards);
+            let estimateGas = await linaProxy.connect(wallet).estimateGas.transfer(rewardLockerAddress, rewards);
             let options = { gasPrice:gasPrice, gasLimit:estimateGas.toNumber()+10000 }
-            await linaProxy.connect(wallet).transfer(feesystem.address, rewards, options);
+            await linaProxy.connect(wallet).transfer(rewardLockerAddress, rewards, options);
             lastTransferId = lastRewardPeriodId;
             console.log("transfer id", lastTransferId );
         }

@@ -60,6 +60,26 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         rewardDistributer = _rewardDistri;
     }
 
+    //set period data, maybe copy from old contract
+    function SetPeriodData(int16 index, // 0 current 1 pre
+            uint256 id,
+            uint256 startingDebtFactor,
+            uint256 startTime,
+            uint256 feesToDistribute,
+            uint256 feesClaimed,
+            uint256 rewardsToDistribute,
+            uint256 rewardsClaimed
+        ) public onlyAdmin {
+        RewardPeriod storage toset = index == 0? curRewardPeriod : preRewardPeriod;
+        toset.id = id;
+        toset.startingDebtFactor = startingDebtFactor;
+        toset.startTime = startTime;
+        toset.feesToDistribute = feesToDistribute;
+        toset.feesClaimed = feesClaimed;
+        toset.rewardsToDistribute = rewardsToDistribute;
+        toset.rewardsClaimed = rewardsClaimed;
+    }
+
     function setExchangeSystemAddress(address _address) public onlyAdmin {
         exchangeSystemAddress = _address;
     }
@@ -200,21 +220,22 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         if (preRewardPeriod.feesToDistribute == 0 && preRewardPeriod.rewardsToDistribute == 0) {
             return (0,0);
         }
-        // close factor
-        uint256 pos = 0;
-        if (userPeriodDebt[user][0].PeriodID < userPeriodDebt[user][1].PeriodID) {
-            pos = 1;
-        }
+        uint256 debtFactor = 0;
+        uint256 debtProportion = 0;
+        uint256 pid = 0; //get last period factor
         for (uint64 i = 0; i < userPeriodDebt[user].length; i++) {
-            if (userPeriodDebt[user][i].PeriodID == curRewardPeriod.id) {
-                pos = i;
-                break;
+            if (userPeriodDebt[user][i].PeriodID < curRewardPeriod.id
+            && userPeriodDebt[user][i].PeriodID > pid) {
+                pid = curRewardPeriod.id;
+                debtFactor = userPeriodDebt[user][i].debtFactor;
+                debtProportion = userPeriodDebt[user][i].debtProportion;
             }
         }
+        if (debtProportion == 0) {
+            (debtProportion, debtFactor) = debtSystem.userDebtState(user);
+        }
 
-        uint256 debtFactor = userPeriodDebt[user][pos].debtFactor;
-        uint256 debtProportion = userPeriodDebt[user][pos].debtProportion;
-        if (debtFactor == 0) {
+        if (debtProportion == 0 ) {
             return (0,0);
         }
 
@@ -247,7 +268,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         require(fee > 0 || reward > 0, "Nothing to claim");
 
         if (fee > 0) {
-            LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( "LINA", "get lina asset address fail" ));
+            LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( "lUSD", "get lUSD asset address fail" ));
             lusd.burn( FEE_DUMMY_ADDRESS, fee );
             lusd.mint(user, fee);
         }

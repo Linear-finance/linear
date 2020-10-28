@@ -74,9 +74,6 @@
   "LnFeeSystem": {
     "address": "0x6b91027Ea587301544B88971D55D2bABf7007F9F"
   },
-  "LnFeeSystemTest": {
-    "address": "0x8657f180611Ba12F9D2620FC9066aD1E866e0460"
-  },
   "LnProxyERC20_lBTC": {
     "address": "0x5B9361fFdBB357eEeC2900803226cC13d3002B7F"
   },
@@ -103,5 +100,8 @@
   },
   "LnAsset_lHB10": {
     "address": "0xf32bCf8f1BB8aBD9D56D6F5AdC0Fb606bBBA30F1"
+  },
+  "LnFeeSystemTest": {
+    "address": "0xC2B3D062F995703A8Ab5B46677226dFe454B2756"
   }
 }

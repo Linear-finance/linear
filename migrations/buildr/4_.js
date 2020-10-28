@@ -18,6 +18,7 @@ const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
 const LnConfig = artifacts.require("LnConfig");
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
+const LnRewardLocker = artifacts.require("LnRewardLocker");
 const assert = require('assert');
 
 module.exports = function (deployer, network, accounts) {
@@ -35,13 +36,56 @@ module.exports = function (deployer, network, accounts) {
     let kLnExchangeSystem = await GetDeployed(LnExchangeSystem);
 
     let kLnAccessControl = await GetDeployed(LnAccessControl);
-    
-    let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
-    if (network == "ropsten") {
-      kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
-    }
-
     let kLnAssetSystem = await GetDeployed(LnAssetSystem);
+
+    let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+    if (network == "ropsten") {//console.log("deploy ropsten LnFeeSystemTest");
+      kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
+      /*
+      let kLnRewardLocker = await GetDeployed(LnRewardLocker);
+      await CallWithEstimateGas(kLnRewardLocker.Init, kLnFeeSystem.address);
+      let rewardDistributer = "0x474f7783d9a01d8eaa6faee9de8bdb9453adf2cd"; // TODO: need a contract?
+      await CallWithEstimateGas(kLnFeeSystem.Init, kLnExchangeSystem.address, rewardDistributer);
+  
+      // access role setting
+      await CallWithEstimateGas(kLnAccessControl.SetIssueAssetRole, 
+          [kLnFeeSystem.address], 
+          [true]
+      );
+      await CallWithEstimateGas(kLnAccessControl.SetBurnAssetRole, 
+          [kLnFeeSystem.address], 
+          [true]
+      );
+
+      let contractNames = [];
+      let contractAddrs = [];
+      function registContract(name, contractObj) {
+          contractNames.push(toBytes32(name));
+          contractAddrs.push(contractObj.address);
+      }
+      registContract("LnFeeSystem", kLnFeeSystem);
+      await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
+
+      await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
+      await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
+      await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
+      await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
+      await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
+
+      let old = await LnFeeSystemTest.at("0x8657f180611Ba12F9D2620FC9066aD1E866e0460");
+      let curRewardPeriod = await old.curRewardPeriod();
+      let preRewardPeriod = await old.preRewardPeriod();
+      let ndata = curRewardPeriod;
+      await CallWithEstimateGas(kLnFeeSystem.SetPeriodData, 0, ndata.id, 
+        ndata.startingDebtFactor, ndata.startTime, ndata.feesToDistribute, ndata.feesClaimed,
+        ndata.rewardsToDistribute, ndata.rewardsClaimed
+      );
+      ndata = preRewardPeriod;
+      await CallWithEstimateGas(kLnFeeSystem.SetPeriodData, 1, ndata.id, 
+        ndata.startingDebtFactor, ndata.startTime, ndata.feesToDistribute, ndata.feesClaimed,
+        ndata.rewardsToDistribute, ndata.rewardsClaimed
+      );*/
+    }
 
     let lusdret = await kLnChainLinkPrices.LUSD();
     console.log("lusdret", lusdret, toBytes32("lUSD"));
