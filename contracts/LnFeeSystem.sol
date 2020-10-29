@@ -116,11 +116,15 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         collateralSystem = LnCollateralSystem( collateralAddress );
         rewardLocker =   LnRewardLocker(     _addressStorage.getAddressWithRequire( "LnRewardLocker",      "LnRewardLocker address not valid" ));
         mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( "LnAssetSystem",      "LnAssetSystem address not valid" ));
+        
+        // as Init func. record LnExchangeSystem address
+        exchangeSystemAddress = _addressStorage.getAddressWithRequire( "LnExchangeSystem",      "LnExchangeSystem address not valid" );
 
         emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
         emit updateCachedAddress( "LnCollateralSystem",address(collateralSystem) );
         emit updateCachedAddress( "LnRewardLocker",address(rewardLocker) );
         emit updateCachedAddress( "LnAssetSystem",address(mAssets) );
+        emit updateCachedAddress( "LnExchangeSystem",address(exchangeSystemAddress) );
      }
 
     function switchPeriod() public {
