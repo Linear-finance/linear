@@ -79,14 +79,6 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
     }
 
-    function SetPause(bool pause) external onlyAdmin {
-        if (pause) {
-            _pause();
-        } else {
-            _unpause();
-        }
-    }
-
     function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {
         require(_currency[0] != 0, "symbol cannot empty");
         require(_currency != Currency_ETH, "ETH is used by system");
