@@ -235,9 +235,10 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
                 debtProportion = userPeriodDebt[user][i].debtProportion;
             }
         }
-        if (debtProportion == 0) {
-            (debtProportion, debtFactor) = debtSystem.userDebtState(user);
-        }
+        //
+        //if (debtProportion == 0) {
+        //    (debtProportion, debtFactor) = debtSystem.userDebtState(user);
+        //}
 
         if (debtProportion == 0 ) {
             return (0,0);
