@@ -109,22 +109,22 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     event RewardCollateral( uint reward );
     event FeesClaimed(address user, uint lUSDAmount, uint linaRewards);
 
-    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    function updateAddressCache(LnAddressStorage _addressStorage ) onlyAdmin public override
     {
-        debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
+        debtSystem = LnDebtSystem(_addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ));
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
         collateralSystem = LnCollateralSystem( collateralAddress );
-        rewardLocker =   LnRewardLocker(     _addressStorage.getAddressWithRequire( "LnRewardLocker",      "LnRewardLocker address not valid" ));
-        mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( "LnAssetSystem",      "LnAssetSystem address not valid" ));
+        rewardLocker = LnRewardLocker(_addressStorage.getAddressWithRequire( "LnRewardLocker", "LnRewardLocker address not valid" ));
+        mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( "LnAssetSystem", "LnAssetSystem address not valid" ));
         
         // as Init func. record LnExchangeSystem address
-        exchangeSystemAddress = _addressStorage.getAddressWithRequire( "LnExchangeSystem",      "LnExchangeSystem address not valid" );
+        exchangeSystemAddress = _addressStorage.getAddressWithRequire( "LnExchangeSystem","LnExchangeSystem address not valid" );
 
-        emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
-        emit updateCachedAddress( "LnCollateralSystem",address(collateralSystem) );
-        emit updateCachedAddress( "LnRewardLocker",address(rewardLocker) );
-        emit updateCachedAddress( "LnAssetSystem",address(mAssets) );
-        emit updateCachedAddress( "LnExchangeSystem",address(exchangeSystemAddress) );
+        emit updateCachedAddress( "LnDebtSystem", address(debtSystem) );
+        emit updateCachedAddress( "LnCollateralSystem", address(collateralSystem) );
+        emit updateCachedAddress( "LnRewardLocker", address(rewardLocker) );
+        emit updateCachedAddress( "LnAssetSystem", address(mAssets) );
+        emit updateCachedAddress( "LnExchangeSystem", address(exchangeSystemAddress) );
      }
 
     function switchPeriod() public {

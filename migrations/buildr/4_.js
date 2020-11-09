@@ -39,7 +39,7 @@ module.exports = function (deployer, network, accounts) {
     let kLnAssetSystem = await GetDeployed(LnAssetSystem);
 
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
-    if (network == "ropsten") {//console.log("deploy ropsten LnFeeSystemTest");
+    if (network == "ropsten" || network == "bsctestnet") {//console.log("deploy ropsten LnFeeSystemTest");
       kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
       /*
       let kLnRewardLocker = await GetDeployed(LnRewardLocker);
@@ -143,11 +143,12 @@ module.exports = function (deployer, network, accounts) {
 
     //set fee rate
     let kLnConfig = await DeployIfNotExist(deployer, LnConfig, admin);
-    let lUSD32 = toBytes32("lUSD");/*
+    let lUSD32 = toBytes32("lUSD");
     await CallWithEstimateGas(kLnConfig.setUint, lBTC32, toUnit("0.001"));
     await CallWithEstimateGas(kLnConfig.setUint, lETH32, toUnit("0.001"));
     await CallWithEstimateGas(kLnConfig.setUint, lUSD32, toUnit("0.001"));
-    */
+    await CallWithEstimateGas(kLnConfig.setUint, lHB1032, toUnit("0.001"));
+    
     
     if (network == "ropsten") {
       //console.log("mint to ropsten test address");

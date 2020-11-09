@@ -1,5 +1,5 @@
 const assert = require('assert');
-const {DeployIfNotExist, DeployWithEstimate, DeployWithEstimateSuffix, CallWithEstimateGas, getDeployedByName} = require("../../utility/truffle-tool");
+const {DeployIfNotExist, DeployWithEstimate, DeployWithEstimateSuffix, CallWithEstimateGas, getDeployedByName, GetDeployed} = require("../../utility/truffle-tool");
 
 const w3utils = require('web3-utils');
 const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
@@ -72,7 +72,7 @@ module.exports = function (deployer, network, accounts) {
     let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
     let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin, linaProxyErc20Address);
     let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
-    if (network == "ropsten") {
+    if (network == "ropsten" || network == "bsctestnet") {
       kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
     }
 
@@ -109,6 +109,7 @@ module.exports = function (deployer, network, accounts) {
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
     registContract("LnFeeSystem", kLnFeeSystem);
     registContract("LnRewardLocker", kLnRewardLocker);
+    registContract("LnExchangeSystem", kLnExchangeSystem);
   
     await CallWithEstimateGas(kLnAssetSystem.updateAll, contractNames, contractAddrs);
 
@@ -117,9 +118,9 @@ module.exports = function (deployer, network, accounts) {
       let lUSD = await newAssetToken(deployer, toBytes32("lUSD"), "lUSD", "lUSD", admin, kLnAssetSystem);
       LnAsset_lUSDAddress = lUSD.address;
     }
-    
+    console.log("kLnAssetSystem.address", kLnAssetSystem.address);
+    console.log("kLnFeeSystem", kLnFeeSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, LnAsset_lUSDAddress);
-
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);

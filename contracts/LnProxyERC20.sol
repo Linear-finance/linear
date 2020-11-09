@@ -67,5 +67,6 @@ contract LnProxyERC20 is LnProxyBase, IERC20 {
 
         return true;
     }
+
 }
 

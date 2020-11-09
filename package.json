@@ -25,6 +25,6 @@
     "fs": "0.0.1-security",
     "solc": "^0.6.12",
     "string-format": "^2.0.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.5"
+    "truffle-hdwallet-provider": "^1.0.17"
   }
 }

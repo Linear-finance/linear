@@ -1,0 +1,83 @@
+{
+  "LnTokenStorage": {
+    "address": "0xdfFbA72543418Eb585f0a3860837B3ac8eb76cF6"
+  },
+  "LnProxyERC20": {
+    "address": "0xEeA12f9aC7fD26EC12d94c3Bca0ac1140e43787C"
+  },
+  "LinearFinance": {
+    "address": "0xe08AeB5b5BA086d2Cc79c6A1b80f7EBBE2513A56"
+  },
+  "SafeDecimalMath": {
+    "address": "0x734c5719B2DdDdcE1bBB3114Ff9fa22793170D6E"
+  },
+  "LnAssetSystem": {
+    "address": "0x7f7b3f5FFeD23BF14Fb59bbC35F1dA74313F3E99"
+  },
+  "LnConfig": {
+    "address": "0x671fbefEd68e585133e7951a0E57C37a35da8E1D"
+  },
+  "LnAccessControl": {
+    "address": "0xa185850cc7E7d1080327B9c8eE298C9D56088E67"
+  },
+  "LnChainLinkPrices": {
+    "address": "0x0592D3ABD720C71Ba1ce1a8143bc5bfe3f818deD"
+  },
+  "LnDebtSystem": {
+    "address": "0x982b4bCbDd148AE9487522658de8E3522D0016BB"
+  },
+  "LnCollateralSystem": {
+    "address": "0x92F6465EFC79bE264C942d5Ea120fae9E14cca99"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x5097CC0539b39C824493eBeAB55be3A16Feb6aaF"
+  },
+  "LnExchangeSystem": {
+    "address": "0x4408d78E6A08f9f3D13869378C43DEE423ADbe3C"
+  },
+  "LnRewardLocker": {
+    "address": "0xbCA747F9114500DA2245503A89B6e8a5Ef148E38"
+  },
+  "LnFeeSystem": {
+    "address": "0x4FC1662C023D901d33F5996A8B7bC1a918018555"
+  },
+  "LnProxyERC20_lUSD": {
+    "address": "0x1a86A9524aD6fC4ffEaB6AF317f61a166c22B919"
+  },
+  "LnTokenStorage_lUSD": {
+    "address": "0x26F4b6270E4644A07CB6A1AFe409400c739E3810"
+  },
+  "LnAsset_lUSD": {
+    "address": "0xca435540503B151eBf697d793016e2456C173EA8"
+  },
+  "LnFeeSystemTest": {
+    "address": "0xa00c32dB507A2c5f0e307D9b8Ae6fAd7a9A4368D"
+  },
+  "LnProxyERC20_lBTC": {
+    "address": "0x7522E7Ff49a336B3E890FCF0810Ca76eE4A99a96"
+  },
+  "LnTokenStorage_lBTC": {
+    "address": "0xC00Dc9a8e682A50508d38409EdDdA6A384769CdE"
+  },
+  "LnAsset_lBTC": {
+    "address": "0x48cb62B1E39cD7F8D477a24F2849d0A6B0598763"
+  },
+  "LnProxyERC20_lETH": {
+    "address": "0xa0eb4DCB124CEe0449c86eC54053D7F668eB6d89"
+  },
+  "LnTokenStorage_lETH": {
+    "address": "0x7B492c866Ec83E43435EC021133eF517b5c1C0c8"
+  },
+  "LnAsset_lETH": {
+    "address": "0x8eF5aF926f584c017CA23391F35Db47E38A31e23"
+  },
+  "LnProxyERC20_lHB10": {
+    "address": "0x59AC43C6B4F46794850A9F3397bE9d5b2b55DeD5"
+  },
+  "LnTokenStorage_lHB10": {
+    "address": "0x86e2256c72c0F9c645843D69Ec891e2d3A93b67b"
+  },
+  "LnAsset_lHB10": {
+    "address": "0xC182FE2Aee01dF2de986eF22FE9eD0aE603D7F8F"
+  }
+}

@@ -2,6 +2,7 @@ const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const LnRewardCalculator = artifacts.require('LnRewardCalculator');
 const LnRewardCalculatorTest = artifacts.require('LnRewardCalculatorTest');
 const LnSimpleStaking = artifacts.require('LnSimpleStaking');
+const LnSimpleStakingExtension = artifacts.require('LnSimpleStakingExtension');
 
 const LinearFinance = artifacts.require("LinearFinance");
 const LnLinearStakingStorage = artifacts.require("LnLinearStakingStorage");

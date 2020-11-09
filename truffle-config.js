@@ -132,9 +132,18 @@ module.exports = {
         timeoutBlocks: 2000,
         networkCheckTimeout: 50000,
         skipDryRun: true
+    },
+    bsctestnet: {
+        provider: CreateHDWallet(privatekey, "https://data-seed-prebsc-1-s1.binance.org:8545"),
+        network_id: "*",       //
+        gas: 30000000,        // Ropsten has a lower block limit than mainnet
+        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000,
+        confirmations: 0,    // # of confs to wait between deployments. (default: 0)
+        timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
+        networkCheckTimeout: 500000,
+        skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     }
   },
-
   // Set default mocha options here, use special reporters etc.
   mocha: {
     // timeout: 100000

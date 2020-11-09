@@ -30,6 +30,10 @@ contract LnErc20Handler is IERC20, LnAdmin, LnProxyImpl {
         totalSupply = _totalSupply;
         decimals = _decimals;
     }
+    // // For BEP extension impl
+    // function getOwner() external view override returns (address) {
+    //     return tokenStorage.admin();
+    // }
 
     function allowance(address owner, address spender) public view virtual override returns (uint) {
         return tokenStorage.allowance(owner, spender);
