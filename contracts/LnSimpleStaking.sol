@@ -774,11 +774,11 @@ contract LnSimpleStakingExtension is
 
     //--------------------------------------------------------
 
-    // function migrationsOldStaking( address contractAddr, uint amount, uint blockNb ) public onlyAdmin {
-    //     super._deposit( blockNb, contractAddr, amount );
-    //     mOldStaking = contractAddr;
-    //     mOldAmount = amount;
-    // }
+    function migrationsOldStaking( address contractAddr, uint amount, uint blockNb ) public onlyAdmin {
+        super._deposit( blockNb, contractAddr, amount );
+        mOldStaking = contractAddr;
+        mOldAmount = amount;
+    }
 
     function staking(uint256 amount)
         public
