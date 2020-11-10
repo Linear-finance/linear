@@ -734,6 +734,13 @@ contract LnSimpleStakingExtension is
         uint256 stakingBalance = super.amountOf(account).add(
             stakingStorage.stakingBalanceOf(account)
         );
+        
+        if (!syncUserInfo[msg.sender]) {
+            uint256 oldAmoutOf = mOldSimpleStaking.amountOf(account);
+            stakingBalance = stakingBalance.add(oldAmoutOf);
+        }
+
+        
         return stakingBalance;
     }
 
@@ -753,41 +760,24 @@ contract LnSimpleStakingExtension is
         mEndBlock = _newEndBlock;
     }
 
-    function isUserSynced(address _user) external view returns (bool) {
-        bool status;
-        if (!requireSync) {
-            status = true;
-        } else {
-            status = syncUserInfo[_user];
+    function syncUserInfoData(address _user) internal {
+        if (requireSync && !syncUserInfo[_user]) {
+            (
+                userInfo[_user].reward,
+                userInfo[_user].amount,
+                userInfo[_user].rewardDebt
+            ) = mOldSimpleStaking.getUserInfo(_user);
+            syncUserInfo[_user] = true;
         }
-        return status;
-    }
-
-    function syncUserInfoData(address _user)
-        public
-        whenNotPaused
-        returns (bool)
-    {
-        require(requireSync, "sync is not required.");
-        require(!syncUserInfo[_user], "Already sync.");
-
-        (
-            userInfo[_user].reward,
-            userInfo[_user].amount,
-            userInfo[_user].rewardDebt
-        ) = mOldSimpleStaking.getUserInfo(_user);
-        syncUserInfo[_user] = true;
-        return true;
     }
 
     //--------------------------------------------------------
 
     function migrationsOldStaking(
         address contractAddr,
-        uint256 amount,
-        uint256 blockNb
+        uint256 amount
     ) public onlyAdmin {
-        super._deposit(blockNb, contractAddr, amount);
+        // super._deposit(blockNb, contractAddr, amount);
         mOldStaking = contractAddr;
         mOldAmount = amount;
     }
@@ -799,10 +789,14 @@ contract LnSimpleStakingExtension is
         returns (bool)
     {
         // stakingStorage.requireInStakingPeriod();
-        require(
-            syncUserInfo[msg.sender],
-            "sync is required before perform action."
-        );
+        // require(
+        //     syncUserInfo[msg.sender],
+        //     "sync is required before perform action."
+        // );
+
+        if (!syncUserInfo[msg.sender]) {
+            syncUserInfoData(msg.sender);
+        }
 
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
@@ -904,10 +898,14 @@ contract LnSimpleStakingExtension is
         whenNotPaused
         returns (bool)
     {
-        require(
-            syncUserInfo[msg.sender],
-            "sync is required before perform action."
-        );
+        // require(
+        //     syncUserInfo[msg.sender],
+        //     "sync is required before perform action."
+        // );
+
+        if (!syncUserInfo[msg.sender]) {
+            syncUserInfoData(msg.sender);
+        }
 
         //stakingStorage.requireInStakingPeriod();
         require(amount > 0, "Invalid amount.");
@@ -921,6 +919,18 @@ contract LnSimpleStakingExtension is
 
     function getTotalReward(uint256 blockNb, address _user)
         public
+        view
+        returns (uint256 total)
+    {
+        if (!syncUserInfo[msg.sender]) {
+            total = _getTotalRewardNotSync(blockNb, _user);
+        } else {
+            total = _getTotalReward(blockNb, _user);
+        }
+    }
+
+    function _getTotalReward(uint256 blockNb, address _user)
+        internal 
         view
         returns (uint256 total)
     {
@@ -962,14 +972,37 @@ contract LnSimpleStakingExtension is
         total = total.add(reward3);
     }
 
+
+    function _getTotalRewardNotSync(uint256 blockNb, address _user)
+        internal 
+        view
+        returns (uint256 total)
+    {
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+
+        // rely on the old simplestaking contract
+        uint256 oldTotalReward = 0;
+        oldTotalReward = mOldSimpleStaking.getTotalReward(blockNb, _user);
+        total = total.add(oldTotalReward);
+
+        uint256 reward3 = super._calcReward(blockNb, _user);
+        total = total.add(reward3);
+    }
+
     // claim reward
     // Note: 需要提前提前把奖励token转进来
     function claim() public override whenNotPaused returns (bool) {
         //stakingStorage.requireStakingEnd()
-        require(
-            syncUserInfo[msg.sender],
-            "sync is required before perform action."
-        );
+        // require(
+        //     syncUserInfo[msg.sender],
+        //     "sync is required before perform action."
+        // );
+
+        if (!syncUserInfo[msg.sender]) {
+            syncUserInfoData(msg.sender);
+        }
 
         require(
             block.timestamp > claimRewardLockTime,
@@ -999,7 +1032,47 @@ contract LnSimpleStakingExtension is
         view
         returns (uint256)
     {
-        return _calcReward(curBlock, _user);
+        return _calcRewardWithViewSimpleAmount(curBlock, _user);
+    }
+
+    // This is copied particularly for catering the amount when user not sync
+    function _calcRewardWithViewSimpleAmount(uint256 curBlock, address _user)
+        internal
+        view
+        returns (uint256)
+    {
+        PoolInfo storage pool = mPoolInfo;
+        UserInfo storage user = userInfo[_user];
+        uint256 accRewardPerShare = pool.accRewardPerShare;
+        uint256 lpSupply = pool.amount;
+        if (curBlock > pool.lastRewardBlock && lpSupply != 0) {
+            uint256 multiplier = curBlock.sub(
+                pool.lastRewardBlock,
+                "cr curBlock sub overflow"
+            );
+            uint256 curReward = multiplier.mul(rewardPerBlock);
+            accRewardPerShare = accRewardPerShare.add(
+                curReward.mul(1e20).div(lpSupply)
+            );
+        }
+
+        // Only logic added for old simpleStaking
+        uint256 ssReward;
+        uint256 ssAmount;
+        uint256 ssRewardDebt;
+        (ssReward, ssAmount, ssRewardDebt) = mOldSimpleStaking.getUserInfo(
+            _user
+        );
+        ssAmount = ssAmount.add(user.amount);
+        ssRewardDebt = ssRewardDebt.add(user.rewardDebt);
+        ssReward = ssReward.add(user.reward);
+
+        // uint256 newReward = user.amount.mul(accRewardPerShare).div(1e20).sub(
+        uint256 newReward = ssAmount.mul(accRewardPerShare).div(1e20).sub(
+            ssRewardDebt,
+            "cr newReward sub overflow"
+        );
+        return newReward.add(ssReward);
     }
 
     function setTransLock(address target, uint256 locktime) public onlyAdmin {
