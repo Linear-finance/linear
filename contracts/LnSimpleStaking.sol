@@ -686,11 +686,7 @@ contract LnSimpleStakingExtension is
         mEndBlock = _endBlock;
         if (_mOldSimpleStaking != address(0)) {
             mOldSimpleStaking = LnSimpleStaking(_mOldSimpleStaking);
-            (
-                mPoolInfo.amount,
-                ,
-                mPoolInfo.accRewardPerShare
-            ) = mOldSimpleStaking.getPoolInfo();
+            (mPoolInfo.amount, ,mPoolInfo.accRewardPerShare) = mOldSimpleStaking.getPoolInfo();
             requireSync = true;
         }
     }
@@ -775,11 +771,13 @@ contract LnSimpleStakingExtension is
 
     function migrationsOldStaking(
         address contractAddr,
-        uint256 amount
+        uint256 amount,
+        uint256 blockNb
     ) public onlyAdmin {
-        // super._deposit(blockNb, contractAddr, amount);
+        super._deposit(blockNb, contractAddr, amount);
         mOldStaking = contractAddr;
         mOldAmount = amount;
+        mPoolInfo.amount = mPoolInfo.amount.sub(amount);
     }
 
     function staking(uint256 amount)
@@ -922,18 +920,6 @@ contract LnSimpleStakingExtension is
         view
         returns (uint256 total)
     {
-        if (!syncUserInfo[msg.sender]) {
-            total = _getTotalRewardNotSync(blockNb, _user);
-        } else {
-            total = _getTotalReward(blockNb, _user);
-        }
-    }
-
-    function _getTotalReward(uint256 blockNb, address _user)
-        internal 
-        view
-        returns (uint256 total)
-    {
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
@@ -942,6 +928,7 @@ contract LnSimpleStakingExtension is
         // 1,已经从旧奖池中cancel了的
         // 2,还在旧奖池中的
         // 3，在新奖池中的
+        // 4, old simple staking pool
         total = mOldReward[_user];
         uint256 iMyOldStaking = 0;
         for (
@@ -967,28 +954,23 @@ contract LnSimpleStakingExtension is
                 .div(oldStakingAmount);
             total = total.add(iReward2);
         }
-
+        
         uint256 reward3 = super._calcReward(blockNb, _user);
         total = total.add(reward3);
-    }
-
-
-    function _getTotalRewardNotSync(uint256 blockNb, address _user)
-        internal 
-        view
-        returns (uint256 total)
-    {
-        if (blockNb > mEndBlock) {
-            blockNb = mEndBlock;
+        
+        // Handling case 4 
+        if (!syncUserInfo[_user]) {
+            uint256 oldUserSimpleAmountOf = mOldSimpleStaking.amountOf(_user);
+            uint256 oldSimpleStakingAmount;
+            (oldSimpleStakingAmount, ,) = mOldSimpleStaking.getPoolInfo();
+            uint256 iReward4 = super
+                ._calcReward(blockNb, _user)
+                .mul(oldUserSimpleAmountOf)
+                .div(oldSimpleStakingAmount);
+            total = total.add(iReward4);
+            
         }
 
-        // rely on the old simplestaking contract
-        uint256 oldTotalReward = 0;
-        oldTotalReward = mOldSimpleStaking.getTotalReward(blockNb, _user);
-        total = total.add(oldTotalReward);
-
-        uint256 reward3 = super._calcReward(blockNb, _user);
-        total = total.add(reward3);
     }
 
     // claim reward
