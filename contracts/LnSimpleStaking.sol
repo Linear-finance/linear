@@ -763,15 +763,11 @@ contract LnSimpleStakingExtension is
         return status;
     }
 
-    function syncUserInfoData(address _user) external returns (bool) {
-        require(requireSync != true, "sync is not required.");
-        require(syncUserInfo[_user] != true, "Already sync.");
+    function syncUserInfoData(address _user) public whenNotPaused returns (bool) {
+        require(requireSync, "sync is not required.");
+        require(!syncUserInfo[_user], "Already sync.");
 
-        (
-            userInfo[_user].reward,
-            userInfo[_user].amount,
-            userInfo[_user].rewardDebt
-        ) = mOldSimpleStaking.getUserInfo(_user);
+        (userInfo[_user].reward, userInfo[_user].amount, userInfo[_user].rewardDebt) = mOldSimpleStaking.getUserInfo(_user);
         syncUserInfo[_user] = true;
         return true;
     }
@@ -791,6 +787,7 @@ contract LnSimpleStakingExtension is
         returns (bool)
     {
         // stakingStorage.requireInStakingPeriod();
+        require(syncUserInfo[msg.sender], "sync is required before perform action.");
 
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
@@ -892,6 +889,8 @@ contract LnSimpleStakingExtension is
         whenNotPaused
         returns (bool)
     {
+        require(syncUserInfo[msg.sender], "sync is required before perform action.");
+
         //stakingStorage.requireInStakingPeriod();
         require(amount > 0, "Invalid amount.");
 
@@ -907,6 +906,7 @@ contract LnSimpleStakingExtension is
         view
         returns (uint256 total)
     {
+
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
@@ -948,7 +948,9 @@ contract LnSimpleStakingExtension is
     // claim reward
     // Note: 需要提前提前把奖励token转进来
     function claim() public override whenNotPaused returns (bool) {
-        //stakingStorage.requireStakingEnd();
+        //stakingStorage.requireStakingEnd()
+        require(syncUserInfo[msg.sender], "sync is required before perform action.");
+
         require(
             block.timestamp > claimRewardLockTime,
             "Not time to claim reward"

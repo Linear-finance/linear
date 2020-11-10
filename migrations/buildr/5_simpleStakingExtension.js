@@ -24,9 +24,9 @@ module.exports = function (deployer, network, accounts) {
     //let kLnProxyERC20 = await LnProxyERC20.at(linaProxyErc20Address);
 
     let kLnLinearStaking = await GetDeployed(LnLinearStaking);
-    //let kLnLinearStakingStorage = await getDeployedAddress(LnLinearStakingStorage);
+    let kLnLinearStakingStorage = await GetDeployed(LnLinearStakingStorage);
     let kLnAccessControl = await GetDeployed(LnAccessControl);
-    let kLnSimpleStaking = await getDeployedAddress(LnSimpleStaking);
+    let kLnSimpleStaking = await GetDeployed(LnSimpleStaking);
     // TODO: setup value
     if (network == "ropsten" || "development") {
       let rewardPerBlock = toUnit(10000);
@@ -35,9 +35,10 @@ module.exports = function (deployer, network, accounts) {
 
       //undesired sync use null address
       //let emptyAddr = "0x0000000000000000000000000000000000000000";
-      let simpleStakingAddress = kLnSimpleStaking;
-      //let kLnSimpleStaking = await DeployIfNotExist(deployer, LnSimpleStaking, admin, linaProxyErc20Address, kLnLinearStakingStorage.address, rewardPerBlock, rewardStartBlock, rewardEndBlock, kLnSimpleStaking);
-      let kLnSimpleStakingExtension = await DeployIfNotExist(deployer, LnSimpleStakingExtension, admin, linaProxyErc20Address, kLnLinearStakingStorage, rewardPerBlock, rewardStartBlock, rewardEndBlock, simpleStakingAddress );
+      //let simpleStakingAddress = kLnSimpleStaking;
+      let kLnLinearStakingStorage = await DeployIfNotExist(deployer, LnLinearStakingStorage, admin, kLnAccessControl.address);
+      let kLnSimpleStaking = await DeployIfNotExist(deployer, LnSimpleStaking, admin, linaProxyErc20Address.address, kLnLinearStakingStorage.address, rewardPerBlock, rewardStartBlock, rewardEndBlock);
+      let kLnSimpleStakingExtension = await DeployIfNotExist(deployer, LnSimpleStakingExtension, admin, linaProxyErc20Address.address, kLnLinearStakingStorage.address, rewardPerBlock, rewardStartBlock, rewardEndBlock,  kLnSimpleStaking.address);
       //const roleKey = await kLnLinearStakingStorage.DATA_ACCESS_ROLE();
       //await kLnAccessControl.SetRoles( roleKey, [kLnSimpleStaking.address], [true] );
     //   let arrayTotal = await kLnLinearStakingStorage.weekTotalStaking();
