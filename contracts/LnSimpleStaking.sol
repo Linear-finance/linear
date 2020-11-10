@@ -787,8 +787,11 @@ contract LnSimpleStakingExtension is
         returns (bool)
     {
         // stakingStorage.requireInStakingPeriod();
+<<<<<<< HEAD
         require(syncUserInfo[msg.sender], "sync is required before perform action.");
 
+=======
+>>>>>>> refs/remotes/origin/master
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
 
@@ -949,7 +952,10 @@ contract LnSimpleStakingExtension is
     // Note: 需要提前提前把奖励token转进来
     function claim() public override whenNotPaused returns (bool) {
         //stakingStorage.requireStakingEnd()
+<<<<<<< HEAD
         require(syncUserInfo[msg.sender], "sync is required before perform action.");
+=======
+>>>>>>> refs/remotes/origin/master
 
         require(
             block.timestamp > claimRewardLockTime,
