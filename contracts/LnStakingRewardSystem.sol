@@ -178,7 +178,9 @@ contract LnStakingRewardSystem is
             (reward, uamount, rewardDebt) = staking.getUserInfo(_user);
 
             pool.amount = pool.amount.add(amount);
-            pool.lastRewardBlock = lastRewardBlock;
+            if (lastRewardBlock != 0){
+                pool.lastRewardBlock = lastRewardBlock;
+            }
             pool.accRewardPerShare = accRewardPerShare;
             user.reward = user.reward.add(reward);
             user.amount = user.amount.add(uamount);
