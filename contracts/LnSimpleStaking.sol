@@ -817,7 +817,34 @@ contract LnStakingReward is
         view
         returns (uint256)
     {
-        return _calcReward(curBlock, _user);
+        return _calcRewardWithViewSimpleAmount(curBlock, _user);
+    }
+
+    // This is copied particularly for catering the amount when user not sync
+    function _calcRewardWithViewSimpleAmount(uint256 curBlock, address _user)
+        internal
+        view
+        returns (uint256)
+    {
+        PoolInfo storage pool = mPoolInfo;
+        UserInfo storage user = userInfo[_user];
+        uint256 accRewardPerShare = pool.accRewardPerShare;
+        uint256 ssReward;
+        uint256 ssAmount;
+        uint256 ssRewardDebt;
+        (ssReward, ssAmount, ssRewardDebt) = mOldSimpleStaking.getUserInfo(
+            _user
+        );
+        ssAmount = ssAmount.add(user.amount);
+        ssRewardDebt = ssRewardDebt.add(user.rewardDebt);
+        ssReward = ssReward.add(user.reward);
+
+        // uint256 newReward = user.amount.mul(accRewardPerShare).div(1e20).sub(
+        uint256 newReward = ssAmount.mul(accRewardPerShare).div(1e20).sub(
+            ssRewardDebt,
+            "cr newReward sub overflow"
+        );
+        return newReward.add(ssReward);
     }
 
     function setTransLock(address target, uint256 locktime) public onlyAdmin {
