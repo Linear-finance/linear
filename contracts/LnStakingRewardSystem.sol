@@ -27,6 +27,17 @@ contract LnStakingRewardSystem is
 
     address[] public  stakingRewardList;
 
+    struct UserInfo {
+        uint256 reward;
+        uint256 amount;
+        uint256 rewardDebt;
+    }
+
+    struct PoolInfo {
+        uint256 amount;
+        uint256 lastRewardBlock;
+        uint256 accRewardPerShare;
+    }
 
     constructor(
         address _admin,
@@ -149,18 +160,51 @@ contract LnStakingRewardSystem is
         }
         total = 0;
         uint256 sEndblock = 0;
-        sEndblock = simpleStaking.mEndBlock();
-        total.add(simpleStaking.getTotalReward(sEndblock, _user));
-        
+        uint256 rewardPerBlock;
+        PoolInfo memory pool;
+        UserInfo  memory user;
+        (pool.amount, pool.lastRewardBlock, pool.accRewardPerShare) = simpleStaking.mPoolInfo();
+        (user.reward, user.amount, user.rewardDebt) = simpleStaking.getUserInfo(_user);
+
         for(uint256 i; i < stakingRewardList.length; i++) {
             LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            if (staking.mEndBlock() < blockNb){
-                total.add(staking.getTotalReward(staking.mEndBlock(), _user));
-            } else {
-                total.add(staking.getTotalReward(blockNb, _user));
-            }
+            uint256 reward;
+            uint256 amount;
+            uint256 rewardDebt;
+            uint256 uamount;
+            uint256 lastRewardBlock;
+            uint256 accRewardPerShare;
+            (amount, lastRewardBlock, accRewardPerShare) = staking.mPoolInfo();
+            (reward, uamount, rewardDebt) = staking.getUserInfo(_user);
 
+            pool.amount = pool.amount.add(amount);
+            pool.lastRewardBlock = lastRewardBlock;
+            pool.accRewardPerShare = accRewardPerShare;
+            user.reward = user.reward.add(reward);
+            user.amount = user.amount.add(uamount);
+            user.rewardDebt = user.rewardDebt.add(rewardDebt);
+
+            rewardPerBlock = staking.rewardPerBlock();
         }
+
+        uint256 accRewardPerShare = pool.accRewardPerShare;
+        uint256 lpSupply = pool.amount;
+        if (blockNb > pool.lastRewardBlock && lpSupply != 0) {
+            uint256 multiplier = blockNb.sub(
+                pool.lastRewardBlock,
+                "cr curBlock sub overflow"
+            );
+            uint256 curReward = multiplier.mul(rewardPerBlock);
+            accRewardPerShare = accRewardPerShare.add(
+                curReward.mul(1e20).div(lpSupply)
+            );
+        }
+        uint256 newReward = user.amount.mul(accRewardPerShare).div(1e20).sub(
+            user.rewardDebt,
+            "cr newReward sub overflow"
+        );
+        return newReward.add(user.reward);
+
     }
 
     // claim reward
