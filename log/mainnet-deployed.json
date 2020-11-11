@@ -86,7 +86,10 @@
   "MultiSigForTransferFunds": {
     "address": "0x32423a4c53cFB980264F804DF4500340Ca3318A8"
   },
-  "LnSimpleStakingExtension": {
-    "address": "0x2603589d21807b6481F15c394696386BAE64eB2f"
+  "LnStakingReward": {
+    "address": "0x929ee135a3de193e860a4de78439da3627a807ae"
+  },
+  "LnStakingRewardSystem": {
+    "address": "0xfE0A8dc85c9279A583F76615bcAA64162d0AD7e6"
   }
 }
