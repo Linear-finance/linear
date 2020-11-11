@@ -158,13 +158,14 @@ contract LnStakingRewardSystem is
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
-        total = 0;
-        uint256 sEndblock = 0;
         uint256 rewardPerBlock;
         PoolInfo memory pool;
         UserInfo  memory user;
+
         (pool.amount, pool.lastRewardBlock, pool.accRewardPerShare) = simpleStaking.mPoolInfo();
         (user.reward, user.amount, user.rewardDebt) = simpleStaking.getUserInfo(_user);
+
+        total = simpleStaking.mOldReward(_user);
 
         for(uint256 i; i < stakingRewardList.length; i++) {
             LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
@@ -201,12 +202,36 @@ contract LnStakingRewardSystem is
                 curReward.mul(1e20).div(lpSupply)
             );
         }
-        uint256 newReward = user.amount.mul(accRewardPerShare).div(1e20).sub(
+        total = user.amount.mul(accRewardPerShare).div(1e20).sub(
             user.rewardDebt,
             "cr newReward sub overflow"
         );
-        return newReward.add(user.reward);
+        total.add(user.reward);
 
+    }
+
+    function getStakingTotalReward(uint256 blockNb, address _user)
+        public
+        view
+        returns (uint256 total)
+    {
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+        total = 0;
+        uint256 sEndblock = 0;
+        sEndblock = simpleStaking.mEndBlock();
+        total.add(simpleStaking.getTotalReward(sEndblock, _user));
+
+        for(uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
+            if (staking.mEndBlock() < blockNb){
+                total.add(staking.getTotalReward(staking.mEndBlock(), _user));
+            } else {
+                total.add(staking.getTotalReward(blockNb, _user));
+            }
+
+        }
     }
 
     // claim reward
