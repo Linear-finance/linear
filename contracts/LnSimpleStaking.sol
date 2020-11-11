@@ -645,7 +645,8 @@ contract MultiSigForTransferFunds {
     }
 }
 
-contract LnSimpleStakingExtension is
+//use for simpleStaking extension without stakingStorage
+contract LnStakingReward is
     LnAdmin,
     Pausable,
     ILinearStaking,
@@ -655,7 +656,6 @@ contract LnSimpleStakingExtension is
     using SafeDecimalMath for uint256;
 
     IERC20 public linaToken; // lina token proxy address
-    LnLinearStakingStorage public stakingStorage;
     uint256 public mEndBlock;
     address public mOldStaking;
     uint256 public mOldAmount;
@@ -666,33 +666,17 @@ contract LnSimpleStakingExtension is
     address public mTargetAddress;
     uint256 public mTransLockTime;
 
-    LnSimpleStaking public mOldSimpleStaking;
-    bool public requireSync = false;
-
     mapping(address => uint256) public mOldReward;
-    mapping(address => bool) public syncUserInfo;
 
     constructor(
         address _admin,
         address _linaToken,
-        address _storage,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
-        uint256 _endBlock,
-        address _mOldSimpleStaking
+        uint256 _endBlock
     ) public LnAdmin(_admin) LnRewardCalculator(_rewardPerBlock, _startBlock) {
         linaToken = IERC20(_linaToken);
-        stakingStorage = LnLinearStakingStorage(_storage);
         mEndBlock = _endBlock;
-        if (_mOldSimpleStaking != address(0)) {
-            mOldSimpleStaking = LnSimpleStaking(_mOldSimpleStaking);
-            (
-                mPoolInfo.amount,
-                ,
-                mPoolInfo.accRewardPerShare
-            ) = mOldSimpleStaking.getPoolInfo();
-            requireSync = true;
-        }
     }
 
     function setLinaToken(address _linaToken) external onlyAdmin {
@@ -725,26 +709,6 @@ contract LnSimpleStakingExtension is
         minStakingAmount = _minStakingAmount;
     }
 
-    function stakingBalanceOf(address account)
-        external
-        override
-        view
-        returns (uint256)
-    {
-        uint256 stakingBalance = super.amountOf(account).add(
-            stakingStorage.stakingBalanceOf(account)
-        );
-        return stakingBalance;
-    }
-
-    function getStakesdataLength(address account)
-        external
-        view
-        returns (uint256)
-    {
-        return stakingStorage.getStakesdataLength(account);
-    }
-
     function setEndBlock(uint256 _newEndBlock) external onlyAdmin {
         require(
             _newEndBlock > mEndBlock,
@@ -753,31 +717,14 @@ contract LnSimpleStakingExtension is
         mEndBlock = _newEndBlock;
     }
 
-    function isUserSynced(address _user) external view returns (bool) {
-        bool status;
-        if (!requireSync) {
-            status = true;
-        } else {
-            status = syncUserInfo[_user];
-        }
-        return status;
-    }
-
-    function syncUserInfoData(address _user) public whenNotPaused returns (bool) {
-        require(requireSync, "sync is not required.");
-        require(!syncUserInfo[_user], "Already sync.");
-
-        (userInfo[_user].reward, userInfo[_user].amount, userInfo[_user].rewardDebt) = mOldSimpleStaking.getUserInfo(_user);
-        syncUserInfo[_user] = true;
-        return true;
-    }
-
-    //--------------------------------------------------------
-
-    function migrationsOldStaking( address contractAddr, uint amount, uint blockNb ) public onlyAdmin {
-        super._deposit( blockNb, contractAddr, amount );
-        mOldStaking = contractAddr;
-        mOldAmount = amount;
+    function stakingBalanceOf(address account)
+        external
+        override
+        view
+        returns (uint256)
+    {
+        uint256 stakingBalance = super.amountOf(account);
+        return stakingBalance;
     }
 
     function staking(uint256 amount)
@@ -786,9 +733,6 @@ contract LnSimpleStakingExtension is
         whenNotPaused
         returns (bool)
     {
-        // stakingStorage.requireInStakingPeriod();
-        require(syncUserInfo[msg.sender], "sync is required before perform action.");
-
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
 
@@ -805,31 +749,6 @@ contract LnSimpleStakingExtension is
         return true;
     }
 
-    function _widthdrawFromOldStaking(address _addr, uint256 amount) internal {
-        uint256 blockNb = block.number;
-        if (blockNb > mEndBlock) {
-            blockNb = mEndBlock;
-        }
-
-        uint256 oldStakingAmount = super.amountOf(mOldStaking);
-        super._withdraw(blockNb, mOldStaking, amount);
-        // sub already withraw reward, then cal portion
-        uint256 reward = super
-            .rewardOf(mOldStaking)
-            .sub(
-            mWidthdrawRewardFromOldStaking,
-            "_widthdrawFromOldStaking reward sub overflow"
-        )
-            .mul(amount)
-            .mul(1e20)
-            .div(oldStakingAmount)
-            .div(1e20);
-        mWidthdrawRewardFromOldStaking = mWidthdrawRewardFromOldStaking.add(
-            reward
-        );
-        mOldReward[_addr] = mOldReward[_addr].add(reward);
-    }
-
     function _cancelStaking(address user, uint256 amount) internal {
         uint256 blockNb = block.number;
         if (blockNb > mEndBlock) {
@@ -837,49 +756,8 @@ contract LnSimpleStakingExtension is
         }
 
         uint256 returnAmount = amount;
-        uint256 newAmount = super.amountOf(user);
-        if (newAmount >= amount) {
-            super._withdraw(blockNb, user, amount);
-            amount = 0;
-        } else {
-            if (newAmount > 0) {
-                super._withdraw(blockNb, user, newAmount);
-                amount = amount.sub(
-                    newAmount,
-                    "_cancelStaking amount sub overflow"
-                );
-            }
-
-            for (
-                uint256 i = stakingStorage.getStakesdataLength(user);
-                i >= 1;
-                i--
-            ) {
-                (uint256 stakingAmount, uint256 staketime) = stakingStorage
-                    .getStakesDataByIndex(user, i - 1);
-                if (amount >= stakingAmount) {
-                    amount = amount.sub(
-                        stakingAmount,
-                        "_cancelStaking amount sub overflow"
-                    );
-
-                    stakingStorage.PopStakesData(user);
-                    stakingStorage.SubWeeksTotal(staketime, stakingAmount);
-                    _widthdrawFromOldStaking(user, stakingAmount);
-                } else {
-                    stakingStorage.StakingDataSub(user, i - 1, amount);
-                    stakingStorage.SubWeeksTotal(staketime, amount);
-                    _widthdrawFromOldStaking(user, amount);
-
-                    amount = 0;
-                }
-                if (amount == 0) break;
-            }
-        }
-
-        // cancel as many as possible, not fail, that waste gas
-        //require(amount == 0, "Cancel amount too big then staked.");
-
+        super._withdraw(blockNb, user, amount);
+        amount = 0;
         linaToken.transfer(msg.sender, returnAmount.sub(amount));
     }
 
@@ -889,9 +767,6 @@ contract LnSimpleStakingExtension is
         whenNotPaused
         returns (bool)
     {
-        require(syncUserInfo[msg.sender], "sync is required before perform action.");
-
-        //stakingStorage.requireInStakingPeriod();
         require(amount > 0, "Invalid amount.");
 
         _cancelStaking(msg.sender, amount);
@@ -906,67 +781,30 @@ contract LnSimpleStakingExtension is
         view
         returns (uint256 total)
     {
-
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
-
-        // 这里奖励分成了三部分
-        // 1,已经从旧奖池中cancel了的
-        // 2,还在旧奖池中的
-        // 3，在新奖池中的
-        total = mOldReward[_user];
-        uint256 iMyOldStaking = 0;
-        for (
-            uint256 i = 0;
-            i < stakingStorage.getStakesdataLength(_user);
-            i++
-        ) {
-            (uint256 stakingAmount, ) = stakingStorage.getStakesDataByIndex(
-                _user,
-                i
-            );
-            iMyOldStaking = iMyOldStaking.add(stakingAmount);
-        }
-        if (iMyOldStaking > 0) {
-            uint256 oldStakingAmount = super.amountOf(mOldStaking);
-            uint256 iReward2 = super
-                ._calcReward(blockNb, mOldStaking)
-                .sub(
-                mWidthdrawRewardFromOldStaking,
-                "getTotalReward iReward2 sub overflow"
-            )
-                .mul(iMyOldStaking)
-                .div(oldStakingAmount);
-            total = total.add(iReward2);
-        }
-
-        uint256 reward3 = super._calcReward(blockNb, _user);
-        total = total.add(reward3);
+        total = 0;
+        total = super._calcReward(blockNb, _user);
     }
 
     // claim reward
     // Note: 需要提前提前把奖励token转进来
     function claim() public override whenNotPaused returns (bool) {
-        //stakingStorage.requireStakingEnd()
-        require(syncUserInfo[msg.sender], "sync is required before perform action.");
-
         require(
             block.timestamp > claimRewardLockTime,
             "Not time to claim reward"
         );
 
-        uint256 iMyOldStaking = stakingStorage.stakingBalanceOf(msg.sender);
         uint256 iAmount = super.amountOf(msg.sender);
-        _cancelStaking(msg.sender, iMyOldStaking.add(iAmount));
+        _cancelStaking(msg.sender, iAmount);
 
         uint256 iReward = getTotalReward(mEndBlock, msg.sender);
 
         _claim(msg.sender);
-        mOldReward[msg.sender] = 0;
         linaToken.transfer(msg.sender, iReward);
 
-        emit Claim(msg.sender, iReward, iMyOldStaking.add(iAmount));
+        emit Claim(msg.sender, iReward, iAmount);
         return true;
     }
 
