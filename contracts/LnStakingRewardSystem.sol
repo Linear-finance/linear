@@ -12,10 +12,7 @@ import "./SafeDecimalMath.sol";
 
 //Manage all staking pools
 //Tow type staking 1:simpleStaking 2:simpleStakingExtension
-contract LnStakingRewardSystem is
-    LnAdmin,
-    Pausable
-{
+contract LnStakingRewardSystem is LnAdmin, Pausable {
     using SafeMath for uint256;
     using SafeDecimalMath for uint256;
 
@@ -25,7 +22,7 @@ contract LnStakingRewardSystem is
 
     LnSimpleStaking public simpleStaking;
 
-    address[] public  stakingRewardList;
+    address[] public stakingRewardList;
 
     struct UserInfo {
         uint256 reward;
@@ -46,9 +43,7 @@ contract LnStakingRewardSystem is
     ) public LnAdmin(_admin) {
         mEndBlock = _endBlock;
         simpleStaking = LnSimpleStaking(_simpleStaking);
-
     }
-
 
     function setPaused(bool _paused) external onlyAdmin {
         if (_paused) {
@@ -57,10 +52,14 @@ contract LnStakingRewardSystem is
             _unpause();
         }
     }
+
     //必须按stakingPool的向后顺序一个一个设置
     //deploy 合约后必须添加 staking pool
-    function setStakingPoolList(address[] memory stakingRewardAddress) public onlyAdmin {
-        for (uint256 i; i < stakingRewardAddress.length; i++){
+    function setStakingPoolList(address[] memory stakingRewardAddress)
+        public
+        onlyAdmin
+    {
+        for (uint256 i; i < stakingRewardAddress.length; i++) {
             stakingRewardList.push(stakingRewardAddress[i]);
         }
     }
@@ -82,69 +81,63 @@ contract LnStakingRewardSystem is
         mEndBlock = _newEndBlock;
     }
 
-    function stakingBalanceOf(address account)
-        external
-        view
-        returns (uint256)
-    {
+    function stakingBalanceOf(address account) external view returns (uint256) {
         uint256 totalStakingBalance = 0;
 
-        totalStakingBalance.add(simpleStaking.stakingBalanceOf(account));
+        totalStakingBalance = totalStakingBalance.add(simpleStaking.stakingBalanceOf(account));
 
-        for(uint256 i; i < stakingRewardList.length; i++) {
+        for (uint256 i; i < stakingRewardList.length; i++) {
             LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            totalStakingBalance.add(staking.stakingBalanceOf(account));
+            totalStakingBalance = totalStakingBalance.add(staking.stakingBalanceOf(account));
         }
         return totalStakingBalance;
     }
 
-    function staking(uint256 amount)
-        public
-        whenNotPaused
-        returns (bool)
-    {
+    function staking(uint256 amount) public whenNotPaused returns (bool) {
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
         uint256 blockNb = block.number;
-        for(uint256 i; i < stakingRewardList.length; i++) {
-            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            if(staking.mEndBlock() > blockNb){
-                staking.staking(amount);
+        for (uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward istaking = LnStakingReward(stakingRewardList[i]);
+            if (istaking.mEndBlock() > blockNb) {
+                istaking.staking(amount);
                 return true;
             }
         }
 
         return true;
     }
+
     //由最早的staking 开始 unstaking
-    function cancelStaking(uint256 amount)
-        public
-        whenNotPaused
-        returns (bool)
-    {
+    function cancelStaking(uint256 amount) public whenNotPaused returns (bool) {
         require(amount > 0, "Invalid amount.");
         uint256 userAmountInStaking = 0;
 
-        (userAmountInStaking,,) = simpleStaking.getUserInfo(msg.sender);
-        if (userAmountInStaking > amount){
+        (userAmountInStaking, , ) = simpleStaking.getUserInfo(msg.sender);
+        if (userAmountInStaking > amount) {
             simpleStaking.cancelStaking(amount);
             return true;
         } else {
             simpleStaking.cancelStaking(userAmountInStaking);
-            amount = amount.sub(userAmountInStaking, "cr userAmountInStaking sub overflow");
+            amount = amount.sub(
+                userAmountInStaking,
+                "cr userAmountInStaking sub overflow"
+            );
         }
 
-        for(uint256 i; i < stakingRewardList.length; i++) {
-            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            (userAmountInStaking,,) = staking.getUserInfo(msg.sender);
-            if (userAmountInStaking > amount){
-                staking.cancelStaking(amount);
+        for (uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward istaking = LnStakingReward(stakingRewardList[i]);
+            (userAmountInStaking, , ) = istaking.getUserInfo(msg.sender);
+            if (userAmountInStaking > amount) {
+                istaking.cancelStaking(amount);
                 return true;
             } else {
-                staking.cancelStaking(userAmountInStaking);
-                amount = amount.sub(userAmountInStaking, "cr userAmountInStaking sub overflow");
+                istaking.cancelStaking(userAmountInStaking);
+                amount = amount.sub(
+                    userAmountInStaking,
+                    "cr userAmountInStaking sub overflow"
+                );
             }
-
         }
 
         return true;
@@ -160,26 +153,32 @@ contract LnStakingRewardSystem is
         }
         uint256 rewardPerBlock;
         PoolInfo memory pool;
-        UserInfo  memory user;
+        UserInfo memory user;
 
-        (pool.amount, pool.lastRewardBlock, pool.accRewardPerShare) = simpleStaking.mPoolInfo();
-        (user.reward, user.amount, user.rewardDebt) = simpleStaking.getUserInfo(_user);
+        (
+            pool.amount,
+            pool.lastRewardBlock,
+            pool.accRewardPerShare
+        ) = simpleStaking.mPoolInfo();
+        (user.reward, user.amount, user.rewardDebt) = simpleStaking.getUserInfo(
+            _user
+        );
 
         total = simpleStaking.mOldReward(_user);
 
-        for(uint256 i; i < stakingRewardList.length; i++) {
-            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
+        for (uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward istaking = LnStakingReward(stakingRewardList[i]);
             uint256 reward;
             uint256 amount;
             uint256 rewardDebt;
             uint256 uamount;
             uint256 lastRewardBlock;
             uint256 accRewardPerShare;
-            (amount, lastRewardBlock, accRewardPerShare) = staking.mPoolInfo();
-            (reward, uamount, rewardDebt) = staking.getUserInfo(_user);
+            (amount, lastRewardBlock, accRewardPerShare) = istaking.mPoolInfo();
+            (reward, uamount, rewardDebt) = istaking.getUserInfo(_user);
 
             pool.amount = pool.amount.add(amount);
-            if (lastRewardBlock != 0){
+            if (lastRewardBlock != 0) {
                 pool.lastRewardBlock = lastRewardBlock;
             }
             pool.accRewardPerShare = accRewardPerShare;
@@ -187,7 +186,7 @@ contract LnStakingRewardSystem is
             user.amount = user.amount.add(uamount);
             user.rewardDebt = user.rewardDebt.add(rewardDebt);
 
-            rewardPerBlock = staking.rewardPerBlock();
+            rewardPerBlock = istaking.rewardPerBlock();
         }
 
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -206,8 +205,7 @@ contract LnStakingRewardSystem is
             user.rewardDebt,
             "cr newReward sub overflow"
         );
-        total.add(user.reward);
-
+        total = total.add(user.reward);
     }
 
     function getStakingTotalReward(uint256 blockNb, address _user)
@@ -221,22 +219,21 @@ contract LnStakingRewardSystem is
         total = 0;
         uint256 sEndblock = 0;
         sEndblock = simpleStaking.mEndBlock();
-        total.add(simpleStaking.getTotalReward(sEndblock, _user));
+        total = total.add(simpleStaking.getTotalReward(sEndblock, _user));
 
-        for(uint256 i; i < stakingRewardList.length; i++) {
-            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            if (staking.mEndBlock() < blockNb){
-                total.add(staking.getTotalReward(staking.mEndBlock(), _user));
+        for (uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward istaking = LnStakingReward(stakingRewardList[i]);
+            if (istaking.mEndBlock() < blockNb) {
+                total = total.add(istaking.getTotalReward(istaking.mEndBlock(), _user));
             } else {
-                total.add(staking.getTotalReward(blockNb, _user));
+                total = total.add(istaking.getTotalReward(blockNb, _user));
             }
-
         }
     }
 
     // claim reward
     // Note: 需要提前提前把奖励token转进来
-    function claim() public  whenNotPaused returns (bool) {
+    function claim() public whenNotPaused returns (bool) {
         require(
             block.timestamp > claimRewardLockTime,
             "Not time to claim reward"
@@ -244,9 +241,9 @@ contract LnStakingRewardSystem is
 
         simpleStaking.claim();
 
-        for(uint256 i; i < stakingRewardList.length; i++) {
-            LnStakingReward staking = LnStakingReward(stakingRewardList[i]);
-            staking.claim();
+        for (uint256 i; i < stakingRewardList.length; i++) {
+            LnStakingReward istaking = LnStakingReward(stakingRewardList[i]);
+            istaking.claim();
         }
         return true;
     }
@@ -254,5 +251,4 @@ contract LnStakingRewardSystem is
     function setRewardLockTime(uint256 newtime) public onlyAdmin {
         claimRewardLockTime = newtime;
     }
-
 }
