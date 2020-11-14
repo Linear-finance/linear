@@ -71,9 +71,12 @@ module.exports = function (deployer, network, accounts) {
     await deployer.link(SafeDecimalMath, LnExchangeSystem);
     let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
     let kLnRewardLocker = await DeployIfNotExist(deployer, LnRewardLocker, admin, linaProxyErc20Address);
-    let kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+    let kLnFeeSystem;
     if (network == "ropsten" || network == "bsctestnet") {
       kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystemTest, admin);
+    } else {
+      kLnFeeSystem = await DeployIfNotExist(deployer, LnFeeSystem, admin);
+
     }
 
     await CallWithEstimateGas(kLnRewardLocker.Init, kLnFeeSystem.address);
@@ -120,11 +123,11 @@ module.exports = function (deployer, network, accounts) {
     }
     console.log("kLnAssetSystem.address", kLnAssetSystem.address);
     console.log("kLnFeeSystem", kLnFeeSystem.address);
+    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, LnAsset_lUSDAddress);
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
-    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
   });
 };

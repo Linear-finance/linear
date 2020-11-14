@@ -11,8 +11,12 @@ module.exports = function (deployer, network, accounts) {
 
     let tokenstorage = await DeployIfNotExist(deployer, LnTokenStorage, admin, admin);
     let proxyErc20 = await DeployIfNotExist(deployer, LnProxyERC20, admin);
-
-    let lina = await DeployIfNotExist(deployer, LinearFinance, proxyErc20.address, tokenstorage.address, admin, "0");
+    let lina;
+    if (network == "bsctestnet" ){
+      lina = await DeployIfNotExist(deployer, LinearFinance, proxyErc20.address, tokenstorage.address, admin, "10000000000");
+    } else {
+      lina = await DeployIfNotExist(deployer, LinearFinance, proxyErc20.address, tokenstorage.address, admin, "0");
+    }
 
     gaslimit = await tokenstorage.setOperator.estimateGas(lina.address);
     console.log("gaslimit setOperator", gaslimit);

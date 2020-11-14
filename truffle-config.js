@@ -134,7 +134,7 @@ module.exports = {
         skipDryRun: true
     },
     bsctestnet: {
-        provider: CreateHDWallet(privatekey, "https://data-seed-prebsc-1-s1.binance.org:8545"),
+        provider: () => CreateHDWallet(privatekey,  "https://data-seed-prebsc-1-s1.binance.org:8545"),
         network_id: "*",       //
         gas: 30000000,        // Ropsten has a lower block limit than mainnet
         gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000,

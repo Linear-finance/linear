@@ -1,83 +1,44 @@
 {
   "LnTokenStorage": {
-    "address": "0xdfFbA72543418Eb585f0a3860837B3ac8eb76cF6"
+    "address": "0x3F2e7FFa5F6627C29F6342D5d5be7EF8aAAb7086"
   },
   "LnProxyERC20": {
-    "address": "0xEeA12f9aC7fD26EC12d94c3Bca0ac1140e43787C"
+    "address": "0xD1D9E8916BD8a8774aeE1f581076ced00bd974cB"
   },
   "LinearFinance": {
-    "address": "0xe08AeB5b5BA086d2Cc79c6A1b80f7EBBE2513A56"
+    "address": "0x037E823d46E75A1C7e5E39bE21cfF1903263a479"
   },
   "SafeDecimalMath": {
-    "address": "0x734c5719B2DdDdcE1bBB3114Ff9fa22793170D6E"
+    "address": "0x98b09e62640a264e18f4a0CA29Cddc22Cbf3ad14"
   },
   "LnAssetSystem": {
-    "address": "0x7f7b3f5FFeD23BF14Fb59bbC35F1dA74313F3E99"
+    "address": "0x7f335ff55122819a6B442FD6548D7587e5dd0FEA"
   },
   "LnConfig": {
-    "address": "0x671fbefEd68e585133e7951a0E57C37a35da8E1D"
+    "address": "0x0993EE0e07387986f7a22F13488C46AccF6340aD"
   },
   "LnAccessControl": {
-    "address": "0xa185850cc7E7d1080327B9c8eE298C9D56088E67"
+    "address": "0x9a2D8ec6f0B5E15Ad7d106E28F2Ef98952FCEF34"
   },
   "LnChainLinkPrices": {
-    "address": "0x0592D3ABD720C71Ba1ce1a8143bc5bfe3f818deD"
+    "address": "0x9A353B0a2b25f84c6E6EdBe60e5D24B615EC616D"
   },
   "LnDebtSystem": {
-    "address": "0x982b4bCbDd148AE9487522658de8E3522D0016BB"
+    "address": "0xaC5d5990a3e2dABFa16acC97D0a9e0f9dDcbBd92"
   },
   "LnCollateralSystem": {
-    "address": "0x92F6465EFC79bE264C942d5Ea120fae9E14cca99"
+    "address": "0x44065f789670827DC617763c3e5F9910041788d7"
   },
   "LnBuildBurnSystem": {
-    "address": "0x5097CC0539b39C824493eBeAB55be3A16Feb6aaF"
+    "address": "0x15dbd9384d39C493d3872D016571b2af75Fa8a76"
   },
   "LnExchangeSystem": {
-    "address": "0x4408d78E6A08f9f3D13869378C43DEE423ADbe3C"
+    "address": "0x9Aa63a260d2c052A446F0AC5ddCD3ec33CF919E2"
   },
   "LnRewardLocker": {
-    "address": "0xbCA747F9114500DA2245503A89B6e8a5Ef148E38"
-  },
-  "LnFeeSystem": {
-    "address": "0x4FC1662C023D901d33F5996A8B7bC1a918018555"
-  },
-  "LnProxyERC20_lUSD": {
-    "address": "0x1a86A9524aD6fC4ffEaB6AF317f61a166c22B919"
-  },
-  "LnTokenStorage_lUSD": {
-    "address": "0x26F4b6270E4644A07CB6A1AFe409400c739E3810"
-  },
-  "LnAsset_lUSD": {
-    "address": "0xca435540503B151eBf697d793016e2456C173EA8"
+    "address": "0xe70edd24B38aCeb89cB997823F366749198F079B"
   },
   "LnFeeSystemTest": {
-    "address": "0xa00c32dB507A2c5f0e307D9b8Ae6fAd7a9A4368D"
-  },
-  "LnProxyERC20_lBTC": {
-    "address": "0x7522E7Ff49a336B3E890FCF0810Ca76eE4A99a96"
-  },
-  "LnTokenStorage_lBTC": {
-    "address": "0xC00Dc9a8e682A50508d38409EdDdA6A384769CdE"
-  },
-  "LnAsset_lBTC": {
-    "address": "0x48cb62B1E39cD7F8D477a24F2849d0A6B0598763"
-  },
-  "LnProxyERC20_lETH": {
-    "address": "0xa0eb4DCB124CEe0449c86eC54053D7F668eB6d89"
-  },
-  "LnTokenStorage_lETH": {
-    "address": "0x7B492c866Ec83E43435EC021133eF517b5c1C0c8"
-  },
-  "LnAsset_lETH": {
-    "address": "0x8eF5aF926f584c017CA23391F35Db47E38A31e23"
-  },
-  "LnProxyERC20_lHB10": {
-    "address": "0x59AC43C6B4F46794850A9F3397bE9d5b2b55DeD5"
-  },
-  "LnTokenStorage_lHB10": {
-    "address": "0x86e2256c72c0F9c645843D69Ec891e2d3A93b67b"
-  },
-  "LnAsset_lHB10": {
-    "address": "0xC182FE2Aee01dF2de986eF22FE9eD0aE603D7F8F"
+    "address": "0xb312ceB7c6664cC6545E0ff2D626EDbf0b0b384C"
   }
 }
