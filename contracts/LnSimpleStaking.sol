@@ -1076,7 +1076,7 @@ contract LnSimpleStakingNew is
         if (userSync[msg.sender]){
             stakingBalance = super.amountOf(account).add(mOldStake[account]);
         } else {
-            stakingBalance = super.amountOf(account).add(simpleStaking.amountOf(account));
+            stakingBalance = super.amountOf(account).add(simpleStaking.stakingBalanceOf(account));
         }
         
         return stakingBalance;
@@ -1113,7 +1113,7 @@ contract LnSimpleStakingNew is
         require(amount >= minStakingAmount, "Staking amount too small.");
         //require(stakingStorage.getStakesdataLength(msg.sender) < accountStakingListLimit, "Staking list out of limit.");
         if(!userSync[msg.sender] ){
-            mOldStake[msg.sender] = simpleStaking.amountOf(msg.sender);
+            mOldStake[msg.sender] = simpleStaking.stakingBalanceOf(msg.sender);
             userSync[msg.sender] = true;
         }
         linaToken.transferFrom(msg.sender, address(this), amount);
@@ -1135,7 +1135,7 @@ contract LnSimpleStakingNew is
             blockNb = mEndBlock;
         }
 
-        uint256 oldStakingAmount = super.amountOf(mOldStaking);
+        uint256 oldStakingAmount = super.amountOf(_addr);
         super._withdraw(blockNb, mOldStaking, amount);
         // sub already withraw reward, then cal portion
         uint256 reward = super
@@ -1174,23 +1174,23 @@ contract LnSimpleStakingNew is
                     "_cancelStaking amount sub overflow"
                 );
             }
-
-            if (mOldStake[user] > 0 && amount > 0){
-                if ( mOldStake[user] > amount) {
+            uint256 oldAmount = mOldStake[user];
+            if (oldAmount > 0 && amount > 0){
+                if ( oldAmount> amount) {
                     _widthdrawFromOldStaking(user, amount);
                     amount = amount.sub(
                         amount,
                         "_cancelStaking amount sub overflow"
                     );
                 } else {
-                     _widthdrawFromOldStaking(user, mOldStake[user]);
+                     _widthdrawFromOldStaking(user, oldAmount);
                     amount = amount.sub(
-                        mOldStake[user],
+                        oldAmount,
                         "_cancelStaking amount sub overflow"
-                    );                   
+                    );
                 }
 
-            } 
+            }
         }
 
         linaToken.transfer(msg.sender, returnAmount.sub(amount));
@@ -1206,7 +1206,7 @@ contract LnSimpleStakingNew is
         require(amount > 0, "Invalid amount.");
 
         if(!userSync[msg.sender]){
-            mOldStake[msg.sender] = simpleStaking.amountOf(msg.sender);
+            mOldStake[msg.sender] = simpleStaking.stakingBalanceOf(msg.sender);
             userSync[msg.sender] = true;
         }
 
@@ -1236,7 +1236,7 @@ contract LnSimpleStakingNew is
         if ( userSync[_user]){
             iMyOldStaking = mOldStake[_user];
         } else {
-            iMyOldStaking = simpleStaking.amountOf(_user);
+            iMyOldStaking = simpleStaking.stakingBalanceOf(_user);
         }
         
         if (iMyOldStaking > 0) {

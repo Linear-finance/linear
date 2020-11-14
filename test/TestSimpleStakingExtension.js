@@ -11,6 +11,7 @@ const LnLinearStaking = artifacts.require("LnLinearStaking");
 const LnAddressStorage = artifacts.require("LnAddressStorage");
 const HelperPushStakingData = artifacts.require("HelperPushStakingData");
 const MultiSigForTransferFunds = artifacts.require("MultiSigForTransferFunds");
+const LnSimpleStakingNew = artifacts.require("LnSimpleStakingNew");
 
 const fs = require('fs');
 
@@ -212,6 +213,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let startRewardBn = cur_block;
         let endRewardBn = startRewardBn.add(toBN(100));
         const staking = await LnSimpleStaking.new(admin, linaproxy.address, kLnLinearStakingStorage.address, rewardPerBlock, startRewardBn, endRewardBn);
+        const newStaking = await LnSimpleStakingNew.new(admin, linaproxy.address, staking.address, rewardPerBlock, startRewardBn, endRewardBn);
         await kLnAccessControl.SetRoles( roleKey, [staking.address, kHelperPushStakingData.address], [true, true] );
 
         let mintAmount = toUnit(1000);
@@ -234,7 +236,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         let startclaimtime = newEndTime + claimwaittime;
         await kLnLinearStakingStorage.setStakingPeriod(newStartTime, newEndTime);
         await staking.setRewardLockTime(startclaimtime);
-        
+
         console.log("set starttime, endtime", newStartTime, newEndTime);
         console.log("startRewardBn, endRewardBn", startRewardBn.toString(), endRewardBn.toString());
 
