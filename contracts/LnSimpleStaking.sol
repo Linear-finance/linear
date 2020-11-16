@@ -774,7 +774,7 @@ contract LnSimpleStakingExtension is
             if (actions[i] == "deposit") {
                 _deposit(blockIntake[i], users[i], amount[i]);
             } else if (actions[i] == "withdraw") {
-                _deposit(blockIntake[i], users[i], amount[i]);
+                _withdraw(blockIntake[i], users[i], amount[i]);
             }
         }
     }
@@ -1045,6 +1045,7 @@ contract LnSimpleStakingNew is
     //////////////////////////////////////////////////////
     event Staking(address indexed who, uint256 value, uint256 staketime);
     event CancelStaking(address indexed who, uint256 value);
+    event CancelStakingV2(address indexed who, uint256 value);
     event Claim(address indexed who, uint256 rewardval, uint256 totalStaking);
     event TransLock(address target, uint256 time);
 
@@ -1102,6 +1103,46 @@ contract LnSimpleStakingNew is
         mOldAmount = amount;
     }
 
+    //for 之前有bug的合约把stake in入去的数据migrate到本合约，
+    //migrate data后必须将之前合约到lina转到本合约
+    function migrateOldStakInData(
+        address[] memory users,
+        uint256[] memory blockIntake,
+        uint256[] memory amount
+    ) public onlyAdmin {
+        require(
+            users.length == amount.length,
+            "parameter address length not eq"
+        );
+        require(
+            blockIntake.length == amount.length,
+            "parameter address length not eq"
+        );
+
+        for (uint256 i = 0; i < users.length; i++) {
+            super._deposit(blockIntake[i], users[i], amount[i]);
+        }
+    }
+
+    function migrateOldStakOutData(
+        address[] memory users,
+        uint256[] memory blockIntake,
+        uint256[] memory amount
+    ) public onlyAdmin {
+        require(
+            users.length == amount.length,
+            "parameter address length not eq"
+        );
+        require(
+            blockIntake.length == amount.length,
+            "parameter address length not eq"
+        );
+
+        for (uint256 i = 0; i < users.length; i++) {
+            super._withdraw(blockIntake[i], users[i], amount[i]);
+        }
+    }
+
     function staking(uint256 amount)
         public
         override
@@ -1135,7 +1176,7 @@ contract LnSimpleStakingNew is
             blockNb = mEndBlock;
         }
 
-        uint256 oldStakingAmount = super.amountOf(_addr);
+        uint256 oldStakingAmount = simpleStaking.amountOf(_addr);
         super._withdraw(blockNb, mOldStaking, amount);
         // sub already withraw reward, then cal portion
         uint256 reward = super
@@ -1155,17 +1196,19 @@ contract LnSimpleStakingNew is
         mOldStake[_addr] = mOldStake[_addr].sub(amount, "_widthdrawFromOldStaking staking sub overflow");
     }
 
-    function _cancelStaking(address user, uint256 amount) internal {
+
+    function _cancelStaking(address user, uint256 amount) internal returns(bool){
         uint256 blockNb = block.number;
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
 
-        uint256 returnAmount = amount;
+        uint256 unStakingFromNew = 0;
         uint256 newAmount = super.amountOf(user);
         if (newAmount >= amount) {
             super._withdraw(blockNb, user, amount);
             amount = 0;
+            unStakingFromNew = amount;
         } else {
             if (newAmount > 0) {
                 super._withdraw(blockNb, user, newAmount);
@@ -1173,16 +1216,57 @@ contract LnSimpleStakingNew is
                     newAmount,
                     "_cancelStaking amount sub overflow"
                 );
+                unStakingFromNew = newAmount;
             }
-            uint256 oldAmount = mOldStake[user];
+
+        }
+        if ( unStakingFromNew > 0 ){
+           linaToken.transfer(msg.sender, unStakingFromNew);
+        }
+        
+        return true;
+    }
+
+    function _cancelStakingV2(address user, uint256 amount) internal returns(uint256){
+        uint256 blockNb = block.number;
+        if (blockNb > mEndBlock) {
+            blockNb = mEndBlock;
+        }
+
+        uint256 unStakingFromNew = 0;
+        uint256 unStakingFromOld = 0;
+        uint256 newAmount = super.amountOf(user);
+        if (newAmount >= amount) {
+            unStakingFromNew = unStakingFromNew.add(amount);
+            super._withdraw(blockNb, user, amount);
+            amount = 0;
+        } else {
+            if (newAmount > 0) {
+                unStakingFromNew = unStakingFromNew.add(newAmount);
+                super._withdraw(blockNb, user, newAmount);
+                amount = amount.sub(
+                    newAmount,
+                    "_cancelStaking amount sub overflow"
+                );
+            }
+            //以下处理只在本合约进行计数，没有在旧合约发生cancelStaking动作，前端必须多调用一次旧合约进行实际cancelStaking
+            uint256 oldAmount = 0;
+
+            if ( userSync[user]){
+                oldAmount = mOldStake[user];
+            } else {
+                oldAmount = simpleStaking.stakingBalanceOf(user);
+            }
             if (oldAmount > 0 && amount > 0){
                 if ( oldAmount> amount) {
+                    unStakingFromOld = unStakingFromOld.add(amount);
                     _widthdrawFromOldStaking(user, amount);
                     amount = amount.sub(
                         amount,
                         "_cancelStaking amount sub overflow"
                     );
                 } else {
+                    unStakingFromOld = unStakingFromOld.add(oldAmount);
                      _widthdrawFromOldStaking(user, oldAmount);
                     amount = amount.sub(
                         oldAmount,
@@ -1193,7 +1277,8 @@ contract LnSimpleStakingNew is
             }
         }
 
-        linaToken.transfer(msg.sender, returnAmount.sub(amount));
+        linaToken.transfer(msg.sender, unStakingFromNew);
+        return unStakingFromOld;
     }
 
     function cancelStaking(uint256 amount)
@@ -1210,12 +1295,35 @@ contract LnSimpleStakingNew is
             userSync[msg.sender] = true;
         }
 
-        _cancelStaking(msg.sender, amount);
+         _cancelStaking(msg.sender, amount);
 
         emit CancelStaking(msg.sender, amount);
 
         return true;
     }
+
+    //返回需要在旧的simpleStaking由前端调用cancelStaking的数量
+    function cancelStakingV2(uint256 amount)
+        public
+        whenNotPaused
+        returns (uint256)
+    {
+
+        require(amount > 0, "Invalid amount.");
+
+        if(!userSync[msg.sender]){
+            mOldStake[msg.sender] = simpleStaking.stakingBalanceOf(msg.sender);
+            userSync[msg.sender] = true;
+        }
+
+        uint256 unStakingFromOld = 0;
+        unStakingFromOld = _cancelStakingV2(msg.sender, amount);
+
+        emit CancelStakingV2(msg.sender, amount);
+
+        return unStakingFromOld;
+    }
+
 
     function getTotalReward(uint256 blockNb, address _user)
         public
@@ -1230,7 +1338,14 @@ contract LnSimpleStakingNew is
         // 1,已经从旧奖池中cancel了的
         // 2,还在旧奖池中的
         // 3，在新奖池中的
+
+        //第一部分
+
+        uint256 reward1 = simpleStaking.getTotalReward(blockNb, _user);
+
+        //第二部分
         total = mOldReward[_user];
+
         uint256 iMyOldStaking = 0;
 
         if ( userSync[_user]){
@@ -1238,11 +1353,10 @@ contract LnSimpleStakingNew is
         } else {
             iMyOldStaking = simpleStaking.stakingBalanceOf(_user);
         }
-        
+
         if (iMyOldStaking > 0) {
             uint256 oldStakingAmount = super.amountOf(mOldStaking);
-            uint256 iReward2 = super
-                ._calcReward(blockNb, mOldStaking)
+            uint256 iReward2 = super._calcReward(blockNb, mOldStaking)
                 .sub(
                 mWidthdrawRewardFromOldStaking,
                 "getTotalReward iReward2 sub overflow"
@@ -1252,8 +1366,9 @@ contract LnSimpleStakingNew is
             total = total.add(iReward2);
         }
 
+        //第三部分
         uint256 reward3 = super._calcReward(blockNb, _user);
-        total = total.add(reward3);
+        total = total.add(reward3).add(reward1);
     }
 
     // claim reward
@@ -1265,8 +1380,12 @@ contract LnSimpleStakingNew is
             "Not time to claim reward"
         );
 
-        //uint256 iMyOldStaking = stakingStorage.stakingBalanceOf(msg.sender);
-        uint256 iMyOldStaking = mOldStake[msg.sender];
+        uint256 iMyOldStaking = 0;
+        if ( userSync[msg.sender]){
+            iMyOldStaking = mOldStake[msg.sender];
+        } else {
+            iMyOldStaking = simpleStaking.stakingBalanceOf(msg.sender);
+        }
         uint256 iAmount = super.amountOf(msg.sender);
         _cancelStaking(msg.sender, iMyOldStaking.add(iAmount));
 
