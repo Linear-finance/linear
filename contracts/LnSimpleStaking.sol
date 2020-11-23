@@ -1143,6 +1143,34 @@ contract LnSimpleStakingNew is
         }
     }
 
+    function migrateData(
+        address[] calldata users,
+        uint256[] calldata actions,
+        uint256[] calldata blockIntake,
+        uint256[] calldata amount
+    ) public onlyAdmin {
+        require(
+            users.length == amount.length,
+            "parameter address length not eq"
+        );
+        require(
+            actions.length == amount.length,
+            "parameter address length not eq"
+        );
+        require(
+            blockIntake.length == amount.length,
+            "parameter address length not eq"
+        );
+
+        for (uint256 i = 0; i < users.length; i++) {
+            if (actions[i] == 1) {
+                _deposit(blockIntake[i], users[i], amount[i]);
+            } else if (actions[i] == 2) {
+                _withdraw(blockIntake[i], users[i], amount[i]);
+            }
+        }
+    }
+
     function staking(uint256 amount)
         public
         override
@@ -1175,8 +1203,7 @@ contract LnSimpleStakingNew is
         if (blockNb > mEndBlock) {
             blockNb = mEndBlock;
         }
-
-        uint256 oldStakingAmount = simpleStaking.amountOf(_addr);
+        uint256 oldStakingAmount = super.amountOf(mOldStaking);
         super._withdraw(blockNb, mOldStaking, amount);
         // sub already withraw reward, then cal portion
         uint256 reward = super

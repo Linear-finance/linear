@@ -927,7 +927,7 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         //test simpleStaking new
         let ac1RewardNew = await stakingNew.getTotalReward(blockNumber, ac1);
 
-        console.log("rewards ac1RewardNew", ac1RewardNew.toString());
+        console.log("rewards total reward in simpleStaking", ac1RewardNew.toString());
 
         let ac1SimpleStakingAmount = await staking.stakingBalanceOf(ac1);
         let ac1SimpleStakingNewAmount = await stakingNew.amountOf(ac1);
@@ -935,37 +935,10 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
         console.log("ac1SimpleStakingNewAmount", ac1SimpleStakingNewAmount.toString());
         
 
-        await stakingNew.staking( toUnit(20), { from: ac1 });
-
-        ac1SimpleStakingAmount = await staking.stakingBalanceOf(ac1);
-        ac1SimpleStakingNewAmount = await stakingNew.amountOf(ac1);
-        console.log("ac1SimpleStakingNewAmount", ac1SimpleStakingNewAmount.toString());
-
-
-        let amountAC1 = await linaproxy.balanceOf(ac1);
-        console.log("amountAC1", amountAC1.toString());
-        let ac1CancelNew = toUnit(10);
-        let rt = await stakingNew.cancelStakingV2(ac1CancelNew, {from: ac1});
-
-        amountAC1 = await linaproxy.balanceOf(ac1);
-        console.log("after unstaking amountAC1", amountAC1.toString());
-
-        ac1SimpleStakingAmount = await staking.stakingBalanceOf(ac1);
-        ac1SimpleStakingNewAmount = await stakingNew.amountOf(ac1);
-        console.log("ac1SimpleStakingAmount", ac1SimpleStakingAmount.toString());
-        console.log("ac1SimpleStakingNewAmount", ac1SimpleStakingNewAmount.toString())
-
-        await stakingNew.cancelStakingV2(toUnit(5), {from: ac1});
-
-        ac1RewardNew = await stakingNew.getTotalReward(blockNumber, ac1);
-
-        console.log("rewards ac1RewardNew", ac1RewardNew.toString());
-
-      
-        // let ac1NewStakingHeightN = await curBlockNumber();
-        // let ac1Staking1N = toUnit(10);
-        // let vN = await linaproxy.balanceOf(ac1);
-        // let ac1SimpleStaking = staking.amountOf(ac1);
+        let ac1NewStakingHeightN = await curBlockNumber();
+        let ac1Staking1N = toUnit(10);
+        let vN = await linaproxy.balanceOf(ac1);
+        let ac1SimpleStaking = staking.amountOf(ac1);
         // await stakingNew.staking( ac1Staking1N, { from: ac1 });
         // rewardCalcHelper.RegStaking(ac1, ac1Staking1N, ac1NewStakingHeightN, true);
         // assert.equal(await linaproxy.balanceOf(ac1), vN.sub(ac1Staking1N).toString() );
@@ -974,6 +947,26 @@ contract('LnRewardCalculator', ([alice, bob, carol, dev, minter]) => {
 
         // assert.equal(await stakingNew.cancelStakingV2(ac1Staking1N.sub(1), { from: ac1}), 0);
         // assert.equal(await stakingNew.cancelStakingV2(2, { from: ac1}), 1);
+        
+
+
+        let mWidthdrawRewardFromOldStaking = await stakingNew.mWidthdrawRewardFromOldStaking();
+        let rewardOfOldStaking = await stakingNew.rewardOf(staking.address);
+        console.log("mWidthdrawRewardFromOldStaking", mWidthdrawRewardFromOldStaking.toString());
+        console.log("reward Of oldStaking", rewardOfOldStaking.toString());
+
+        await staking.cancelStaking(ac1SimpleStakingAmount);
+
+        mWidthdrawRewardFromOldStaking = await stakingNew.mWidthdrawRewardFromOldStaking();
+        rewardOfOldStaking = await stakingNew.rewardOf(staking.address);
+        console.log("mWidthdrawRewardFromOldStaking", mWidthdrawRewardFromOldStaking.toString());
+        console.log("reward Of oldStaking", rewardOfOldStaking.toString());
+
+
+
+
+      
+
 
  
 

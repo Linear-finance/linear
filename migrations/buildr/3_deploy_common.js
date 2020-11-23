@@ -38,7 +38,7 @@ module.exports = function (deployer, network, accounts) {
     console.log("linaProxyErc20Address", linaProxyErc20Address);
     let klinaProxy = await LnProxyERC20.at(linaProxyErc20Address);
     
-    if (network == "mainnet" || network == "ropsten")
+    if (network == "mainnet" || network == "ropsten"  || network == "bsctestnet")
       assert.ok(kLinearFinance, "LinearFinance was not deployed");
 
     // deploy base infrastructure
@@ -123,11 +123,11 @@ module.exports = function (deployer, network, accounts) {
     }
     console.log("kLnAssetSystem.address", kLnAssetSystem.address);
     console.log("kLnFeeSystem", kLnFeeSystem.address);
-    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.SetLusdTokenAddress, LnAsset_lUSDAddress);
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
   });
 };
