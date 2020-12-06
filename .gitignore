@@ -1,5 +1,4 @@
 package-lock.json
-yarn.lock
 deploy.sh
 node_modules
 build
