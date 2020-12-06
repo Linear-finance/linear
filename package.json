@@ -4,6 +4,7 @@
   "description": "linear finance token",
   "main": "truffle-config.js",
   "scripts": {
+    "format": "prettier --write .",
     "compile": "truffle compile"
   },
   "author": "",
@@ -23,6 +24,8 @@
     "@openzeppelin/contracts": "^3.1.0",
     "ethers": "^5.0.8",
     "fs": "0.0.1-security",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.1",
     "solc": "^0.6.12",
     "string-format": "^2.0.0",
     "truffle": "^5.1.56",
