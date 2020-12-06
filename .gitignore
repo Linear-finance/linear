@@ -2,7 +2,8 @@ package-lock.json
 yarn.lock
 deploy.sh
 node_modules
-build/development
+build
+contracts/artifacts
 log/development-deployed.json
 .openzeppelin/.session
 .DS_Store
