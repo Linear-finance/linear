@@ -27,6 +27,12 @@ Build the smart contracts with the following command:
 $ yarn compile
 ```
 
+## Testing
+Run test cases with [Waffle](https://getwaffle.io):
+```sh
+$ yarn test
+```
+
 ## Deployment
 You can deploy the smart contracts on currently supported networks
 - [Ganache][GAN] (for development purpose)
@@ -46,7 +52,7 @@ $ export MIGRATIONS_DIR="" #./migrations/linaToken | ./migrations/buildr
 
 ### Example
 Deploying to Ganache, create a shell script as below and run:
-```shell
+```bash
 #!/bin/bash
 export NETWORK="development"
 
@@ -54,10 +60,10 @@ read -s -p "input private key:" privateKey
 export WALLET_PRIVATE_KEY=$privateKey
 
 export MIGRATIONS_DIR="./migrations/linaToken"
-export BUILD_DIR="./build/$network"
+export BUILD_DIR="./build/$NETWORK"
 export ETH_GAS_PRICE=650000000000
 
-truffle migrate --network $network 
+truffle migrate --network $NETWORK 
 ```
 After successfully run, change the script `MIGRATIONS_DIR="./migrations/buildr"` and run the revised script.
 

@@ -5,7 +5,8 @@
   "main": "truffle-config.js",
   "scripts": {
     "format": "prettier --write .",
-    "compile": "truffle compile"
+    "compile": "truffle compile",
+    "test": "mocha"
   },
   "author": "",
   "license": "ISC",
@@ -22,13 +23,20 @@
   "devDependencies": {
     "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts": "^3.1.0",
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.0.4",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.2.1",
     "ethers": "^5.0.8",
     "fs": "0.0.1-security",
+    "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
     "solc": "^0.6.12",
     "string-format": "^2.0.0",
     "truffle": "^5.1.56",
-    "truffle-hdwallet-provider": "^1.0.17"
+    "truffle-hdwallet-provider": "^1.0.17",
+    "ts-node": "^9.1.0",
+    "typescript": "^4.1.2"
   }
 }
