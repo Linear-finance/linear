@@ -101,6 +101,7 @@ async function InitComment(admin) {
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
     registContract("LnFeeSystem", kLnFeeSystem);
     registContract("LnRewardLocker", kLnRewardLocker);
+    registContract("LnExchangeSystem", kLnExchangeSystem);
   
     await kLnAssetSystem.updateAll(contractNames, contractAddrs);
 

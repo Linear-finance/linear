@@ -49,7 +49,6 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
     it('BuildBurn test', async ()=> {
         const linaBytes32 = toBytes32("lina");
         const ETHBytes32 = toBytes32("ETH");
-        const lusdBytes32 = toBytes32("lUSD");
 
         let InitContracts = await InitComment(ac0);
 
@@ -68,7 +67,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
             "Build amount too big, you need more collateral");
         
         // set price
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(1), toUnit(200)], Math.floor(Date.now()/1000).toString() );
     
         // mint lina
         lina.mint(ac1, toUnit(1000) ); // ac1 mint lina
@@ -261,7 +260,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         // price change, debt change, redeem change
         // collateral price down
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(100), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(1), toUnit(100)], Math.floor(Date.now()/1000).toString() );
         // ac1 collateral 750 lina, value 750 usd
         // ac2 collateral 900 lina, value 900 usd
         // ac3 collateral 5 eth, value 500 usd
@@ -289,7 +288,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         assert.equal(v, toUnit(0).toString());
 
         // collateral price down down
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(0.1), toUnit(10), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(0.1), toUnit(10)], Math.floor(Date.now()/1000).toString() );
 
         // ac1 collateral 500 lina, value 50 usd
         // ac2 collateral 500 lina, value 50 usd
@@ -318,7 +317,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
             "Build amount too big, you need more collateral");
 
         // collateral price up
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(10), toUnit(1000), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(10), toUnit(1000)], Math.floor(Date.now()/1000).toString() );
 
         // ac1 collateral 500 lina, value 5000 usd
         // ac2 collateral 500 lina, value 5000 usd
@@ -352,7 +351,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         assert.equal(v, toUnit(3000).toString());
 
         // price down
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(0.1), toUnit(10), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(0.1), toUnit(10)], Math.floor(Date.now()/1000).toString() );
 
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
         assert.equal(v, toUnit(0).toString());
@@ -392,7 +391,6 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
     it('test build burn toTarget', async ()=> {
         const linaBytes32 = toBytes32("lina");
         const ETHBytes32 = toBytes32("ETH");
-        const lusdBytes32 = toBytes32("lUSD");
 
         let InitContracts = await InitComment(ac0);
 
@@ -407,7 +405,7 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
         
         // set price
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit(1), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit(1), toUnit(200)], Math.floor(Date.now()/1000).toString() );
         
         // mint lina
         lina.mint(ac1, toUnit(1000) ); // ac1 mint lina
@@ -426,12 +424,12 @@ contract('test LnBuildBurnSystem', async (accounts)=> {
 
         checkDebtBalance(ac1, toUnit(200));
 
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit("0.5"), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit("0.5"), toUnit(200)], Math.floor(Date.now()/1000).toString() );
         await kLnBuildBurnSystem.BurnAssetToTarget({from:ac1});
 
         checkDebtBalance(ac1, toUnit(100));
 
-        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32, lusdBytes32], [toUnit("1"), toUnit(200), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32, ETHBytes32], [toUnit("1"), toUnit(200)], Math.floor(Date.now()/1000).toString() );
         await exceptionEqual(
             kLnBuildBurnSystem.BurnAssetToTarget({from:ac1}),
             "You maybe want build to target"
