@@ -51,7 +51,7 @@ const assertRevert = async (blockOrPromise, reason) => {
 };
 
 
-contract('LnExchangeSystem', async (accounts)=> {
+contract('LnFundVault', async (accounts)=> {
 
     const admin = accounts[0];
     const op1 = accounts[1];
@@ -77,7 +77,7 @@ contract('LnExchangeSystem', async (accounts)=> {
             assert.equal( vaultBalance, v );
 
             // send 1 again
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
 
             // send2
             message = {from: op1, to:vault.address, value: v};
@@ -87,11 +87,11 @@ contract('LnExchangeSystem', async (accounts)=> {
             assert.equal( vaultBalance, v*2 );
 
             // send2 again
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
           
             // send3
             message = {from: op2, to:vault.address, value: v};
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
              
             // claim
             vaultBalance = await web3.eth.getBalance(vault.address);
@@ -123,7 +123,7 @@ contract('LnExchangeSystem', async (accounts)=> {
             assert.equal( vaultBalance, v );
 
             // send 1 again
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
 
             // send2
             message = {from: op1, to:vault.address, value: v};
@@ -133,11 +133,11 @@ contract('LnExchangeSystem', async (accounts)=> {
             assert.equal( vaultBalance, v*2 );
 
             // send2 again
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
           
             // send3
             message = {from: op2, to:vault.address, value: v};
-            assertRevert( web3.eth.sendTransaction(message ) );
+            await assertRevert( web3.eth.sendTransaction(message ) );
              
             // claim
             vaultBalance = await web3.eth.getBalance(vault.address);

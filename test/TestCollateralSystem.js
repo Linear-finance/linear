@@ -25,7 +25,6 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
     const linaBytes32 = toBytes32("lina");
     const ETHBytes32 = toBytes32("ETH");
-    const lusdBytes32 = toBytes32("lUSD");
 
     it('collateral and redeem', async ()=> {
         
@@ -212,7 +211,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         let lUSD = InitContracts.lUSD;
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
-        await kLnChainLinkPrices.updateAll([linaBytes32, lusdBytes32], [toUnit(1), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(1)], Math.floor(Date.now()/1000).toString() );
 
         let v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
         assert.equal(v.valueOf(), 0);

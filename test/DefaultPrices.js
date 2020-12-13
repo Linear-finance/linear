@@ -91,7 +91,7 @@ contract('LnDefaultPrices', async (accounts)=> {
             let timeSent = await currentTime();
 
             // should ignore updates not from oracle
-            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: admin} ) );
+            await assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: admin} ) );
         });
         it('not lusd', async ()=> {
             // new instance of LnDefaultPrices
@@ -99,7 +99,7 @@ contract('LnDefaultPrices', async (accounts)=> {
 
             let timeSent = await currentTime();
 
-            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("lUSD")], [ 3,4 ], timeSent, { from: oracle} ) );
+            await assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("lUSD")], [ 3,4 ], timeSent, { from: oracle} ) );
         });
         it('not 0', async ()=> {
             // new instance of LnDefaultPrices
@@ -107,7 +107,7 @@ contract('LnDefaultPrices', async (accounts)=> {
 
             let timeSent = await currentTime();
 
-            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,0 ], timeSent, { from: oracle} ) );
+            await assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,0 ], timeSent, { from: oracle} ) );
         });
 
         it('get price and update time', async () => {
@@ -250,7 +250,7 @@ contract('LnDefaultPrices', async (accounts)=> {
             assert.equal( linaPrice.valueOf(), 0 );
 
             // only oracle
-            assertRevert( defaultPrices.deletePrice( toBytes32("CNY"),{ from:admin} ) );
+            await assertRevert( defaultPrices.deletePrice( toBytes32("CNY"),{ from:admin} ) );
             let cnyPrice = await defaultPrices.getPrice( toBytes32("CNY") );    
             assert.equal( cnyPrice.valueOf(), 2 );
         });
@@ -279,11 +279,11 @@ contract('LnDefaultPrices', async (accounts)=> {
             // new instance of LnDefaultPrices
             const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
             // should revert, wrong admin
-            assertRevert( defaultPrices.setOracle( admin, {from:oracle}) );
+            await assertRevert( defaultPrices.setOracle( admin, {from:oracle}) );
 
             // shuld revert, wrong oracle
             let timeSent = await currentTime();
-            assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: oracle } ) );
+            await assertRevert( defaultPrices.updateAll( [toBytes32("LINA"), toBytes32("CNY")], [ 3,4 ], timeSent, { from: admin } ) );
         });
 
 
