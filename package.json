@@ -6,6 +6,8 @@
   "scripts": {
     "format": "prettier --write .",
     "compile": "truffle compile",
+    "compile-waffle": "waffle waffle-dev.json",
+    "compile-waffle:production": "waffle waffle-prod.json",
     "test": "mocha"
   },
   "author": "",

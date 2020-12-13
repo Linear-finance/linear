@@ -22,16 +22,26 @@ $ yarn install
 ```
 
 ## Building
-Build the smart contracts with the following command:
+Build the smart contracts using [Truffle][TRUFFLE] with the following command:
 ```sh
 $ yarn compile
 ```
 
+Alternatively, you can compile them using [Waffle][WAFFLE]:
+```sh
+# Compile for development (optimization off)
+$ yarn compile-waffle
+# Compile for production (optimization on)
+$ yarn compile-waffle:production
+```
+
 ## Testing
-Run test cases with [Waffle](https://getwaffle.io):
+Run test cases with [Waffle][WAFFLE]:
 ```sh
 $ yarn test
 ```
+
+*Note that you must compile the contracts with **Waffle** first as instructed above before running the tests.*
 
 ## Deployment
 You can deploy the smart contracts on currently supported networks
@@ -154,3 +164,4 @@ you will find the created contract addresses in the log/[NETWORK]-deployed.json.
 [TRUFFLE]: <https://www.trufflesuite.com/truffle>
 [OZ]: <https://openzeppelin.com>
 [GAN]: <https://www.trufflesuite.com/ganache>
+[WAFFLE]: <https://getwaffle.io>
