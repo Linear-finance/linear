@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
 import "./LnAddressCache.sol";
@@ -11,7 +11,7 @@ import "./LnRewardLocker.sol";
 import "./LnAssetSystem.sol";
 import "./LnAsset.sol";
 
-contract LnFeeSystem is LnAdmin, LnAddressCache {
+contract LnFeeSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint256;
     using SafeDecimalMath for uint256;
 
@@ -35,8 +35,8 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 
     RewardPeriod public curRewardPeriod;
     RewardPeriod public preRewardPeriod;
-    uint256 public OnePeriodSecs = 1 weeks;
-    uint64 public LockTime = uint64(52 weeks);
+    uint256 public OnePeriodSecs;
+    uint64 public LockTime;
 
     mapping (address => uint256) public userLastClaimedId;
 
@@ -51,7 +51,11 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
     address public exchangeSystemAddress;
     address public rewardDistributer;
 
-    constructor(address _admin ) public LnAdmin(_admin ) {
+    function __LnFeeSystem_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+
+        OnePeriodSecs = 1 weeks;
+        LockTime = uint64(52 weeks);
     }
 
     // Note: before start run need call this func to init.
@@ -285,10 +289,16 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         emit FeesClaimed(user, fee, reward);
         return true;
     }
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[38] private __gap;
 }
 
 contract LnFeeSystemTest is LnFeeSystem {
-    constructor(address _admin ) public LnFeeSystem(_admin ) {
+
+    function __LnFeeSystemTest_init(address _admin) public initializer {
+        __LnFeeSystem_init(_admin);
+
         OnePeriodSecs = 6 hours;
         LockTime = 1 hours;
     }
