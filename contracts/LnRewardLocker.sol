@@ -2,11 +2,11 @@
 pragma solidity ^0.6.12;
 
 import "./IERC20.sol";
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 // Reward Distributor
-contract LnRewardLocker is LnAdmin {
+contract LnRewardLocker is LnAdminUpgradeable {
     using SafeMath for uint256;
 
     struct RewardData{
@@ -23,7 +23,9 @@ contract LnRewardLocker is LnAdmin {
     address feeSysAddr;
     IERC20 public linaToken;
 
-    constructor(address _admin, address linaAddress) public LnAdmin(_admin ) {
+    function __LnRewardLocker_init(address _admin, address linaAddress) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+
         linaToken = IERC20(linaAddress);
     }
 
@@ -113,5 +115,8 @@ contract LnRewardLocker is LnAdmin {
 
     event AppendReward(address user, uint256 amount, uint64 lockTo);
     event ClaimLog(address user, uint256 amount);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[45] private __gap;
 }
 
