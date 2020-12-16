@@ -35,6 +35,11 @@ $ yarn compile-waffle
 $ yarn compile-waffle:production
 ```
 
+[Hardhat][HARDHAT] is also supported for compilation:
+```sh
+$ yarn compile-hardhat
+```
+
 ## Testing
 Run test cases with [Waffle][WAFFLE]:
 ```sh
@@ -165,3 +170,4 @@ you will find the created contract addresses in the log/[NETWORK]-deployed.json.
 [OZ]: <https://openzeppelin.com>
 [GAN]: <https://www.trufflesuite.com/ganache>
 [WAFFLE]: <https://getwaffle.io>
+[HARDHAT]: <https://hardhat.org>
