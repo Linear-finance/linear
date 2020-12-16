@@ -20,9 +20,6 @@
   "LnLinearStaking": {
     "address": "0x6E399001031fe7105ff218c3d5c9b558d3Be837c"
   },
-  "SafeDecimalMath": {
-    "address": "0x93d7Fe915848aB6782399ae301dC6826e7C101c7"
-  },
   "LnConfig": {
     "address": "0x6c7Be26cC2afcb571f43298950F29764BE2Ca74E"
   },
@@ -55,12 +52,6 @@
   },
   "LnDebtSystem": {
     "address": "0xc17650b3ECC76ba6cc8236C41Ed1b6A48Ea3cff5"
-  },
-  "LnCollateralSystem": {
-    "address": "0x3e6cE54259886720F41e6d25973570835e3eef20"
-  },
-  "LnBuildBurnSystem": {
-    "address": "0x7B213c34C4cB1C8A7e75f1Eb9f93f0276D7078A5"
   },
   "LnProxyERC20_lUSD": {
     "address": "0xEA53e2cfC9f8cd022f68e15C6bAB9466bd1EF4A5"
@@ -103,5 +94,20 @@
   },
   "LnFeeSystemTest": {
     "address": "0xC2B3D062F995703A8Ab5B46677226dFe454B2756"
+  },
+  "LnErc20Bridge": {
+    "address": "0x007B38508C21049996B798F65Ce3609A7Eb6549E"
+  },
+  "SafeDecimalMath": {
+    "address": "0x0eab752bde64B5091c69F1eeDDF784F1E4dF22AC"
+  },
+  "LnCollateralSystem": {
+    "address": "0xD3Caa4A733AB2bb289Fc3f7ad272EAc276938012"
+  },
+  "LnBuildBurnSystem": {
+    "address": "0x59ed169683e198c2eEF3bef9D1BfbFe1F98b4F8E"
+  },
+  "LnColateralBuildBurnAPI": {
+    "address": "0xD56adCA720eb7B8FECe48BA80a4Ec8F1338A0481"
   }
 }

@@ -180,13 +180,12 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // need approve
-    function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
+    function Collateral(address user, bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
         TokenInfo storage tokeninfo = tokenInfos[_currency];
         require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
         require(tokeninfo.bClose == false, "This token is closed");
 
-        address user = msg.sender;
 
         IERC20 erc20 = IERC20(tokenInfos[_currency].tokenAddr);
         require(erc20.balanceOf(user) >= _amount, "insufficient balance");
@@ -250,8 +249,23 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return maxRedeem.sub(lockedLina);
     }
 
-    function RedeemMax(bytes32 _currency) external whenNotPaused {
-        address user = msg.sender;
+
+    //input asset amount lUSD->LINA
+    function calcRedeemAmount(address user, uint256 _amount) public view returns(uint256) {
+        uint256 canRedeem = _amount.divideDecimal(priceGetter.getPrice(Currency_LINA));
+        if (canRedeem > userCollateralData[user][Currency_LINA].collateral) {
+            canRedeem = userCollateralData[user][Currency_LINA].collateral;
+        }
+
+        uint256 lockedLina = mRewardLocker.balanceOf(user);
+        if (canRedeem <= lockedLina) {
+            return 0;
+        }
+        return canRedeem.sub(lockedLina);
+    }
+
+
+    function RedeemMax(address user, bytes32 _currency) external whenNotPaused {
         uint256 maxRedeem = MaxRedeemable(user, _currency);
         _Redeem(user, _currency, maxRedeem);
     }
@@ -276,8 +290,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
 
     // 1. After redeem, collateral ratio need bigger than target ratio.
     // 2. Cannot redeem more than collateral.
-    function Redeem(bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
-        address user = msg.sender;
+    function Redeem(address user, bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
         _Redeem(user, _currency, _amount);
         return true;
     }
@@ -296,21 +309,18 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
     }
 
-    // payable eth receive, 
-    function CollateralEth() external payable whenNotPaused returns (bool) {
-        address user = msg.sender;
-        uint256 ethAmount = msg.value;
+    // payable eth receive,
+    function CollateralEth(address user, uint256 ethAmount) external payable whenNotPaused returns (bool) {
         _CollateralEth(user, ethAmount);
         return true;
     }
 
-    function RedeemETH(uint256 _amount) external whenNotPaused returns (bool) {
-        address payable user = msg.sender;
+    function RedeemETH(address payable user, uint256 _amount) external whenNotPaused returns (bool) {
         require(_amount <= userCollateralData[user][Currency_ETH].collateral, "Can not redeem more than collateral");
         require(_amount > 0, "Redeem amount need larger than zero");
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-        
+
         uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 

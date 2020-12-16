@@ -50,21 +50,21 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         // fail test
         await exceptionEqual(
-            kLnCollateralSystem.Collateral( toBytes32("notExist"), toUnit(10) ),
+            kLnCollateralSystem.Collateral(ac1, toBytes32("notExist"), toUnit(10) ),
             "Invalid token symbol");
 
         await exceptionEqual(
-            kLnCollateralSystem.Collateral( linaBytes32, toUnit(0.1)),
+            kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(0.1)),
             "Collateral amount too small");
 
         // collateral more than balance and approve balance
         await exceptionEqual(
-            kLnCollateralSystem.Collateral( linaBytes32, toUnit(1001), {from:ac1}),
+            kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(1001), {from:ac1}),
             "insufficient balance");
 
         // before 
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
-        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(1000), {from:ac1});
         
         // setup price, chainlink price is price*10e8
         await InitContracts.kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(1)], Math.floor(Date.now()/1000).toString() );
@@ -90,14 +90,14 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         //redeem
         await exceptionEqual(
-            kLnCollateralSystem.Redeem( toBytes32("notExist"), toUnit(10) ),
+            kLnCollateralSystem.Redeem(ac1, toBytes32("notExist"), toUnit(10) ),
             "Can not redeem more than collateral");
 
         await exceptionEqual(
-            kLnCollateralSystem.Redeem( toBytes32("notExist"), 1 ),
+            kLnCollateralSystem.Redeem(ac1, toBytes32("notExist"), 1 ),
             "Can not redeem more than collateral");
 
-        await kLnCollateralSystem.Redeem( linaBytes32, toUnit(10), {from:ac1} );
+        await kLnCollateralSystem.Redeem(ac1, linaBytes32, toUnit(10), {from:ac1} );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
         assert.equal(v.valueOf(), 990e18);
@@ -106,7 +106,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
         assert.equal(v.valueOf(), 2*990e18);
 
-        await kLnCollateralSystem.Redeem( linaBytes32, toUnit(990), {from:ac1} );
+        await kLnCollateralSystem.Redeem(ac1, linaBytes32, toUnit(990), {from:ac1} );
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, linaBytes32);
         assert.equal(v.valueOf(), 0e18);
@@ -116,12 +116,12 @@ contract('test LnCollateralSystem', async (accounts)=> {
         assert.equal(v.valueOf(), 2*0e18);
 
         await exceptionEqual(
-            kLnCollateralSystem.Redeem( linaBytes32, 1, {from:ac1} ),
+            kLnCollateralSystem.Redeem(ac1, linaBytes32, 1, {from:ac1} ),
             "Can not redeem more than collateral");
 
         // ETH test, ETH collateral
         let ac1balance = await web3.eth.getBalance(ac1);
-        await kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)});
+        await kLnCollateralSystem.CollateralEth(ac1, toUnit(1), {from:ac1, value:toUnit(1)});
         let ac1newbalance = await web3.eth.getBalance(ac1);
         assert.equal(ac1balance.valueOf() >= ac1newbalance.valueOf() + toUnit(1), true); // need fee
 
@@ -143,11 +143,11 @@ contract('test LnCollateralSystem', async (accounts)=> {
         //ETH redeem
         // admin redeem
         await exceptionEqual(
-            kLnCollateralSystem.RedeemETH(toUnit(1)),
+            kLnCollateralSystem.RedeemETH(ac0, toUnit(1)),
             "Can not redeem more than collateral");
 
-        await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1});
-        
+        await kLnCollateralSystem.RedeemETH(ac1, toUnit(1), {from:ac1});
+
         v = await kLnCollateralSystem.GetUserCollateral(ac1, ETHBytes32);
         assert.equal(v.valueOf(), 0e18);
         v = await kLnCollateralSystem.GetUserTotalCollateralInUsd(ac1);
@@ -160,13 +160,13 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
         // many people
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac1});
-        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac1});
+        await kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(1000), {from:ac1});
 
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac1);
         assert.equal(v.valueOf(), 2*1000e18);
 
         // ac2 join in with ETH
-        await kLnCollateralSystem.CollateralEth({from:ac2, value:toUnit(1)});
+        await kLnCollateralSystem.CollateralEth(ac2, toUnit(1), {from:ac2, value:toUnit(1)});
 
         v = await kLnCollateralSystem.GetUserCollateral(ac1, ETHBytes32);
         assert.equal(v.valueOf(), 0);
@@ -191,12 +191,12 @@ contract('test LnCollateralSystem', async (accounts)=> {
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
         assert.equal(v.cmp(toUnit(200)), 0);
 
-        await kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac3});
+        await kLnCollateralSystem.RedeemETH(ac3, toUnit(1), {from:ac3});
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac3);
         assert.equal(v.cmp(toUnit(0)), 0);
         //revert
         //await kLnCollateralSystem.sendTransaction({from:ac3, value:toUnit(1), data:"0x1234567890"});
-        
+
         //TODO: CollateralEth 重入测试，
     });
 
@@ -212,7 +212,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
         let lUSD = InitContracts.lUSD;
 
         await kLnCollateralSystem.UpdateTokenInfo( linaBytes32, lina.address, toUnit(1), false);
-        await kLnChainLinkPrices.updateAll([linaBytes32, lusdBytes32], [toUnit(1), toUnit(1)], Math.floor(Date.now()/1000).toString() );
+        await kLnChainLinkPrices.updateAll([linaBytes32], [toUnit(1)], Math.floor(Date.now()/1000).toString() );
 
         let v = await kLnCollateralSystem.GetSystemTotalCollateralInUsd();
         assert.equal(v.valueOf(), 0);
@@ -220,11 +220,11 @@ contract('test LnCollateralSystem', async (accounts)=> {
         // mint lina
         lina.mint(ac2, toUnit(1000) ); // ac1 mint lina
         await lina.approve(kLnCollateralSystem.address, toUnit(1000), {from:ac2});
-        await kLnCollateralSystem.Collateral( linaBytes32, toUnit(1000), {from:ac2});
+        await kLnCollateralSystem.Collateral(ac2, linaBytes32, toUnit(1000), {from:ac2});
 
         v = await kLnBuildBurnSystem.MaxCanBuildAsset(ac2);
         //console.log("MaxCanBuildAsset", v.toString());
-        await kLnBuildBurnSystem.BuildMaxAsset({from:ac2});
+        await kLnBuildBurnSystem.BuildMaxAsset(ac2,{from:ac2});
 
         v = await kLnCollateralSystem.MaxRedeemableInUsd(ac2);
         //console.log("MaxRedeemableInUsd", v.toString());
@@ -237,38 +237,38 @@ contract('test LnCollateralSystem', async (accounts)=> {
     });
 
     it('Pausable', async function () {
-        
+
         let kLnCollateralSystem = await LnCollateralSystem.new(ac0);
         await kLnCollateralSystem.setPaused(true);
 
         await exceptionEqual(
-            kLnCollateralSystem.Collateral(linaBytes32, toUnit(1)),
+            kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(1)),
             "Pausable: paused");
 
         await exceptionEqual(
-            kLnCollateralSystem.Redeem(linaBytes32, toUnit(1)),
+            kLnCollateralSystem.Redeem(ac1, linaBytes32, toUnit(1)),
             "Pausable: paused");
 
         await exceptionEqual(
-            kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)}),
+            kLnCollateralSystem.CollateralEth(ac1, toUnit(1), {from:ac1, value:toUnit(1)}),
             "Pausable: paused");
 
         await exceptionEqual(
-            kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1}),
+            kLnCollateralSystem.RedeemETH(ac1, toUnit(1), {from:ac1}),
             "Pausable: paused");
 
         await kLnCollateralSystem.setPaused(false);
 
         await exceptionNotEqual(
-            kLnCollateralSystem.Collateral(linaBytes32, toUnit(1)),
+            kLnCollateralSystem.Collateral(ac1,linaBytes32, toUnit(1)),
             "Pausable: paused");
 
         await exceptionNotEqual(
-            kLnCollateralSystem.Redeem(linaBytes32, toUnit(1)),
+            kLnCollateralSystem.Redeem(ac1, linaBytes32, toUnit(1)),
             "Pausable: paused");
 
         await exceptionNotEqual(
-            kLnCollateralSystem.CollateralEth({from:ac1, value:toUnit(1)}),
+            kLnCollateralSystem.CollateralEth(ac1, toUnit(1), {from:ac1, value:toUnit(1)}),
             "Pausable: paused");
 
         await exceptionNotEqual(
@@ -276,7 +276,7 @@ contract('test LnCollateralSystem', async (accounts)=> {
             "Pausable: paused");
 
         await exceptionNotEqual(
-            kLnCollateralSystem.RedeemETH(toUnit(1), {from:ac1}),
+            kLnCollateralSystem.RedeemETH(ac1, toUnit(1), {from:ac1}),
             "Pausable: paused");
     });
 

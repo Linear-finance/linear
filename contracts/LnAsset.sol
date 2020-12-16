@@ -74,4 +74,3 @@ contract LnAsset is LnErc20Handler, IAsset, LnAddressCache {
         emitTransfer(account, address(0), amount);
     }
 }
-

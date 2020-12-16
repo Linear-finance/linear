@@ -35,7 +35,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
 
     RewardPeriod public curRewardPeriod;
     RewardPeriod public preRewardPeriod;
-    uint256 public OnePeriodSecs = 1 weeks;
+    uint256 public OnePeriodSecs = 2 weeks;
     uint64 public LockTime = uint64(52 weeks);
 
     mapping (address => uint256) public userLastClaimedId;

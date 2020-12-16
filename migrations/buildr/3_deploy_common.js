@@ -24,6 +24,7 @@ const LnExchangeSystem = artifacts.require("LnExchangeSystem");
 const LnRewardLocker = artifacts.require("LnRewardLocker");
 const LnFeeSystem = artifacts.require("LnFeeSystem");
 const LnFeeSystemTest = artifacts.require("LnFeeSystemTest");
+const LnColateralBuildBurnAPI = artifacts.require("LnColateralBuildBurnAPI");
 const {newAssetToken} = require("../helpers");
 
 const BUILD_RATIO = toUnit("0.2");
@@ -31,6 +32,7 @@ const BUILD_RATIO = toUnit("0.2");
 module.exports = function (deployer, network, accounts) {
   deployer.then(async ()=>{
     const admin = accounts[0];
+    
     
     // lina token has deployed before main contract deploying.
     const kLinearFinance = await GetDeployed(LinearFinance);//LinearFinance.deployed();
@@ -67,6 +69,8 @@ module.exports = function (deployer, network, accounts) {
     await deployer.link(SafeDecimalMath, LnBuildBurnSystem);
     let lUSDTokenAddress = emptyAddr;
     let kLnBuildBurnSystem = await DeployIfNotExist(deployer, LnBuildBurnSystem, admin, lUSDTokenAddress);
+
+    let kLnColateralBuildBurnAPI = await DeployIfNotExist(deployer, LnColateralBuildBurnAPI ,admin);
 
     await deployer.link(SafeDecimalMath, LnExchangeSystem);
     let kLnExchangeSystem = await DeployIfNotExist(deployer, LnExchangeSystem, admin)
@@ -110,6 +114,7 @@ module.exports = function (deployer, network, accounts) {
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
+    registContract("LnColateralBuildBurnAPI", kLnColateralBuildBurnAPI);
     registContract("LnFeeSystem", kLnFeeSystem);
     registContract("LnRewardLocker", kLnRewardLocker);
     registContract("LnExchangeSystem", kLnExchangeSystem);
@@ -127,6 +132,7 @@ module.exports = function (deployer, network, accounts) {
     await CallWithEstimateGas(kLnDebtSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnCollateralSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnBuildBurnSystem.updateAddressCache, kLnAssetSystem.address);
+    await CallWithEstimateGas(kLnColateralBuildBurnAPI.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnExchangeSystem.updateAddressCache, kLnAssetSystem.address);
     await CallWithEstimateGas(kLnFeeSystem.updateAddressCache, kLnAssetSystem.address);
   });

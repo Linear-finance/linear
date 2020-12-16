@@ -21,6 +21,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     using SafeDecimalMath for uint;
     using Address for address;
 
+    bytes32 constant public Currency_LINA = "LINA";
     // -------------------------------------------------------
     // need set before system running value.
     LnAsset private lUSDToken; // this contract need 
@@ -72,9 +73,28 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         return maxCanBuild;
     }
 
+    //input LINA amount LINA->lUSD
+    function calcBuildAmount(address _user, uint256 _amount) public view returns(uint256) {
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 canBuildUsd = _amount.mul(priceGetter.getPrice(Currency_LINA)).multiplyDecimal(buildRatio).div(SafeDecimalMath.unit());
+        
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
+        if (debtBalance == 0) {
+            return canBuildUsd;
+        }
+
+        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
+        if (canBuildUsd < minCollateral) {
+            return 0;
+        }
+        
+        return canBuildUsd.sub(minCollateral);
+    }
+
+
+
     // build lusd
-    function BuildAsset(uint256 amount) public whenNotPaused returns(bool) {
-        address user = msg.sender;
+    function BuildAsset(address user, uint256 amount) public whenNotPaused returns(bool) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
@@ -101,10 +121,9 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
-    function BuildMaxAsset() external whenNotPaused {
-        address user = msg.sender;
+    function BuildMaxAsset(address user) external whenNotPaused {
         uint256 max = MaxCanBuildAsset(user);
-        BuildAsset(max);
+        BuildAsset(user, max);
     }
 
     function _burnAsset(address user, uint256 amount) internal {
@@ -136,8 +155,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // burn
-    function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
-        address user = msg.sender;
+    function BurnAsset(address user, uint256 amount) external whenNotPaused returns(bool) {
         _burnAsset(user, amount);
         return true;
     }
@@ -149,8 +167,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     // }
 
     // burn to target ratio
-    function BurnAssetToTarget() external whenNotPaused returns(bool) {
-        address user = msg.sender;
+    function BurnAssetToTarget(address user) external whenNotPaused returns(bool) {
 
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 totalCollateral = collaterSys.GetUserTotalCollateralInUsd(user);

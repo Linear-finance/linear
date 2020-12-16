@@ -116,8 +116,8 @@ module.exports = {
     ropsten: {
       provider: () => CreateHDWallet(privatekey, "https://ropsten.infura.io/v3/" + process.env.INFURA_PROJECT_ID),
         network_id: "*",       // Ropsten's id
-        gas: 5500000,        // Ropsten has a lower block limit than mainnet
-        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:150000000000,
+        gas: 6721975,        // Ropsten has a lower block limit than mainnet
+        gasPrice: process.env.ETH_GAS_PRICE?process.env.ETH_GAS_PRICE:500000000000,
         confirmations: 0,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 2000,  // # of blocks before a deployment times out  (minimum/default: 50)
         networkCheckTimeout: 50000,
