@@ -3,7 +3,7 @@ pragma solidity ^0.6.12;
 
 import "./LnAddressCache.sol";
 import "./IAsset.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 import "./LnPrices.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
@@ -62,7 +62,7 @@ contract LnAssetSystem is LnAddressStorage {
         LnPrices priceGetter = LnPrices( mAddrs["LnPrices"] ); //getAddress
         for (uint256 i=0; i< mAssetList.length; i++) {
             uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            rTotal = rTotal.add( LnAsset(address(mAssetList[i])).totalSupply().multiplyDecimal(exchangeRate) );
+            rTotal = rTotal.add( LnAssetUpgradeable(address(mAssetList[i])).totalSupply().multiplyDecimal(exchangeRate) );
         }
     }
 

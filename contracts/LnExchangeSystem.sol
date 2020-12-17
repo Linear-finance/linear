@@ -2,7 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "./LnAddressCache.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
 import "./LnPrices.sol";
 import "./LnConfig.sol";
@@ -49,8 +49,8 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     function _exchange( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) internal {
         
-        LnAsset source = LnAsset( mAssets.getAddressWithRequire( sourceKey, ""));
-        LnAsset dest = LnAsset( mAssets.getAddressWithRequire( destKey, ""));
+        LnAssetUpgradeable source = LnAssetUpgradeable( mAssets.getAddressWithRequire( sourceKey, ""));
+        LnAssetUpgradeable dest = LnAssetUpgradeable( mAssets.getAddressWithRequire( destKey, ""));
         uint destAmount=  mPrices.exchange( sourceKey, sourceAmount, destKey );
         require( destAmount > 0, "dest amount must > 0" );
 
@@ -76,7 +76,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     function _addExchangeFee( uint feeUsd ) internal
     {
-        LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
+        LnAssetUpgradeable lusd = LnAssetUpgradeable( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
         lusd.mint( mFeeSys.FEE_DUMMY_ADDRESS(), feeUsd );
         mFeeSys.addExchangeFee( feeUsd );
     }

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
 import "./LnPrices.sol";
 import "./LnAddressCache.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
 import "./LnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
@@ -23,7 +23,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     // -------------------------------------------------------
     // need set before system running value.
-    LnAsset private lUSDToken; // this contract need 
+    LnAssetUpgradeable private lUSDToken; // this contract need 
 
     LnDebtSystem private debtSystem;
     LnAssetSystem private assetSys;
@@ -32,7 +32,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     LnConfig private mConfig;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
-        lUSDToken = LnAsset(_lUSDTokenAddr);
+        lUSDToken = LnAssetUpgradeable(_lUSDTokenAddr);
     }
 
     function setPaused(bool _paused) external onlyAdmin {
@@ -61,7 +61,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
         emit UpdateLusdToken(address(lUSDToken), _address);
-        lUSDToken = LnAsset(_address);
+        lUSDToken = LnAssetUpgradeable(_address);
     }
 
     event UpdateLusdToken(address oldAddr, address newAddr);

@@ -9,7 +9,7 @@ import "./LnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
 import "./LnRewardLocker.sol";
 import "./LnAssetSystem.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 
 contract LnFeeSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint256;
@@ -277,7 +277,7 @@ contract LnFeeSystem is LnAdminUpgradeable, LnAddressCache {
         require(fee > 0 || reward > 0, "Nothing to claim");
 
         if (fee > 0) {
-            LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( "lUSD", "get lUSD asset address fail" ));
+            LnAssetUpgradeable lusd = LnAssetUpgradeable( mAssets.getAddressWithRequire( "lUSD", "get lUSD asset address fail" ));
             lusd.burn( FEE_DUMMY_ADDRESS, fee );
             lusd.mint(user, fee);
         }
