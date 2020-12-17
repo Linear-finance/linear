@@ -25,7 +25,6 @@ contract('test LnCollateralSystem', async (accounts)=> {
 
     const linaBytes32 = toBytes32("lina");
     const ETHBytes32 = toBytes32("ETH");
-    const lusdBytes32 = toBytes32("lUSD");
 
     it('collateral and redeem', async ()=> {
         

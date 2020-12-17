@@ -6,6 +6,8 @@
   "scripts": {
     "format": "prettier --write .",
     "compile": "truffle compile",
+    "compile-waffle": "waffle waffle-dev.json",
+    "compile-waffle:production": "waffle waffle-prod.json",
     "test": "mocha"
   },
   "author": "",
@@ -21,7 +23,6 @@
     "web3-utils": "^1.2.11"
   },
   "devDependencies": {
-    "@openzeppelin/cli": "^2.8.2",
     "@openzeppelin/contracts": "^3.1.0",
     "@types/chai": "^4.2.14",
     "@types/mocha": "^8.0.4",

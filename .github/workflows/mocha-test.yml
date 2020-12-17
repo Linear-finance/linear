@@ -3,11 +3,11 @@ name: Test with Mocha
 on:
   push:
     branches:
-      - "**"
+      - "master"
 
   pull_request:
     branches:
-      - "**"
+      - "master"
 
 jobs:
   test:
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Compile
-        run: yarn compile
+      - name: Compile with Waffle
+        run: yarn compile-waffle
 
       - name: Test
         run: yarn test
