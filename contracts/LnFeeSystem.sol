@@ -137,7 +137,7 @@ contract LnFeeSystem is LnAdmin, LnAddressCache {
         preRewardPeriod.feesClaimed = 0;
         preRewardPeriod.rewardsToDistribute = curRewardPeriod.rewardsToDistribute.add( preRewardPeriod.rewardsToDistribute.sub(preRewardPeriod.rewardsClaimed) );
         preRewardPeriod.rewardsClaimed = 0;
-        
+    
         curRewardPeriod.id = curRewardPeriod.id + 1;
         curRewardPeriod.startingDebtFactor = debtSystem.LastSystemDebtFactor();
         curRewardPeriod.startTime = now;

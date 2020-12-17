@@ -113,6 +113,19 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
+    function migra(address user, bytes32 _currency, uint256 _amount) external onlyAdmin returns (bool) {
+        require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
+        TokenInfo storage tokeninfo = tokenInfos[_currency];
+        require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
+        require(tokeninfo.bClose == false, "This token is closed");
+
+        userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(_amount);
+        tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(_amount);
+
+        emit CollateralLog(user, _currency, _amount, userCollateralData[user][_currency].collateral);
+        return true;
+    }
+
     // ------------------------------------------------------------------------
     function GetSystemTotalCollateralInUsd() public view returns (uint256 rTotal) {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
