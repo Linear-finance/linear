@@ -96,7 +96,7 @@ contract LnColateralBuildBurnAPI is LnAdmin, Pausable, LnAddressCache{
     function burnAndRedeem(bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
         address user = msg.sender;
         buildBurnSystem.BurnAsset(user, _amount);
-        uint256 redeemAble = collaterSys.calcRedeemAmount(user, _amount);
+        uint256 redeemAble = buildBurnSystem.calcRedeemAmount(user, _amount);
         collaterSys.Redeem(user, _currency, redeemAble);
         return true;
     }

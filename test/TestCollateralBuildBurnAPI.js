@@ -43,7 +43,7 @@ contract('test LnCollateralBuildBurnAPI', async (accounts)=> {
         kLnColateralBuildBurnAPI = InitContracts.kLnColateralBuildBurnAPI;
         kLnCollateralSystem = InitContracts.kLnCollateralSystem;
         kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
-        let kLnDebtSystem = InitContracts.kLnDebtSystem;
+        kLnDebtSystem = InitContracts.kLnDebtSystem;
         lUSD = InitContracts.lUSD;
 
         const [lina,linaproxy] = await CreateLina(ac0);

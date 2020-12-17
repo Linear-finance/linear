@@ -31,6 +31,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     LnPrices private priceGetter;
     LnCollateralSystem private collaterSys;
     LnConfig private mConfig;
+    LnRewardLocker public mRewardLocker;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
         lUSDToken = LnAsset(_lUSDTokenAddr);
@@ -52,12 +53,14 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
         collaterSys = LnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
+        mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
         emit updateCachedAddress( "LnPrices",           address(priceGetter) );
         emit updateCachedAddress( "LnDebtSystem",       address(debtSystem) );
         emit updateCachedAddress( "LnAssetSystem",      address(assetSys) );
         emit updateCachedAddress( "LnCollateralSystem", address(collaterSys) );
         emit updateCachedAddress( "LnConfig",           address(mConfig) );
+        emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
@@ -77,7 +80,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     function calcBuildAmount(address _user, uint256 _amount) public view returns(uint256) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 canBuildUsd = _amount.mul(priceGetter.getPrice(Currency_LINA)).multiplyDecimal(buildRatio).div(SafeDecimalMath.unit());
-        
+
         (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
         if (debtBalance == 0) {
             return canBuildUsd;
@@ -87,10 +90,23 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         if (canBuildUsd < minCollateral) {
             return 0;
         }
-        
+
         return canBuildUsd.sub(minCollateral);
     }
 
+    //input asset amount lUSD->LINA
+    function calcRedeemAmount(address user, uint256 _amount) public view returns(uint256) {
+        uint256 canRedeem = _amount.divideDecimal(priceGetter.getPrice(Currency_LINA));
+        uint256 linaCollateral = collaterSys.GetUserCollateral(user, Currency_LINA);
+        uint256 lockedLina = mRewardLocker.balanceOf(user);
+        if (canRedeem > linaCollateral.add(lockedLina)) {
+            canRedeem = linaCollateral.add(lockedLina);
+        }
+        if (canRedeem <= lockedLina) {
+            return 0;
+        }
+        return canRedeem.sub(lockedLina);
+    }
 
 
     // build lusd

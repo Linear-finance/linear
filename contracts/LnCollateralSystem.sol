@@ -113,17 +113,14 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
-    function migra(address user, bytes32 _currency, uint256 _amount) external onlyAdmin returns (bool) {
-        require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
-        TokenInfo storage tokeninfo = tokenInfos[_currency];
+    function migra(address user, uint256 _amount) public onlyAdmin {
+        require(tokenInfos[Currency_LINA].tokenAddr.isContract(), "Invalid token symbol");
+        TokenInfo storage tokeninfo = tokenInfos[Currency_LINA];
         require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
         require(tokeninfo.bClose == false, "This token is closed");
 
-        userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(_amount);
+        userCollateralData[user][Currency_LINA].collateral = userCollateralData[user][Currency_LINA].collateral.add(_amount);
         tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(_amount);
-
-        emit CollateralLog(user, _currency, _amount, userCollateralData[user][_currency].collateral);
-        return true;
     }
 
     // ------------------------------------------------------------------------
@@ -189,7 +186,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
             retSize++;
         }
 
-        return (rCurrency, rAmount); 
+        return (rCurrency, rAmount);
     }
 
     // need approve
@@ -261,22 +258,6 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         }
         return maxRedeem.sub(lockedLina);
     }
-
-
-    //input asset amount lUSD->LINA
-    function calcRedeemAmount(address user, uint256 _amount) public view returns(uint256) {
-        uint256 canRedeem = _amount.divideDecimal(priceGetter.getPrice(Currency_LINA));
-        if (canRedeem > userCollateralData[user][Currency_LINA].collateral) {
-            canRedeem = userCollateralData[user][Currency_LINA].collateral;
-        }
-
-        uint256 lockedLina = mRewardLocker.balanceOf(user);
-        if (canRedeem <= lockedLina) {
-            return 0;
-        }
-        return canRedeem.sub(lockedLina);
-    }
-
 
     function RedeemMax(address user, bytes32 _currency) external whenNotPaused {
         uint256 maxRedeem = MaxRedeemable(user, _currency);
