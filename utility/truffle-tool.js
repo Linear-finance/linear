@@ -84,7 +84,7 @@ async function SaveContractAddress(contactObj, newContract, suffix) {
     if (suffix != null) {
         recordName = recordName + "_" + suffix;
     }
-    if (recordName == "LnAsset") {
+    if (recordName == "LnAssetUpgradeable") {
         let symbol = await newContract.symbol();
         recordName = recordName + "_" + symbol;
     }
