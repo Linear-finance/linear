@@ -1,7 +1,7 @@
 
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
-const LnAsset = artifacts.require("LnAsset");
+const LnAssetUpgradeable = artifacts.require("LnAssetUpgradeable");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnExchangeSystem = artifacts.require("LnExchangeSystem");

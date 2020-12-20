@@ -47,7 +47,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         it('init prices', async ()=> {
             // new instance of LnDefaultPrices
             await LnDefaultPrices.link(SafeDecimalMath);
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let linaPrice = await defaultPrices.getPrice( toBytes32("LINA") );    
             assert.equal( linaPrice.valueOf(), 1 );
 
@@ -60,7 +61,8 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('updateAll', () => {
         it('update prices', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let linaPrice = await defaultPrices.getPrice( toBytes32("LINA") );    
             assert.equal( linaPrice.valueOf(), 1 );
 
@@ -87,7 +89,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         });
 
         it('only oracle', async () => {
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let timeSent = await currentTime();
 
             // should ignore updates not from oracle
@@ -95,7 +98,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         });
         it('not lusd', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
 
             let timeSent = await currentTime();
 
@@ -103,7 +107,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         });
         it('not 0', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
 
             let timeSent = await currentTime();
 
@@ -112,7 +117,8 @@ contract('LnDefaultPrices', async (accounts)=> {
 
         it('get price and update time', async () => {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let linaPrice = await defaultPrices.getPriceAndUpdatedTime( toBytes32("LINA") );    
             assert.equal( linaPrice.price, 1 );
 
@@ -137,7 +143,8 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('Round Id', () => {
         it('first round', async ()=> {
             // new instance of LnDefaultPrices
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            let defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
             //console.log( roundLina);
             assert.equal( roundLina.valueOf(), 1 );
@@ -149,7 +156,8 @@ contract('LnDefaultPrices', async (accounts)=> {
 
         it('add round', async ()=> {
             // new instance of LnDefaultPrices
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            let defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let roundLina = await defaultPrices.getCurrentRoundId(toBytes32("LINA") );
             assert.equal( roundLina.valueOf(), 1 );
 
@@ -173,7 +181,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         it('exchange', async ()=> {
             // new instance of LnDefaultPrices
             const sourceAmount = toUnit('100.0');
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY"),toBytes32("USD")], [ '1.0','0.125', '1.0' ].map(toUnit) );
+            let defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY"),toBytes32("USD")], ['1.0', '0.125', '1.0'].map(toUnit));
             let amount = await defaultPrices.exchange(  toBytes32("USD"), sourceAmount, toBytes32("CNY") );  
             //console.log( fromUnit(amount) );
             let destAmount =  toUnit('800.0');
@@ -182,7 +191,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         });
 
         it('exchange and price', async ()=> {
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, ["LINA", "CNY","USD"].map(toBytes32), [ '1.0','0.125', '1.0' ].map(toUnit) );
+            let defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, ["LINA", "CNY", "USD"].map(toBytes32), ['1.0', '0.125', '1.0'].map(toUnit));
             const sourceAmount = toUnit('100.0');
             let result = await defaultPrices.exchangeAndPrices(  toBytes32("USD"), sourceAmount, toBytes32("CNY") );  
             //console.log( fromUnit(amount) );
@@ -199,7 +209,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         it('isStale', async ()=> {
             
             // new instance of LnDefaultPrices
-            let defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            let defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
 
             let timeSent = await currentTime();
             
@@ -238,7 +249,8 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('deletePrice', () => {
         it('deletePrice', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let linaPrice = await defaultPrices.getPrice( toBytes32("LINA") );    
             assert.equal( linaPrice.valueOf(), 1 );
 
@@ -260,7 +272,8 @@ contract('LnDefaultPrices', async (accounts)=> {
     describe('setOracle', () => {
         it('setOracle', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
 
             let timeSent = await currentTime();
             
@@ -277,7 +290,8 @@ contract('LnDefaultPrices', async (accounts)=> {
         });
         it('only admin', async ()=> {
             // new instance of LnDefaultPrices
-            const defaultPrices = await LnDefaultPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const defaultPrices = await LnDefaultPrices.new();
+            await defaultPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             // should revert, wrong admin
             await assertRevert( defaultPrices.setOracle( admin, {from:oracle}) );
 

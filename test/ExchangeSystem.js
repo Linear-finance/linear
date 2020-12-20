@@ -1,7 +1,7 @@
 
 const LnAssetSystem = artifacts.require("LnAssetSystem");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
-const LnAsset = artifacts.require("LnAsset");
+const LnAssetUpgradeable = artifacts.require("LnAssetUpgradeable");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnExchangeSystem = artifacts.require("LnExchangeSystem");
@@ -44,34 +44,26 @@ contract('LnExchangeSystem', async (accounts)=> {
         it('exchange protottype', async ()=> {
             // add assets
             const assets = await LnAssetSystem.new( admin );
+
+            const Btc = await LnAssetUpgradeable.new();
+            await Btc.__LnAssetUpgradeable_init(toBytes32("BTC"), "BTC", "BTC SYMBOL", admin);
     
-            const BtcData = await LnTokenStorage.new( admin, op );
-            const BtcProxy = await LnProxyERC20.new( admin );
-            const Btc = await LnAsset.new( toBytes32("BTC"), BtcProxy.address, BtcData.address, "BTC", "BTC SYMBOL", 0, 18, admin );
-            await BtcProxy.setTarget( Btc.address );    
-            await BtcData.setOperator( Btc.address );
- 
             await assets.addAsset( Btc.address );
 
-            const cnyData = await LnTokenStorage.new( admin, op );
-            const cnyProxy = await LnProxyERC20.new( admin );
-            const cny = await LnAsset.new( toBytes32("CNY"), cnyProxy.address, cnyData.address, "CNY", "CNY SYMBOL", 0, 18, admin );
-            await cnyProxy.setTarget( cny.address );    
-            await cnyData.setOperator( cny.address );
+            const cny = await LnAssetUpgradeable.new();
+            await cny.__LnAssetUpgradeable_init(toBytes32("CNY"), "CNY", "CNY SYMBOL", admin);
 
             await assets.addAsset( cny.address );
 
-            const lusdData = await LnTokenStorage.new( admin, op );
-            const lusdProxy = await LnProxyERC20.new( admin );
-            const lusd = await LnAsset.new( toBytes32("lUSD"), lusdProxy.address, lusdData.address, "lUSD", "LUSD SYMBOL", 0, 18, admin );
-            await lusdProxy.setTarget( lusd.address );    
-            await lusdData.setOperator( lusd.address );
+            const lusd = await LnAssetUpgradeable.new();
+            await lusd.__LnAssetUpgradeable_init(toBytes32("lUSD"), "lUSD", "LUSD SYMBOL", admin);
 
             await assets.addAsset( lusd.address );
 
     
             // set prices 
-            const clPrices = await LnChainLinkPrices.new( admin, op, ["BTC","CNY"].map(toBytes32), [ 10000, 0.125 ].map( toUnit) );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, op, ["BTC", "CNY"].map(toBytes32), [10000, 0.125].map(toUnit));
             let timeSent = await currentTime();
 
             const BTCOracle = await TestOracle.new();
@@ -91,8 +83,8 @@ contract('LnExchangeSystem', async (accounts)=> {
             const accessCtrl = await LnAccessControl.new(admin);
 
             // fee system
-            const feeSys = await LnFeeSystem.new( admin );
-
+            const feeSys = await LnFeeSystem.new();
+            await feeSys.__LnFeeSystem_init(admin);
 
             await assets.updateAll(["LnAssetSystem","LnPrices","LnAccessControl","LnConfig","LnFeeSystem"].map(toBytes32),
                 [ assets.address, clPrices.address, accessCtrl.address, config.address, feeSys.address ]);
@@ -119,8 +111,8 @@ contract('LnExchangeSystem', async (accounts)=> {
 
             // exchange 
             let txExchange = await exchangeSys.exchange( toBytes32("BTC"), toUnit(1), trader, toBytes32("CNY"), {from:trader});
-            let cnyAmount = await cnyProxy.balanceOf( trader );
-            let btcAmount = await BtcProxy.balanceOf( trader );
+            let cnyAmount = await cny.balanceOf( trader );
+            let btcAmount = await Btc.balanceOf( trader );
             assertBNEqual( cnyAmount, toUnit(79209));   // 80000+9 -800(手续费)
             assertBNEqual( btcAmount, toUnit(8));    
         });
