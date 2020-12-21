@@ -46,7 +46,7 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnA
             _addressStorage.getAddressWithRequire("LnAccessControl", "LnAccessControl address not valid")
         );
 
-        emit updateCachedAddress("LnAccessControl", address(accessCtrl));
+        emit CachedAddressUpdated("LnAccessControl", address(accessCtrl));
     }
 
     function mint(address account, uint256 amount) external onlyIssueAssetRole(msg.sender) {
