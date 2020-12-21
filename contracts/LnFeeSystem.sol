@@ -124,11 +124,11 @@ contract LnFeeSystem is LnAdminUpgradeable, LnAddressCache {
         // as Init func. record LnExchangeSystem address
         exchangeSystemAddress = _addressStorage.getAddressWithRequire( "LnExchangeSystem","LnExchangeSystem address not valid" );
 
-        emit updateCachedAddress( "LnDebtSystem", address(debtSystem) );
-        emit updateCachedAddress( "LnCollateralSystem", address(collateralSystem) );
-        emit updateCachedAddress( "LnRewardLocker", address(rewardLocker) );
-        emit updateCachedAddress( "LnAssetSystem", address(mAssets) );
-        emit updateCachedAddress( "LnExchangeSystem", address(exchangeSystemAddress) );
+        emit CachedAddressUpdated( "LnDebtSystem", address(debtSystem) );
+        emit CachedAddressUpdated( "LnCollateralSystem", address(collateralSystem) );
+        emit CachedAddressUpdated( "LnRewardLocker", address(rewardLocker) );
+        emit CachedAddressUpdated( "LnAssetSystem", address(mAssets) );
+        emit CachedAddressUpdated( "LnExchangeSystem", address(exchangeSystemAddress) );
      }
 
     function switchPeriod() public {

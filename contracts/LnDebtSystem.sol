@@ -53,9 +53,9 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
         feeSystem = LnFeeSystem( _addressStorage.getAddressWithRequire( "LnFeeSystem",   "LnFeeSystem address not valid" ));
 
-        emit updateCachedAddress( "LnAccessControl", address(accessCtrl) );
-        emit updateCachedAddress( "LnAssetSystem",   address(assetSys) );
-        emit updateCachedAddress( "LnFeeSystem",   address(feeSystem) );
+        emit CachedAddressUpdated( "LnAccessControl", address(accessCtrl) );
+        emit CachedAddressUpdated( "LnAssetSystem",   address(assetSys) );
+        emit CachedAddressUpdated( "LnFeeSystem",   address(feeSystem) );
     }
     
     // -----------------------------------------------

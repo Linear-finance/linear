@@ -73,11 +73,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
-        emit updateCachedAddress( "LnPrices",          address(priceGetter) );
-        emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
-        emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
-        emit updateCachedAddress( "LnConfig",          address(mConfig) );
-        emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
+        emit CachedAddressUpdated( "LnPrices",          address(priceGetter) );
+        emit CachedAddressUpdated( "LnDebtSystem",      address(debtSystem) );
+        emit CachedAddressUpdated( "LnBuildBurnSystem", address(buildBurnSystem) );
+        emit CachedAddressUpdated( "LnConfig",          address(mConfig) );
+        emit CachedAddressUpdated( "LnRewardLocker",    address(mRewardLocker) );
     }
 
     function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {

@@ -52,11 +52,11 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         collaterSys = LnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
 
-        emit updateCachedAddress( "LnPrices",           address(priceGetter) );
-        emit updateCachedAddress( "LnDebtSystem",       address(debtSystem) );
-        emit updateCachedAddress( "LnAssetSystem",      address(assetSys) );
-        emit updateCachedAddress( "LnCollateralSystem", address(collaterSys) );
-        emit updateCachedAddress( "LnConfig",           address(mConfig) );
+        emit CachedAddressUpdated( "LnPrices",           address(priceGetter) );
+        emit CachedAddressUpdated( "LnDebtSystem",       address(debtSystem) );
+        emit CachedAddressUpdated( "LnAssetSystem",      address(assetSys) );
+        emit CachedAddressUpdated( "LnCollateralSystem", address(collaterSys) );
+        emit CachedAddressUpdated( "LnConfig",           address(mConfig) );
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
