@@ -52,7 +52,8 @@ contract('LnChainLinkPrices', async (accounts)=> {
     describe('constructor', () => {
         it('init prices', async ()=> {
             // new instance of LnclPrices
-            const clPrices = await LnChainLinkPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let linaPrice = await clPrices.getPrice( toBytes32("LINA") );    
             assert.equal( linaPrice.valueOf(), 1 );
 
@@ -65,7 +66,8 @@ contract('LnChainLinkPrices', async (accounts)=> {
 
     describe('AddOracle', () => {
         it('add Oracle', async ()=> {
-            const clPrices = await LnChainLinkPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let timeSent = await currentTime();
 
             const LinaOracle = await TestOracle.new();
@@ -79,7 +81,8 @@ contract('LnChainLinkPrices', async (accounts)=> {
         });
 
         it('add 2 Oracle', async ()=> {
-            const clPrices = await LnChainLinkPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ] );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2]);
             let timeSent = await currentTime();
 
             const LinaOracle = await TestOracle.new();
@@ -105,7 +108,8 @@ contract('LnChainLinkPrices', async (accounts)=> {
 
     describe('RemoveOracle', () => {
         it('remove Oracle, use default', async ()=> {
-            const clPrices = await LnChainLinkPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY"), toBytes32("USD")], [ 1,2,111 ].map( toUnit) );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY"), toBytes32("USD")], [1, 2, 111].map(toUnit));
             let timeSent = await currentTime();
 
             const LinaOracle = await TestOracle.new();
@@ -133,7 +137,8 @@ contract('LnChainLinkPrices', async (accounts)=> {
         });
 
         it('remove Oracle, no default', async ()=> {
-            const clPrices = await LnChainLinkPrices.new( admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [ 1,2 ].map( toUnit) );
+            const clPrices = await LnChainLinkPrices.new();
+            await clPrices.__LnDefaultPrices_init(admin, oracle, [toBytes32("LINA"), toBytes32("CNY")], [1, 2].map(toUnit));
             let timeSent = await currentTime();
 
             const LinaOracle = await TestOracle.new();

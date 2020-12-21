@@ -2,10 +2,10 @@
 pragma solidity ^0.6.12;
 
 import "./IERC20.sol";
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 import "./LnPrices.sol";
 import "./LnAddressCache.sol";
@@ -16,10 +16,10 @@ import "./LnRewardLocker.sol";
 
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
-contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
+contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
-    using Address for address;
+    using AddressUpgradeable for address;
 
     // -------------------------------------------------------
     // need set before system running value.
@@ -53,7 +53,8 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     mapping (address => mapping(bytes32 => CollateralData)) public userCollateralData;
 
     // -------------------------------------------------------
-    constructor(address admin) public LnAdmin(admin) {
+    function __LnCollateralSystem_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
     }
 
     function setPaused(bool _paused) external onlyAdmin {
@@ -72,11 +73,11 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
         mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
-        emit updateCachedAddress( "LnPrices",          address(priceGetter) );
-        emit updateCachedAddress( "LnDebtSystem",      address(debtSystem) );
-        emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
-        emit updateCachedAddress( "LnConfig",          address(mConfig) );
-        emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
+        emit CachedAddressUpdated( "LnPrices",          address(priceGetter) );
+        emit CachedAddressUpdated( "LnDebtSystem",      address(debtSystem) );
+        emit CachedAddressUpdated( "LnBuildBurnSystem", address(buildBurnSystem) );
+        emit CachedAddressUpdated( "LnConfig",          address(mConfig) );
+        emit CachedAddressUpdated( "LnRewardLocker",    address(mRewardLocker) );
     }
 
     function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {
@@ -328,4 +329,7 @@ contract LnCollateralSystem is LnAdmin, Pausable, LnAddressCache {
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[41] private __gap;
 }

@@ -14,7 +14,7 @@ contract LnAdmin {
     function setCandidate(address _candidate) external onlyAdmin {
         address old = candidate;
         candidate = _candidate;
-        emit candidateChanged( old, candidate);
+        emit CandidateChanged( old, candidate);
     }
 
     function becomeAdmin( ) external {
@@ -29,7 +29,7 @@ contract LnAdmin {
         _;
     }
 
-    event candidateChanged(address oldCandidate, address newCandidate );
+    event CandidateChanged(address oldCandidate, address newCandidate );
     event AdminChanged(address oldAdmin, address newAdmin);
 }
 

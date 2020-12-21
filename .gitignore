@@ -6,3 +6,7 @@ contracts/artifacts
 log/development-deployed.json
 .openzeppelin/.session
 .DS_Store
+
+# Hardhat files
+cache/
+artifacts/

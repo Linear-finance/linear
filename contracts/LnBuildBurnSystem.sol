@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
 import "./LnPrices.sol";
 import "./LnAddressCache.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
 import "./LnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
@@ -24,7 +24,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     bytes32 constant public Currency_LINA = "LINA";
     // -------------------------------------------------------
     // need set before system running value.
-    LnAsset private lUSDToken; // this contract need 
+    LnAssetUpgradeable private lUSDToken; // this contract need 
 
     LnDebtSystem private debtSystem;
     LnAssetSystem private assetSys;
@@ -34,7 +34,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     LnRewardLocker public mRewardLocker;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
-        lUSDToken = LnAsset(_lUSDTokenAddr);
+        lUSDToken = LnAssetUpgradeable(_lUSDTokenAddr);
     }
 
     function setPaused(bool _paused) external onlyAdmin {
@@ -55,17 +55,16 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
-        emit updateCachedAddress( "LnPrices",           address(priceGetter) );
-        emit updateCachedAddress( "LnDebtSystem",       address(debtSystem) );
-        emit updateCachedAddress( "LnAssetSystem",      address(assetSys) );
-        emit updateCachedAddress( "LnCollateralSystem", address(collaterSys) );
-        emit updateCachedAddress( "LnConfig",           address(mConfig) );
-        emit updateCachedAddress( "LnRewardLocker",    address(mRewardLocker) );
+        emit CachedAddressUpdated( "LnPrices",           address(priceGetter) );
+        emit CachedAddressUpdated( "LnDebtSystem",       address(debtSystem) );
+        emit CachedAddressUpdated( "LnAssetSystem",      address(assetSys) );
+        emit CachedAddressUpdated( "LnCollateralSystem", address(collaterSys) );
+        emit CachedAddressUpdated( "LnConfig",           address(mConfig) );
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
         emit UpdateLusdToken(address(lUSDToken), _address);
-        lUSDToken = LnAsset(_address);
+        lUSDToken = LnAssetUpgradeable(_address);
     }
 
     event UpdateLusdToken(address oldAddr, address newAddr);

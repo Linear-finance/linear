@@ -2,7 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "./LnAddressCache.sol";
-import "./LnAsset.sol";
+import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
 import "./LnPrices.sol";
 import "./LnConfig.sol";
@@ -36,10 +36,10 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         mFeeSys = LnFeeSystem(_addressStorage.getAddressWithRequire( FEE_SYS_KEY,"" ));
 
 
-        emit updateCachedAddress( ASSETS_KEY, address(mAssets) );
-        emit updateCachedAddress( PRICES_KEY, address(mPrices) );
-        emit updateCachedAddress( CONFIG_KEY, address(mConfig) );
-        emit updateCachedAddress( FEE_SYS_KEY, address(mFeeSys) );
+        emit CachedAddressUpdated( ASSETS_KEY, address(mAssets) );
+        emit CachedAddressUpdated( PRICES_KEY, address(mPrices) );
+        emit CachedAddressUpdated( CONFIG_KEY, address(mConfig) );
+        emit CachedAddressUpdated( FEE_SYS_KEY, address(mFeeSys) );
     }
 
 
@@ -49,8 +49,8 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     function _exchange( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey  ) internal {
         
-        LnAsset source = LnAsset( mAssets.getAddressWithRequire( sourceKey, ""));
-        LnAsset dest = LnAsset( mAssets.getAddressWithRequire( destKey, ""));
+        LnAssetUpgradeable source = LnAssetUpgradeable( mAssets.getAddressWithRequire( sourceKey, ""));
+        LnAssetUpgradeable dest = LnAssetUpgradeable( mAssets.getAddressWithRequire( destKey, ""));
         uint destAmount=  mPrices.exchange( sourceKey, sourceAmount, destKey );
         require( destAmount > 0, "dest amount must > 0" );
 
@@ -71,16 +71,16 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
         dest.mint( destAddr, destRecived );
 
-        emit exchangeAsset( fromAddr, sourceKey, sourceAmount, destAddr, destKey, destRecived, feeUsd );
+        emit ExchangeAsset( fromAddr, sourceKey, sourceAmount, destAddr, destKey, destRecived, feeUsd );
     }
 
     function _addExchangeFee( uint feeUsd ) internal
     {
-        LnAsset lusd = LnAsset( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
+        LnAssetUpgradeable lusd = LnAssetUpgradeable( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
         lusd.mint( mFeeSys.FEE_DUMMY_ADDRESS(), feeUsd );
         mFeeSys.addExchangeFee( feeUsd );
     }
     
-    event exchangeAsset( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey,  uint destRecived, uint fee );
+    event ExchangeAsset( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey,  uint destRecived, uint fee );
 }
 

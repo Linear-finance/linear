@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "./LnPrices.sol";
 
 import "./SafeDecimalMath.sol";
 
-contract LnDefaultPrices is LnAdmin, LnBasePrices {
+contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
     address public oracle;
 
-    uint public override stalePeriod = 12 hours;
+    uint public override stalePeriod;
 
     mapping(bytes32 => uint) public mPricesLastRound;
 
@@ -22,20 +22,25 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     }
 
     mapping(bytes32 => mapping(uint => PriceData)) private mPricesStorage;
-    
+
     uint private constant ORACLE_TIME_LIMIT = 10 minutes;
 
-    //
-    // ========== CONSTRUCTOR ==========
-    constructor( address _admin, address _oracle, bytes32[] memory _currencyNames, uint[] memory _newPrices ) public 
-        LnAdmin(_admin) 
-    {
+    function __LnDefaultPrices_init(
+        address _admin,
+        address _oracle,
+        bytes32[] memory _currencyNames,
+        uint[] memory _newPrices
+    ) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+
+        stalePeriod = 12 hours;
+
         require(_currencyNames.length == _newPrices.length, "array length error.");
 
         oracle = _oracle;
 
-      // The LUSD price is always 1 and is never stale.
-        _setPrice( LUSD, SafeDecimalMath.unit(), now);
+        // The LUSD price is always 1 and is never stale.
+        _setPrice(LUSD, SafeDecimalMath.unit(), now);
 
         _updateAll(_currencyNames, _newPrices, now);
     }
@@ -170,4 +175,7 @@ contract LnDefaultPrices is LnAdmin, LnBasePrices {
     event StalePeriodUpdated(uint priceStalePeriod);
     event PricesUpdated(bytes32[] currencyNames, uint[] newPrices);
     event PriceDeleted(bytes32 currencyName);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[46] private __gap;
 }

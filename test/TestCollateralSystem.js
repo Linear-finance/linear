@@ -236,8 +236,9 @@ contract('test LnCollateralSystem', async (accounts)=> {
     });
 
     it('Pausable', async function () {
-
-        let kLnCollateralSystem = await LnCollateralSystem.new(ac0);
+        
+        let kLnCollateralSystem = await LnCollateralSystem.new();
+        await kLnCollateralSystem.__LnCollateralSystem_init(ac0);
         await kLnCollateralSystem.setPaused(true);
 
         await exceptionEqual(

@@ -25,9 +25,6 @@ contract LnChainLinkPrices is LnDefaultPrices {
 
     bytes32[] public mOracleArray;
 
-    constructor( address _admin, address _oracle, bytes32[] memory _currencies, uint[] memory _prices ) public LnDefaultPrices( _admin, _oracle, _currencies,  _prices ) {
-    }
-
     function addOracle(bytes32 currencyKey, address OracleAddress) external onlyAdmin {
         OracleInterface Oracle = OracleInterface(OracleAddress);
         require(Oracle.latestTimestamp() >= 0, "time stamp error");

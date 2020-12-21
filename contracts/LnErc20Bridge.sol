@@ -46,7 +46,7 @@ contract LnErc20Bridge is LnAdmin {
         freezeTxLog[_account][_txId] = _freezeTx;
         pendingProcess[_account].push(_txId);
 
-        emit setFreezeTxLog(_account, _txId, _amount, _timestamp);
+        emit SetFreezeTxLog(_account, _txId, _amount, _timestamp);
         return true;
     }
 
@@ -62,7 +62,7 @@ contract LnErc20Bridge is LnAdmin {
 
         erc20.transferFrom(user, frozenHolder, _amount);
 
-        emit freezeLog(user, erc20.symbol(), _amount);
+        emit FreezeLog(user, erc20.symbol(), _amount);
         return true;
     }    
 
@@ -82,7 +82,7 @@ contract LnErc20Bridge is LnAdmin {
             }
         }
 
-        emit unfreezeLog(user, erc20.symbol(), amount);
+        emit UnfreezeLog(user, erc20.symbol(), amount);
         return true;
     }  
 
@@ -94,9 +94,9 @@ contract LnErc20Bridge is LnAdmin {
         return pendingProcess[_account];
     }
 
-    event freezeLog(address user, string _currency, uint256 _amount);
-    event unfreezeLog(address user, string _currency, uint256 _amount);
-    event setFreezeTxLog(address _account, string _txId, uint _amount, uint _timestamp);
+    event FreezeLog(address user, string _currency, uint256 _amount);
+    event UnfreezeLog(address user, string _currency, uint256 _amount);
+    event SetFreezeTxLog(address _account, string _txId, uint _amount, uint _timestamp);
 
 
 

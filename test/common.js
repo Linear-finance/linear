@@ -4,7 +4,7 @@ const LnAddressStorage = artifacts.require("LnAddressStorage");
 const LnAccessControl = artifacts.require("LnAccessControl");
 const LnConfig = artifacts.require("LnConfig");
 const LnAssetSystem = artifacts.require("LnAssetSystem");
-const LnAsset = artifacts.require("LnAsset");
+const LnAssetUpgradeable = artifacts.require("LnAssetUpgradeable");
 const LnDefaultPrices = artifacts.require("LnDefaultPrices");
 const LnChainLinkPrices = artifacts.require("LnChainLinkPrices");
 const LnProxyERC20 = artifacts.require("LnProxyERC20");
@@ -34,12 +34,8 @@ function registContract(name, contractObj) {
 }
 
 async function testNewAssetToken(keyname, name, symbol, admin, kLnAssetSystem) {
-    let kLnProxyERC20 = await LnProxyERC20.new(admin);
-    let kLnTokenStorage = await LnTokenStorage.new(admin, admin);
-    let kAsset = await LnAsset.new(keyname, kLnProxyERC20.address, kLnTokenStorage.address, name, symbol, 0, 18, admin);
-    await kLnTokenStorage.setOperator(kAsset.address);
-    await kLnProxyERC20.setTarget(kAsset.address);
-    await kAsset.setProxy(kLnProxyERC20.address);
+    let kAsset = await LnAssetUpgradeable.new();
+    await kAsset.__LnAssetUpgradeable_init(keyname, name, symbol, admin);
     await kAsset.updateAddressCache(kLnAssetSystem.address);
 
     await kLnAssetSystem.addAsset(kAsset.address);
@@ -69,12 +65,15 @@ async function InitComment(admin) {
     //let kLnDefaultPrices = await LnDefaultPrices.new(admin, oracleAddress, [], []);
 
     await LnChainLinkPrices.link(SafeDecimalMath);
-    let kLnChainLinkPrices = await LnChainLinkPrices.new(admin, oracleAddress, [], []);
-  
+    let kLnChainLinkPrices = await LnChainLinkPrices.new();
+    await kLnChainLinkPrices.__LnDefaultPrices_init(admin, oracleAddress, [], []);
+
     await LnDebtSystem.link(SafeDecimalMath);
-    let kLnDebtSystem = await LnDebtSystem.new(admin);
+    let kLnDebtSystem = await LnDebtSystem.new();
+    await kLnDebtSystem.__LnDebtSystem_init(admin);
    
-    let kLnCollateralSystem = await LnCollateralSystem.new(admin);
+    let kLnCollateralSystem = await LnCollateralSystem.new();
+    await kLnCollateralSystem.__LnCollateralSystem_init(admin);
  
     await LnBuildBurnSystem.link(SafeDecimalMath);
     let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, emptyAddr);
@@ -83,8 +82,10 @@ async function InitComment(admin) {
 
     await LnExchangeSystem.link(SafeDecimalMath);
     let kLnExchangeSystem = await LnExchangeSystem.new(admin);
-    let kLnRewardLocker = await LnRewardLocker.new(admin, emptyAddr); //TODO: set linaAddress later
-    let kLnFeeSystem = await LnFeeSystem.new(admin);
+    let kLnRewardLocker = await LnRewardLocker.new(); //TODO: set linaAddress later
+    await kLnRewardLocker.__LnRewardLocker_init(admin, emptyAddr);
+    let kLnFeeSystem = await LnFeeSystem.new();
+    await kLnFeeSystem.__LnFeeSystem_init(admin);
     await kLnRewardLocker.Init(kLnFeeSystem.address);
     let rewardDistributer = admin; // TODO: need a contract?
     await kLnFeeSystem.Init(kLnExchangeSystem.address, rewardDistributer);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
@@ -11,7 +11,7 @@ import "./LnAssetSystem.sol";
 import "./LnConfig.sol";
 import "./LnFeeSystem.sol";
 
-contract LnDebtSystem is LnAdmin, LnAddressCache {
+contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
@@ -38,7 +38,8 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
     // 
 
     // -------------------------------------------------------
-    constructor(address admin) public LnAdmin(admin) {
+    function __LnDebtSystem_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
     }
 
     event UpdateAddressStorage(address oldAddr, address newAddr);
@@ -52,9 +53,9 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
         assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
         feeSystem = LnFeeSystem( _addressStorage.getAddressWithRequire( "LnFeeSystem",   "LnFeeSystem address not valid" ));
 
-        emit updateCachedAddress( "LnAccessControl", address(accessCtrl) );
-        emit updateCachedAddress( "LnAssetSystem",   address(assetSys) );
-        emit updateCachedAddress( "LnFeeSystem",   address(feeSystem) );
+        emit CachedAddressUpdated( "LnAccessControl", address(accessCtrl) );
+        emit CachedAddressUpdated( "LnAssetSystem",   address(assetSys) );
+        emit CachedAddressUpdated( "LnFeeSystem",   address(feeSystem) );
     }
     
     // -----------------------------------------------
@@ -166,4 +167,7 @@ contract LnDebtSystem is LnAdmin, LnAddressCache {
 
         return (userDebtBalance, totalAssetSupplyInUsd);
     }
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[42] private __gap;
 }
