@@ -22,6 +22,8 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     using Address for address;
 
     bytes32 constant public Currency_LINA = "LINA";
+    address payable public messageSender;
+
     // -------------------------------------------------------
     // need set before system running value.
     LnAssetUpgradeable private lUSDToken; // this contract need 
@@ -31,7 +33,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     LnPrices private priceGetter;
     LnCollateralSystem private collaterSys;
     LnConfig private mConfig;
-    LnRewardLocker public mRewardLocker;
+    LnRewardLocker private mRewardLocker;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
         lUSDToken = LnAssetUpgradeable(_lUSDTokenAddr);
@@ -45,6 +47,11 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         }
     }
 
+
+    function setMessageSender(address payable sender) external  {
+        messageSender = sender;
+    }
+
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
         priceGetter =    LnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
@@ -55,11 +62,13 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
+
         emit CachedAddressUpdated( "LnPrices",           address(priceGetter) );
         emit CachedAddressUpdated( "LnDebtSystem",       address(debtSystem) );
         emit CachedAddressUpdated( "LnAssetSystem",      address(assetSys) );
         emit CachedAddressUpdated( "LnCollateralSystem", address(collaterSys) );
         emit CachedAddressUpdated( "LnConfig",           address(mConfig) );
+        emit CachedAddressUpdated( "LnRewardLocker",           address(mRewardLocker) );
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
@@ -75,41 +84,10 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         return maxCanBuild;
     }
 
-    //input LINA amount LINA->lUSD
-    function calcBuildAmount(address _user, uint256 _amount) public view returns(uint256) {
-        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
-        uint256 canBuildUsd = _amount.mul(priceGetter.getPrice(Currency_LINA)).multiplyDecimal(buildRatio).div(SafeDecimalMath.unit());
-
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
-        if (debtBalance == 0) {
-            return canBuildUsd;
-        }
-
-        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
-        if (canBuildUsd < minCollateral) {
-            return 0;
-        }
-
-        return canBuildUsd.sub(minCollateral);
-    }
-
-    //input asset amount lUSD->LINA
-    function calcRedeemAmount(address user, uint256 _amount) public view returns(uint256) {
-        uint256 canRedeem = _amount.divideDecimal(priceGetter.getPrice(Currency_LINA));
-        uint256 linaCollateral = collaterSys.GetUserCollateral(user, Currency_LINA);
-        uint256 lockedLina = mRewardLocker.balanceOf(user);
-        if (canRedeem > linaCollateral.add(lockedLina)) {
-            canRedeem = linaCollateral.add(lockedLina);
-        }
-        if (canRedeem <= lockedLina) {
-            return 0;
-        }
-        return canRedeem.sub(lockedLina);
-    }
-
-
     // build lusd
-    function BuildAsset(address user, uint256 amount) public whenNotPaused returns(bool) {
+    function BuildAsset(uint256 amount) public whenNotPaused returns(bool) {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
@@ -136,9 +114,11 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         return true;
     }
 
-    function BuildMaxAsset(address user) external whenNotPaused {
+    function BuildMaxAsset() external whenNotPaused {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
         uint256 max = MaxCanBuildAsset(user);
-        BuildAsset(user, max);
+        BuildAsset(max);
     }
 
     function _burnAsset(address user, uint256 amount) internal {
@@ -170,7 +150,9 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     // burn
-    function BurnAsset(address user, uint256 amount) external whenNotPaused returns(bool) {
+    function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
         _burnAsset(user, amount);
         return true;
     }
@@ -182,8 +164,9 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     // }
 
     // burn to target ratio
-    function BurnAssetToTarget(address user) external whenNotPaused returns(bool) {
-
+    function BurnAssetToTarget() external whenNotPaused returns(bool) {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 totalCollateral = collaterSys.GetUserTotalCollateralInUsd(user);
         uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
@@ -198,4 +181,49 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         _burnAsset(user, needBurn);
         return true;
     }
+
+    //input LINA amount LINA->lUSD
+    function calcBuildAmount(uint256 _amount) public view returns(uint256) {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
+        require(_amount > 0, "amount need > 0");
+        require(user != address(0), "need address");
+
+        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
+        uint256 canBuildUsd = _amount.mul(priceGetter.getPrice(Currency_LINA)).multiplyDecimal(buildRatio).div(SafeDecimalMath.unit());
+
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
+        if (debtBalance == 0) {
+            return canBuildUsd;
+        }
+
+        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
+        if (canBuildUsd < minCollateral) {
+            return 0;
+        }
+
+        return canBuildUsd.sub(minCollateral);
+    }
+
+    //input asset amount lUSD->LINA
+    function calcRedeemAmount(uint256 _amount) public view returns(uint256) {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
+        require(_amount > 0, "amount need > 0");
+        require(user != address(0), "need address");
+
+        uint256 canRedeem = _amount.divideDecimal(priceGetter.getPrice(Currency_LINA));
+        uint256 linaCollateral = collaterSys.GetUserCollateral(user, Currency_LINA);
+        uint256 lockedLina = mRewardLocker.balanceOf(user);
+        if (canRedeem > linaCollateral.add(lockedLina)) {
+            canRedeem = linaCollateral.add(lockedLina);
+        }
+        if (canRedeem <= lockedLina) {
+            return 0;
+        }
+        return canRedeem.sub(lockedLina);
+    }
+
 }
+
+

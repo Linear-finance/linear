@@ -2,15 +2,16 @@
 pragma solidity ^0.6.12;
 
 import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 import "./LnCollateralSystem.sol";
 import "./LnBuildBurnSystem.sol";
 import "./LnAddressCache.sol";
 
-contract LnColateralBuildBurnAPI is LnAdmin, Pausable, LnAddressCache{
+contract LnColateralBuildBurnAPI is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache{
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
@@ -18,7 +19,8 @@ contract LnColateralBuildBurnAPI is LnAdmin, Pausable, LnAddressCache{
     LnCollateralSystem private collaterSys;
     LnBuildBurnSystem public buildBurnSystem;
 
-    constructor(address admin) public LnAdmin(admin) {
+    function __LnCollateralBuildBurnAPI_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
     }
 
     function setPaused(bool _paused) external onlyAdmin {
@@ -35,8 +37,8 @@ contract LnColateralBuildBurnAPI is LnAdmin, Pausable, LnAddressCache{
         collaterSys = LnCollateralSystem( collateralAddress );
         buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
 
-        emit updateCachedAddress( "LnCollateralSystem", address(collaterSys) );
-        emit updateCachedAddress( "LnBuildBurnSystem", address(buildBurnSystem) );
+        emit CachedAddressUpdated( "LnCollateralSystem", address(collaterSys) );
+        emit CachedAddressUpdated( "LnBuildBurnSystem", address(buildBurnSystem) );
 
     }
 
@@ -78,57 +80,55 @@ contract LnColateralBuildBurnAPI is LnAdmin, Pausable, LnAddressCache{
     // need approve LnCollateralSystem.
     // input collateral currency and amount
     function collateralAndBuild(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
-        address user = msg.sender;
-        collaterSys.Collateral(user, _currency, _amount);
-        uint256 canBuild = buildBurnSystem.calcBuildAmount(user, _amount);
-        buildBurnSystem.BuildAsset(user, canBuild);
+        collaterSys.setMessageSender(msg.sender);
+        buildBurnSystem.setMessageSender(msg.sender);
+        collaterSys.Collateral(_currency, _amount);
+        uint256 canBuild = buildBurnSystem.calcBuildAmount(_amount);
+        buildBurnSystem.BuildAsset(canBuild);
         return true;
     }
 
     function burnAndRedeemMax(bytes32 _currency) external whenNotPaused {
-        address user = msg.sender;
-        uint256 maxRedeem = maxRedeemable(user, _currency);
-        buildBurnSystem.BurnAsset(user, maxRedeem);
-        collaterSys.RedeemMax(user, _currency);
+        collaterSys.setMessageSender(msg.sender);
+        buildBurnSystem.setMessageSender(msg.sender);
+        uint256 maxRedeem = maxRedeemable(msg.sender, _currency);
+        buildBurnSystem.BurnAsset(maxRedeem);
+        collaterSys.RedeemMax(_currency);
     }
 
     //input burn usd amount and redeem currency
     function burnAndRedeem(bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
-        address user = msg.sender;
-        buildBurnSystem.BurnAsset(user, _amount);
-        uint256 redeemAble = buildBurnSystem.calcRedeemAmount(user, _amount);
-        collaterSys.Redeem(user, _currency, redeemAble);
+        collaterSys.setMessageSender(msg.sender);
+        buildBurnSystem.setMessageSender(msg.sender);
+        buildBurnSystem.BurnAsset(_amount);
+        uint256 redeemAble = buildBurnSystem.calcRedeemAmount(_amount);
+        collaterSys.Redeem(_currency, redeemAble);
         return true;
     }
 
-    receive() external whenNotPaused payable {
-        address user = msg.sender;
-        uint256 ethAmount = msg.value;
-        collaterSys.CollateralEth(user, ethAmount);
-    }
+    // // payable eth receive,
+    // function collateralEthAndBuild() external payable whenNotPaused returns (bool) {
+    //     collaterSys.setMessageSender(msg.sender);
+    //     collaterSys.setMessageVaule(msg.value);
+    //     buildBurnSystem.setMessageSender(msg.sender);
+    //     collaterSys.CollateralEth();
+    //     uint256 maxCanBuild = maxCanBuildAsset(msg.sender);
+    //     buildBurnSystem.BuildAsset(maxCanBuild);
+    //     return true;
+    // }
 
-    // payable eth receive,
-    function collateralEthAndBuild() external payable whenNotPaused returns (bool) {
-        address user = msg.sender;
-        uint256 ethAmount = msg.value;
-        collaterSys.CollateralEth(user, ethAmount);
-        uint256 macCanBuild = maxCanBuildAsset(user);
-        buildBurnSystem.BuildAsset(user, macCanBuild);
-        return true;
-    }
-
-    function burnAndRedeemETH( uint256 _amount) external whenNotPaused returns (bool) {
-        address payable user = msg.sender;
-        buildBurnSystem.BurnAsset(user, _amount);
-        uint256 maxRedeem = maxRedeemable(user, "ETH");
-        collaterSys.RedeemETH(user, maxRedeem);
-        return true;
-    }
+    // function burnAndRedeemETH( uint256 _amount) external whenNotPaused returns (bool) {
+    //     address payable user = msg.sender;
+    //     buildBurnSystem.BurnAsset(user, _amount);
+    //     uint256 maxRedeem = maxRedeemable(user, "ETH");
+    //     collaterSys.RedeemETH(user, maxRedeem);
+    //     return true;
+    // }
 
     // burn to target ratio
     function burnAssetToTarget() external whenNotPaused returns(bool) {
-        address user = msg.sender;
-        return buildBurnSystem.BurnAssetToTarget(user);
+        // address user = msg.sender;
+        return buildBurnSystem.BurnAssetToTarget();
     }
 
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
