@@ -1,4 +1,4 @@
-const LnColateralBuildBurnAPI = artifacts.require("LnColateralBuildBurnAPI");
+const LnCollateralBuildBurnAPI = artifacts.require("LnCollateralBuildBurnAPI");
 const SafeDecimalMath = artifacts.require("SafeDecimalMath");
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
 
@@ -14,7 +14,7 @@ const {InitComment, CreateLina, exceptionEqual, exceptionNotEqual} = require (".
 const PRECISE_UNIT = toUnit(1e9); // 1e27
 
 let kLnBuildBurnSystem
-let kLnColateralBuildBurnAPI
+let kLnCollateralBuildBurnAPI
 let kLnDebtSystem
 let kLnCollateralSystem
 let kLnChainLinkPrices
@@ -27,20 +27,20 @@ contract('test LnCollateralBuildBurnAPI', async (accounts)=> {
     const ac2 = accounts[2];
     const ac3 = accounts[3];
     
-    // don't call any await async funtions here
+    // don't call any await async functions here
 
     beforeEach(async function () {
         // before exec each test case
     });
 
-    it('BuildBurn test', async ()=> {
+    it('Stake/Build and Unstake/Burn test', async ()=> {
         const linaBytes32 = toBytes32("LINA");
         const ETHBytes32 = toBytes32("ETH");
 
         let InitContracts = await InitComment(ac0);
 
         kLnBuildBurnSystem = InitContracts.kLnBuildBurnSystem;
-        kLnColateralBuildBurnAPI = InitContracts.kLnColateralBuildBurnAPI;
+        kLnCollateralBuildBurnAPI = InitContracts.kLnCollateralBuildBurnAPI;
         kLnCollateralSystem = InitContracts.kLnCollateralSystem;
         kLnChainLinkPrices = InitContracts.kLnChainLinkPrices;
         kLnDebtSystem = InitContracts.kLnDebtSystem;
@@ -56,7 +56,6 @@ contract('test LnCollateralBuildBurnAPI', async (accounts)=> {
     
         // mint lina
         lina.mint(ac1, toUnit(3000) ); // ac1 mint lina
-        lina.mint(ac2, toUnit(1000) );
         
         // ac1 collateral and build
         await lina.approve(kLnCollateralSystem.address, toUnit(3000), {from:ac1});
@@ -64,91 +63,104 @@ contract('test LnCollateralBuildBurnAPI', async (accounts)=> {
         // ac1 prepare to build asset
         v = await lUSD.balanceOf(ac1);
         assert.equal(v, 0);
-        await kLnCollateralSystem.Collateral(ac1, linaBytes32, toUnit(2000));   
+        await kLnCollateralSystem.Collateral(linaBytes32, toUnit(2000), {from:ac1});   
 
-        let ret = await kLnDebtSystem.GetUserDebtData(ac1);
-        console.log("debtbalance: ", ret[0].toString());
-        console.log("totalAssetSupplyInUsd : ", ret[1].toString());
+        console.log("After ac1 stake 2000 LINA:");
 
-        v = await kLnBuildBurnSystem.calcBuildAmount(ac1, 200);
-        console.log("can build:", v.toString());
+        v = await lina.balanceOf(ac1);
+        console.log("LINA balance:", v.toString());
+        assert.equal(v, toUnit(1000).toString());
+
+        let ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
+        console.log("Debt balance: ", ret[0].toString());
+        console.log("Total Asset Supply In Usd : ", ret[1].toString());
+
 
         //-------------------ac1 collateral and build 200
-        v = await kLnBuildBurnSystem.calcBuildAmount(ac1, 200);
-        console.log("can build:", v.toString());
+        v = await kLnBuildBurnSystem.calcBuildAmount(200, {from:ac1});
+        console.log("ac1 can build:", v.toString());
 
-        await kLnColateralBuildBurnAPI.collateralAndBuild(linaBytes32, toUnit(200), {from:ac1});
+        await kLnCollateralBuildBurnAPI.collateralAndBuild(linaBytes32, toUnit(200), {from:ac1});
+
+        console.log("After stake 200 LINA and build:");
 
         v = await lUSD.balanceOf(ac1);
         assert.equal(v, toUnit(40).toString());// 0.2 build ratio
-        console.log("stake 200 LINA and build. lUSD balance:", v.toString());
+        console.log("lUSD balance:", v.toString());
 
         v = await lina.balanceOf(ac1);
         console.log("LINA balance:", v.toString());
         assert.equal(v, toUnit(800).toString());
 
-        ret = await kLnDebtSystem.GetUserDebtData(ac1);
-        console.log("debtbalance: ", ret[0].toString());
-        console.log("totalAssetSupplyInUsd : ", ret[1].toString());
+        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
+        console.log("Debt balance: ", ret[0].toString());
+        console.log("Total Asset Supply In Usd : ", ret[1].toString());
 
         //--------------------ac1 collateral and build 100 
-        v = await kLnBuildBurnSystem.calcBuildAmount(ac1, 200);
-        console.log("can build:", v.toString());
+        v = await kLnBuildBurnSystem.calcBuildAmount(100);
+        console.log("ac1 can build:", v.toString());
 
-        await kLnColateralBuildBurnAPI.collateralAndBuild(linaBytes32, toUnit(100), {from:ac1});
+        await kLnCollateralBuildBurnAPI.collateralAndBuild(linaBytes32, toUnit(100), {from:ac1});
+
+        console.log("After stake 100 LINA and build:");
 
         v = await lUSD.balanceOf(ac1);
-        console.log("stake 100 LINA and build. lUSD balance:", v.toString());
+        console.log("lUSD balance:", v.toString());
         assert.equal(v, toUnit(40).toString());// 0.2 build ratio
         
         v = await lina.balanceOf(ac1);
         console.log("LINA balance:", v.toString());
         assert.equal(v, toUnit(700).toString());
 
-        ret = await kLnDebtSystem.GetUserDebtData(ac1);
-        console.log("debtbalance: ", ret[0].toString());
-        console.log("totalAssetSupplyInUsd : ", ret[1].toString());
+        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
+        console.log("Debt balance: ", ret[0].toString());
+        console.log("Total Asset Supply In Usd : ", ret[1].toString());
 
         //ac1 burn and redeem
 
         //ac1 prepare to burn asset
         v = await lUSD.balanceOf(ac1);
-        console.log("before burn lUSD balance:", v.toString());
+        console.log("Before burn lUSD balance:", v.toString());
         assert.equal(v, toUnit(40).toString());
     
         v = await lina.balanceOf(ac1);
-        console.log("before burn LINA balance:", v.toString());
+        console.log("Before burn LINA balance:", v.toString());
         assert.equal(v, toUnit(700).toString());
 
         //-------------------ac1 burn and redeem 10
-        await kLnColateralBuildBurnAPI.burnAndRedeem( linaBytes32, toUnit(10), {from:ac1});
+        
+        await kLnCollateralBuildBurnAPI.burnAndRedeem( linaBytes32, toUnit(10), {from:ac1});
+
+        console.log("After burn 10 lUSD and unstake:");
 
         v = await lUSD.balanceOf(ac1);
         assert.equal(v, toUnit(30).toString());
-        console.log("burn 10 lUSD. lUSD balance:", v.toString());
+        console.log("lUSD balance:", v.toString());
 
         v = await lina.balanceOf(ac1);
         assert.equal(v, toUnit(710).toString());
         console.log("LINA balance:", v.toString());
 
-        ret = await kLnDebtSystem.GetUserDebtData(ac1);
-        console.log("debtbalance: ", ret[0].toString());
-        console.log("totalAssetSupplyInUsd : ", ret[1].toString());
+        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
+        console.log("Debt balance: ", ret[0].toString());
+        console.log("Total Asset Supply In Usd : ", ret[1].toString());
 
         //-------------------ac1 burn and redeem 20
-        await kLnColateralBuildBurnAPI.burnAndRedeem( linaBytes32, toUnit(20), {from:ac1});
+        await kLnCollateralBuildBurnAPI.burnAndRedeem( linaBytes32, toUnit(20), {from:ac1});
+
+        console.log("After burn 20 lUSD and unstake:");
 
         v = await lUSD.balanceOf(ac1);
-        console.log("burn 20 lUSD. lUSD balance:", v.toString());
+        console.log("lUSD balance:", v.toString());
         assert.equal(v, toUnit(10).toString());
 
         v = await lina.balanceOf(ac1);
         assert.equal(v, toUnit(730).toString());  
         console.log("LINA balance:", v.toString());  
 
-        ret = await kLnDebtSystem.GetUserDebtData(ac1);
-        console.log("debtbalance: ", ret[0].toString());
-        console.log("totalAssetSupplyInUsd : ", ret[1].toString());
+        ret = await kLnDebtSystem.GetUserDebtBalanceInUsd(ac1);
+        console.log("Debt balance: ", ret[0].toString());
+        console.log("Total Asset Supply In Usd : ", ret[1].toString());
     });
 
 });

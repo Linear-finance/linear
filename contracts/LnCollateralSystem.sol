@@ -14,6 +14,7 @@ import "./LnBuildBurnSystem.sol";
 import "./LnConfig.sol";
 import "./LnRewardLocker.sol";
 
+
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
 contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache {
@@ -33,7 +34,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     bytes32 constant public Currency_LINA = "LINA";
     
     // -------------------------------------------------------
-    uint256 public uniqueId; // use log
+    // uint256 public uniqueId; // use log
 
     struct TokenInfo {
         address tokenAddr;
@@ -41,6 +42,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         uint256 totalCollateral;
         bool bClose; // TODO : 为了防止价格波动，另外再加个折扣价?
     }
+
 
     mapping (bytes32 => TokenInfo) public tokenInfos;
     bytes32[] public tokenSymbol; // keys of tokenInfos, use to iteration
@@ -61,17 +63,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         __LnAdminUpgradeable_init(_admin);
     }
 
-    function migra(address user, bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
-        require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
-        TokenInfo storage tokeninfo = tokenInfos[_currency];
-        require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
-        require(tokeninfo.bClose == false, "This token is closed");
+    function migra(address user, uint256 _amount) public onlyAdmin {
+        userCollateralData[user][Currency_LINA].collateral = userCollateralData[user][Currency_LINA].collateral.add(_amount);
+        tokenInfos[Currency_LINA].totalCollateral = tokenInfos[Currency_LINA].totalCollateral.add(_amount);
 
-        userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(_amount);
-        tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(_amount);
-
-        emit CollateralLog(user, _currency, _amount, userCollateralData[user][_currency].collateral);
-        return true;
+        emit CollateralLog(user, Currency_LINA, _amount, userCollateralData[user][Currency_LINA].collateral);
     }
 
     function setPaused(bool _paused) external onlyAdmin {
@@ -82,11 +78,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
-    function setMessageSender(address payable sender) external  {
+    function setMessageSender(address payable sender) public  {
         messageSender = sender;
     }
 
-    function setMessageVaule(uint256 valule) external  {
+    function setMessageVaule(uint256 valule) public  {
         messageVaule = valule;
     }
 
@@ -106,7 +102,13 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         emit CachedAddressUpdated( "LnRewardLocker",    address(mRewardLocker) );
     }
 
-    function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {
+    // function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {
+
+    // }
+
+    // delete token info? need to handle it's staking data.
+
+    function UpdateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) external onlyAdmin returns (bool) {
         require(_currency[0] != 0, "symbol cannot empty");
         require(_currency != Currency_ETH, "ETH is used by system");
         require(_tokenAddr != address(0), "token address cannot zero");
@@ -120,25 +122,20 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         tokenInfos[_currency] = TokenInfo({tokenAddr:_tokenAddr, minCollateral:_minCollateral, totalCollateral:totalCollateral, bClose:_close});
         emit UpdateTokenSetting(_currency, _tokenAddr, _minCollateral, _close);
         return true;
+        //return updateTokenInfo(_currency, _tokenAddr, _minCollateral, _close);
     }
 
-    // delete token info? need to handle it's staking data.
+    // function UpdateTokenInfos(bytes32[] calldata _symbols, address[] calldata _tokenAddrs, uint256[] calldata _minCollateral, bool[] calldata _closes) external onlyAdmin returns (bool) {
+    //     require(_symbols.length == _tokenAddrs.length, "length of array not eq");
+    //     require(_symbols.length == _minCollateral.length, "length of array not eq");
+    //     require(_symbols.length == _closes.length, "length of array not eq");
 
-    function UpdateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) external onlyAdmin returns (bool) {
-        return updateTokenInfo(_currency, _tokenAddr, _minCollateral, _close);
-    }
+    //     for (uint256 i=0; i < _symbols.length; i++) {
+    //         updateTokenInfo(_symbols[i], _tokenAddrs[i], _minCollateral[i], _closes[i]);
+    //     }
 
-    function UpdateTokenInfos(bytes32[] calldata _symbols, address[] calldata _tokenAddrs, uint256[] calldata _minCollateral, bool[] calldata _closes) external onlyAdmin returns (bool) {
-        require(_symbols.length == _tokenAddrs.length, "length of array not eq");
-        require(_symbols.length == _minCollateral.length, "length of array not eq");
-        require(_symbols.length == _closes.length, "length of array not eq");
-
-        for (uint256 i=0; i < _symbols.length; i++) {
-            updateTokenInfo(_symbols[i], _tokenAddrs[i], _minCollateral[i], _closes[i]);
-        }
-
-        return true;
-    }
+    //     return true;
+    // }
 
     // ------------------------------------------------------------------------
     function GetSystemTotalCollateralInUsd() public view returns (uint256 rTotal) {
@@ -203,7 +200,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             retSize++;
         }
 
-        return (rCurrency, rAmount); 
+        return (rCurrency, rAmount);
     }
 
     // need approve
@@ -311,57 +308,57 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
-    // receive() external whenNotPaused payable {
-    //     address user = msg.sender;
-    //     user = user.isContract()? messageSender : user;
-    //     uint256 ethAmount = msg.value;
-    //     _CollateralEth(user, ethAmount);
-    // }
+    receive() external whenNotPaused payable {
+        address user = msg.sender;
+        user = user.isContract()? messageSender : user;
+        uint256 ethAmount = msg.value;
+        _CollateralEth(user, ethAmount);
+    }
 
-    // function _CollateralEth(address user, uint256 ethAmount) internal {
-    //     require(ethAmount > 0, "ETH amount need more than zero");
+    function _CollateralEth(address user, uint256 ethAmount) internal {
+        require(ethAmount > 0, "ETH amount need more than zero");
 
-    //     userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.add(ethAmount);
+        userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.add(ethAmount);
 
-    //     emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
-    // }
+        emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
+    }
 
-    // // payable eth receive,
-    // function CollateralEth() external payable whenNotPaused returns (bool) {
-    //     address user = msg.sender;
-    //     uint256 ethAmount = msg.value;
-    //     if ( user.isContract() ){
-    //         user = messageSender;
-    //         ethAmount = messageVaule;
-    //     }
-    //     _CollateralEth(user, ethAmount);
-    //     return true;
-    // }
+    // payable eth receive,
+    function CollateralEth() external payable whenNotPaused returns (bool) {
+        address user = msg.sender;
+        uint256 ethAmount = msg.value;
+        if ( user.isContract() ){
+            user = messageSender;
+            ethAmount = messageVaule;
+        }
+        _CollateralEth(user, ethAmount);
+        return true;
+    }
 
-    // function RedeemETH(uint256 _amount) external whenNotPaused returns (bool) {
+    function RedeemETH(uint256 _amount) external whenNotPaused returns (bool) {
 
-    //     address payable user;
-    //     address addr = msg.sender;
-    //     if (addr.isContract()){
-    //         user = messageSender;
-    //     } else {
-    //         user = msg.sender;
-    //     }
+        address payable user;
+        address addr = msg.sender;
+        if (addr.isContract()){
+            user = messageSender;
+        } else {
+            user = msg.sender;
+        }
 
-    //     require(_amount <= userCollateralData[user][Currency_ETH].collateral, "Can not redeem more than collateral");
-    //     require(_amount > 0, "Redeem amount need larger than zero");
+        require(_amount <= userCollateralData[user][Currency_ETH].collateral, "Can not redeem more than collateral");
+        require(_amount > 0, "Redeem amount need larger than zero");
 
-    //     uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
+        uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
         
-    //     uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
-    //     require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
+        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
+        require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
-    //     userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.sub(_amount);
-    //     user.transfer(_amount);
+        userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.sub(_amount);
+        user.transfer(_amount);
 
-    //     emit RedeemCollateral(user, Currency_ETH, _amount, userCollateralData[user][Currency_ETH].collateral);
-    //     return true;
-    // }
+        emit RedeemCollateral(user, Currency_ETH, _amount, userCollateralData[user][Currency_ETH].collateral);
+        return true;
+    }
 
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);

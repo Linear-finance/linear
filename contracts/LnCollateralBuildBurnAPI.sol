@@ -11,7 +11,7 @@ import "./LnCollateralSystem.sol";
 import "./LnBuildBurnSystem.sol";
 import "./LnAddressCache.sol";
 
-contract LnColateralBuildBurnAPI is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache{
+contract LnCollateralBuildBurnAPI is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache{
     using SafeMath for uint;
     using SafeDecimalMath for uint;
     using Address for address;
