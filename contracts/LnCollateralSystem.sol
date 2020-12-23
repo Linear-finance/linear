@@ -32,7 +32,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     bytes32 constant public Currency_ETH = "ETH";
     bytes32 constant public Currency_LINA = "LINA";
-    
     // -------------------------------------------------------
     // uint256 public uniqueId; // use log
 
@@ -102,10 +101,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         emit CachedAddressUpdated( "LnRewardLocker",    address(mRewardLocker) );
     }
 
-    // function updateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) private returns (bool) {
-
-    // }
-
     // delete token info? need to handle it's staking data.
 
     function UpdateTokenInfo(bytes32 _currency, address _tokenAddr, uint256 _minCollateral, bool _close) external onlyAdmin returns (bool) {
@@ -122,20 +117,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         tokenInfos[_currency] = TokenInfo({tokenAddr:_tokenAddr, minCollateral:_minCollateral, totalCollateral:totalCollateral, bClose:_close});
         emit UpdateTokenSetting(_currency, _tokenAddr, _minCollateral, _close);
         return true;
-        //return updateTokenInfo(_currency, _tokenAddr, _minCollateral, _close);
     }
-
-    // function UpdateTokenInfos(bytes32[] calldata _symbols, address[] calldata _tokenAddrs, uint256[] calldata _minCollateral, bool[] calldata _closes) external onlyAdmin returns (bool) {
-    //     require(_symbols.length == _tokenAddrs.length, "length of array not eq");
-    //     require(_symbols.length == _minCollateral.length, "length of array not eq");
-    //     require(_symbols.length == _closes.length, "length of array not eq");
-
-    //     for (uint256 i=0; i < _symbols.length; i++) {
-    //         updateTokenInfo(_symbols[i], _tokenAddrs[i], _minCollateral[i], _closes[i]);
-    //     }
-
-    //     return true;
-    // }
 
     // ------------------------------------------------------------------------
     function GetSystemTotalCollateralInUsd() public view returns (uint256 rTotal) {
@@ -349,7 +331,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(_amount > 0, "Redeem amount need larger than zero");
 
         uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-        
+
         uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
         require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
 
