@@ -11,4 +11,7 @@ export default {
       evmVersion: "istanbul",
     },
   },
+  paths: {
+    tests: "./tests",
+  },
 };
