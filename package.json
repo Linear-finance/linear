@@ -9,7 +9,7 @@
     "compile-waffle": "waffle waffle-dev.json",
     "compile-waffle:production": "waffle waffle-prod.json",
     "compile-hardhat": "hardhat compile",
-    "test": "mocha"
+    "test": "hardhat test"
   },
   "author": "",
   "license": "ISC",
@@ -29,12 +29,14 @@
     "@openzeppelin/contracts": "^3.1.0",
     "@openzeppelin/contracts-upgradeable": "^3.3.0",
     "@types/chai": "^4.2.14",
+    "@types/luxon": "^1.25.0",
     "@types/mocha": "^8.0.4",
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.2.1",
     "ethers": "^5.0.8",
     "fs": "0.0.1-security",
     "hardhat": "^2.0.5",
+    "luxon": "^1.25.0",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
