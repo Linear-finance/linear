@@ -1,4 +1,4 @@
-name: Test with Mocha
+name: Test with Hardhat
 
 on:
   push:
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Compile with Waffle
-        run: yarn compile-waffle
+      - name: Compile with Hardhat
+        run: yarn compile-hardhat
 
       - name: Test
         run: yarn test

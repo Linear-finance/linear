@@ -41,12 +41,10 @@ $ yarn compile-hardhat
 ```
 
 ## Testing
-Run test cases with [Waffle][WAFFLE]:
+Run test cases with [Hardhat][HARDHAT]:
 ```sh
 $ yarn test
 ```
-
-*Note that you must compile the contracts with **Waffle** first as instructed above before running the tests.*
 
 ## Deployment
 You can deploy the smart contracts on currently supported networks

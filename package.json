@@ -9,7 +9,7 @@
     "compile-waffle": "waffle waffle-dev.json",
     "compile-waffle:production": "waffle waffle-prod.json",
     "compile-hardhat": "hardhat compile",
-    "test": "mocha"
+    "test": "hardhat test"
   },
   "author": "",
   "license": "ISC",
