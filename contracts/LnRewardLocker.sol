@@ -42,6 +42,39 @@ contract LnRewardLocker is LnAdminUpgradeable {
         _;
     }
 
+    function bulkAppendReward(
+        address[] calldata _users,
+        uint256[] calldata _amounts,
+        uint64 _lockTo
+    ) external onlyAdmin {
+        require(_users.length == _amounts.length, "Length mismatch");
+
+        for (uint256 ind = 0; ind < _users.length; ind++) {
+            address _user = _users[ind];
+            uint256 _amount = _amounts[ind];
+
+            if (userRewards[_user].length >= maxRewardArrayLen) {
+                Slimming(_user);
+            }
+
+            require(userRewards[_user].length <= maxRewardArrayLen, "user array out of");
+            // init cliamable
+            if (userRewards[_user].length == 0) {
+                RewardData memory data = RewardData({lockToTime: 0, amount: 0});
+                userRewards[_user].push(data);
+            }
+
+            // append new reward
+            RewardData memory data = RewardData({lockToTime: _lockTo, amount: _amount});
+            userRewards[_user].push(data);
+
+            balanceOf[_user] = balanceOf[_user].add(_amount);
+            totalNeedToReward = totalNeedToReward.add(_amount);
+
+            emit AppendReward(_user, _amount, _lockTo);
+        }
+    }
+
     function appendReward(address _user, uint256 _amount, uint64 _lockTo) external onlyFeeSys {
         if (userRewards[_user].length >= maxRewardArrayLen) {
             Slimming(_user);
