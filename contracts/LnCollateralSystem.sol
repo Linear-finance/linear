@@ -185,6 +185,31 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return (rCurrency, rAmount);
     }
 
+    /**
+     * @dev A temporary method for migrating LINA tokens from LnSimpleStaking to LnCollateralSystem
+     * without user intervention.
+     */
+    function migrateCollateral(
+        bytes32 _currency,
+        address[] calldata _users,
+        uint256[] calldata _amounts
+    ) external onlyAdmin returns (bool) {
+        require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
+        TokenInfo storage tokeninfo = tokenInfos[_currency];
+        require(tokeninfo.bClose == false, "This token is closed");
+        require(_users.length == _amounts.length, "Length mismatch");
+
+        for (uint256 ind = 0; ind < _amounts.length; ind++) {
+            address user = _users[ind];
+            uint256 amount = _amounts[ind];
+
+            userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(amount);
+            tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(amount);
+
+            emit CollateralLog(user, _currency, amount, userCollateralData[user][_currency].collateral);
+        }
+    }
+
     // need approve
     function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
