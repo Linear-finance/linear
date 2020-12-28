@@ -1,4 +1,5 @@
 import "@nomiclabs/hardhat-waffle";
+import "@openzeppelin/hardhat-upgrades";
 
 export default {
   solidity: {
