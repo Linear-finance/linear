@@ -78,16 +78,19 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     event UpdateLusdToken(address oldAddr, address newAddr);
 
+    modifier onlyCollaterSys {
+        require( (msg.sender == address(collaterSys)), "Only Coolateral System call");
+        _;
+    }
+
+
     function MaxCanBuildAsset(address user) public view returns(uint256) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).mul(buildRatio).div(SafeDecimalMath.unit());
         return maxCanBuild;
     }
 
-    // build lusd
-    function BuildAsset(uint256 amount) public whenNotPaused returns(bool) {
-        address user = msg.sender;
-        user = user.isContract()? messageSender : user;
+    function _buildAsset(address user, uint256 amount) internal returns(bool) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
@@ -113,15 +116,19 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
         return true;
     }
+    // build lusd
+    function BuildAsset(uint256 amount) public whenNotPaused returns(bool) {
+        address user = msg.sender;
+        return _buildAsset(user, amount);
+    }
 
     function BuildMaxAsset() external whenNotPaused {
         address user = msg.sender;
-        user = user.isContract()? messageSender : user;
         uint256 max = MaxCanBuildAsset(user);
         BuildAsset(max);
     }
 
-    function _burnAsset(address user, uint256 amount) internal {
+    function _burnAsset(address user, uint256 amount) internal returns(uint256){
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         require(amount > 0, "amount need > 0");
         // calc debt
@@ -147,12 +154,13 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
         // update debt
         debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
+
+        return(burnAmount);
     }
 
     // burn
     function BurnAsset(uint256 amount) external whenNotPaused returns(bool) {
         address user = msg.sender;
-        user = user.isContract()? messageSender : user;
         _burnAsset(user, amount);
         return true;
     }
@@ -166,7 +174,6 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     // burn to target ratio
     function BurnAssetToTarget() external whenNotPaused returns(bool) {
         address user = msg.sender;
-        user = user.isContract()? messageSender : user;
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 totalCollateral = collaterSys.GetUserTotalCollateralInUsd(user);
         uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
@@ -183,9 +190,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     //input LINA amount LINA->lUSD
-    function calcBuildAmount(uint256 _amount) public view returns(uint256) {
-        address user = msg.sender;
-        user = user.isContract()? messageSender : user;
+    function calcBuildAmount(address user, uint256 _amount) public onlyCollaterSys view returns(uint256) {
         require(_amount > 0, "amount need > 0");
         require(user != address(0), "need address");
 
@@ -206,9 +211,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     }
 
     //input asset amount lUSD->LINA
-    function calcRedeemAmount(uint256 _amount) public view returns(uint256) {
-        address user = msg.sender;
-        user = user.isContract()? messageSender : user;
+    function calcRedeemAmount(address user, uint256 _amount) public onlyCollaterSys view returns(uint256) {
         require(_amount > 0, "amount need > 0");
         require(user != address(0), "need address");
 
@@ -224,6 +227,13 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         return canRedeem.sub(lockedLina);
     }
 
+    function build(address user, uint256 amount) public onlyCollaterSys returns(bool) {
+        return _buildAsset(user, amount);
+    }
+
+    function burn(address user, uint256 amount) public onlyCollaterSys returns(uint256) {
+        return _burnAsset(user, amount);
+    }
 }
 
 

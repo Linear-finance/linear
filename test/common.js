@@ -11,7 +11,6 @@ const LnProxyERC20 = artifacts.require("LnProxyERC20");
 const LnTokenStorage = artifacts.require("LnTokenStorage");
 const LnCollateralSystem = artifacts.require("LnCollateralSystem");
 const LnBuildBurnSystem = artifacts.require("LnBuildBurnSystem");
-const LnCollateralBuildBurnAPI = artifacts.require("LnCollateralBuildBurnAPI");
 const LnDebtSystem = artifacts.require("LnDebtSystem");
 
 const LinearFinance = artifacts.require("LinearFinance");
@@ -78,8 +77,6 @@ async function InitComment(admin) {
     await LnBuildBurnSystem.link(SafeDecimalMath);
     let kLnBuildBurnSystem = await LnBuildBurnSystem.new(admin, emptyAddr);
 
-    let kLnCollateralBuildBurnAPI = await LnCollateralBuildBurnAPI.new();
-    await kLnCollateralBuildBurnAPI.__LnCollateralBuildBurnAPI_init(admin);
 
     await LnExchangeSystem.link(SafeDecimalMath);
     let kLnExchangeSystem = await LnExchangeSystem.new(admin);
@@ -104,7 +101,6 @@ async function InitComment(admin) {
     registContract("LnDebtSystem", kLnDebtSystem);
     registContract("LnCollateralSystem", kLnCollateralSystem);
     registContract("LnBuildBurnSystem", kLnBuildBurnSystem);
-    registContract("LnCollateralBuildBurnAPI", kLnCollateralBuildBurnAPI);
     registContract("LnFeeSystem", kLnFeeSystem);
     registContract("LnRewardLocker", kLnRewardLocker);
     registContract("LnExchangeSystem", kLnExchangeSystem);
@@ -117,7 +113,6 @@ async function InitComment(admin) {
     await kLnDebtSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnCollateralSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnBuildBurnSystem.updateAddressCache(kLnAssetSystem.address);
-    await kLnCollateralBuildBurnAPI.updateAddressCache(kLnAssetSystem.address);
     await kLnExchangeSystem.updateAddressCache(kLnAssetSystem.address);
     await kLnFeeSystem.updateAddressCache(kLnAssetSystem.address);
 
@@ -129,7 +124,6 @@ async function InitComment(admin) {
         kLnAssetSystem:kLnAssetSystem,
         kLnCollateralSystem:kLnCollateralSystem,
         kLnBuildBurnSystem:kLnBuildBurnSystem,
-        kLnCollateralBuildBurnAPI:kLnCollateralBuildBurnAPI,
         kLnDebtSystem:kLnDebtSystem,
         kLnExchangeSystem:kLnExchangeSystem,
         kLnRewardLocker:kLnRewardLocker,
