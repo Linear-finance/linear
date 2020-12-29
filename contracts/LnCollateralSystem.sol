@@ -118,13 +118,12 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     function GetSystemTotalCollateralInUsd() public view returns (uint256 rTotal) {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
-            if (tokenInfos[currency].totalCollateral > 0) { // this check for avoid calling getPrice when collateral is zero
-                if (Currency_LINA == currency) {
-                    uint256 totallina = tokenInfos[currency].totalCollateral.add(mRewardLocker.totalNeedToReward());
-                    rTotal = rTotal.add( totallina.multiplyDecimal(priceGetter.getPrice(currency)) );
-                } else {
-                    rTotal = rTotal.add( tokenInfos[currency].totalCollateral.multiplyDecimal(priceGetter.getPrice(currency)) );
-                }
+            uint256 collateralAmount = tokenInfos[currency].totalCollateral;
+            if (Currency_LINA == currency) {
+                collateralAmount = collateralAmount.add(mRewardLocker.totalNeedToReward());
+            }
+            if (collateralAmount > 0) {
+                rTotal = rTotal.add( collateralAmount.multiplyDecimal(priceGetter.getPrice(currency)) );
             }
         }
 
@@ -136,13 +135,12 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     function GetUserTotalCollateralInUsd(address _user) public view returns (uint256 rTotal) {
         for (uint256 i=0; i< tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
-            if (userCollateralData[_user][currency].collateral > 0) {
-                if (Currency_LINA == currency) {
-                    uint256 totallina = userCollateralData[_user][currency].collateral.add(mRewardLocker.balanceOf(_user));
-                    rTotal = rTotal.add( totallina.multiplyDecimal(priceGetter.getPrice(currency)) );
-                } else {
-                    rTotal = rTotal.add( userCollateralData[_user][currency].collateral.multiplyDecimal(priceGetter.getPrice(currency)) );
-                }
+            uint256 collateralAmount = userCollateralData[_user][currency].collateral;
+            if (Currency_LINA == currency) {
+                collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));
+            }
+            if (collateralAmount > 0) {
+                rTotal = rTotal.add( collateralAmount.multiplyDecimal(priceGetter.getPrice(currency)) );
             }
         }
 
