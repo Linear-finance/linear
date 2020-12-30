@@ -24,6 +24,7 @@ export interface DeployedStack {
   lnDebtSystem: Contract;
   lnFeeSystem: Contract;
   lnRewardLocker: Contract;
+  lnErc20Bridge: Contract;
 }
 
 export const deployLinearStack = async (
@@ -63,6 +64,7 @@ export const deployLinearStack = async (
     LnProxyERC20,
     LnRewardLocker,
     LnTokenStorage,
+    LnErc20Bridge,
   ] = await Promise.all(
     [
       "LinearFinance",
@@ -75,6 +77,7 @@ export const deployLinearStack = async (
       "LnProxyERC20",
       "LnRewardLocker",
       "LnTokenStorage",
+      "LnErc20Bridge",
     ].map((contractName) => ethers.getContractFactory(contractName, deployer))
   );
 
@@ -206,6 +209,18 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardLocker_init",
+      unsafeAllowCustomTypes: true,
+    }
+  );
+
+  const lnErc20Bridge = await upgrades.deployProxy(
+    LnErc20Bridge,
+    [
+      linaTokenProxy.address, // _tokenAddr
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnErc20Bridge_init",
       unsafeAllowCustomTypes: true,
     }
   );
@@ -343,5 +358,6 @@ export const deployLinearStack = async (
     lnDebtSystem,
     lnFeeSystem,
     lnRewardLocker,
+    lnErc20Bridge,
   };
 };
