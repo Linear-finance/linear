@@ -10,3 +10,6 @@ log/development-deployed.json
 # Hardhat files
 cache/
 artifacts/
+
+# OpenZeppelin dev files
+.openzeppelin/unknown-*.json
