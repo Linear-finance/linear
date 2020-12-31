@@ -21,7 +21,7 @@ jobs:
         run: yarn install
 
       - name: Compile with Hardhat
-        run: yarn compile-hardhat
+        run: yarn compile
 
-      - name: Test
+      - name: Test with Hardhat
         run: yarn test

@@ -22,22 +22,9 @@ $ yarn install
 ```
 
 ## Building
-Build the smart contracts using [Truffle][TRUFFLE] with the following command:
+Build the smart contracts using [Hardhat][HARDHAT] with the following command:
 ```sh
 $ yarn compile
-```
-
-Alternatively, you can compile them using [Waffle][WAFFLE]:
-```sh
-# Compile for development (optimization off)
-$ yarn compile-waffle
-# Compile for production (optimization on)
-$ yarn compile-waffle:production
-```
-
-[Hardhat][HARDHAT] is also supported for compilation:
-```sh
-$ yarn compile-hardhat
 ```
 
 ## Testing
@@ -164,8 +151,5 @@ you will find the created contract addresses in the log/[NETWORK]-deployed.json.
 ```
 
 [NODE]: <https://nodejs.org>
-[TRUFFLE]: <https://www.trufflesuite.com/truffle>
-[OZ]: <https://openzeppelin.com>
 [GAN]: <https://www.trufflesuite.com/ganache>
-[WAFFLE]: <https://getwaffle.io>
 [HARDHAT]: <https://hardhat.org>

@@ -5,10 +5,7 @@
   "main": "truffle-config.js",
   "scripts": {
     "format": "prettier --write .",
-    "compile": "truffle compile",
-    "compile-waffle": "waffle waffle-dev.json",
-    "compile-waffle:production": "waffle waffle-prod.json",
-    "compile-hardhat": "hardhat compile",
+    "compile": "hardhat compile",
     "test": "hardhat test"
   },
   "author": "",
