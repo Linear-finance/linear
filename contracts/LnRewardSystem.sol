@@ -26,7 +26,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
 
     uint256 public firstPeriodStartTime;
     address public rewardSigner;
-    mapping(address => uint256) userLastClaimPeriodIds;
+    mapping(address => uint256) public userLastClaimPeriodIds;
 
     IERC20Upgradeable public lusd;
     ILnCollateralSystem public collateralSystem;
