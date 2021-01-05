@@ -1203,6 +1203,124 @@
           }
         }
       }
+    },
+    "e1c0ed203e50f2478bd300470a369846ff4233bf52f6d08526594b508de2ae82": {
+      "address": "0x2E6f89d3000Ec0a7611E57A6CfB7b825Ab9633A6",
+      "txHash": "0xdc7cf0b0c9181d1cd81743aae7c71962d1fe7de312f91c06ab173e42d22c10c0",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "firstPeriodStartTime",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardSystem.sol:27"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardSigner",
+            "type": "t_address",
+            "src": "contracts/LnRewardSystem.sol:28"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "userLastClaimPeriodIds",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardSystem.sol:29"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "lusd",
+            "type": "t_contract(IERC20Upgradeable)919",
+            "src": "contracts/LnRewardSystem.sol:31"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "collateralSystem",
+            "type": "t_contract(ILnCollateralSystem)4038",
+            "src": "contracts/LnRewardSystem.sol:32"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardLocker",
+            "type": "t_contract(ILnRewardLocker)4050",
+            "src": "contracts/LnRewardSystem.sol:33"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnRewardSystem.sol:35"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)43_storage",
+            "src": "contracts/LnRewardSystem.sol:192"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(IERC20Upgradeable)919": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_contract(ILnCollateralSystem)4038": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnRewardLocker)4050": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)43_storage": {
+            "label": "uint256[43]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
