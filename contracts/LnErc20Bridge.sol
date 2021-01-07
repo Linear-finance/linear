@@ -8,15 +8,15 @@ import "./upgradeable/LnAdminUpgradeable.sol";
  * @title LnErc20Bridge
  *
  * @dev An upgradeable contract for moving ERC20 tokens across blockchains. An
- * off-chain relayer is responsible for notifying destination chains of the
- * transactions. The relayer can be set to a multi-signature secured account for
- * enhanced security and decentralization.
+ * off-chain relayer is responsible for signing proofs of deposits to be used on destination
+ * chains of the transactions. A multi-relayer set up can be used for enhanced security and
+ * decentralization.
  *
- * @dev The relayer should wait for finality on the source chain before relaying the transaction
- * to the destination. Otherwise a double-spending attack is possible.
+ * @dev The relayer should wait for finality on the source chain before generating a deposit
+ * proof. Otherwise a double-spending attack is possible.
  *
  * @dev The bridge can operate in two different modes for each token: transfer mode and mint/burn
- * mode.
+ * mode, depending on the nature of the token.
  *
  * @dev Note that transaction hashes shall NOT be used for re-entrance prevention as doing
  * so will result in false negatives when multiple transfers are made in a single
@@ -36,37 +36,24 @@ contract LnErc20Bridge is LnAdminUpgradeable {
      * @param destChainId Chain ID of the destination blockchain
      * @param depositId Unique ID of the deposit on the current chain
      * @param depositor Address of the account on the current chain that made the deposit
-     * @param withdrawer Address of the account on the destination chain that's allowed to withdraw
+     * @param recipient Address of the account on the destination chain that will receive the amount
      * @param currency A bytes32-encoded universal currency key
-     * @param amount Amount of tokens being deposited
-     * @param forcedWithdrawalAllowed Whether the depositor allowed the amount to be forcibly pushed
-     * to withdrawer's address.
+     * @param amount Amount of tokens being deposited to recipient's address.
      */
     event TokenDeposited(
         uint256 srcChainId,
         uint256 destChainId,
         uint256 depositId,
         bytes32 depositor,
-        bytes32 withdrawer,
+        bytes32 recipient,
         bytes32 currency,
-        uint256 amount,
-        bool forcedWithdrawalAllowed
-    );
-    event DepositRelayed(
-        uint256 srcChainId,
-        uint256 destChainId,
-        uint256 depositId,
-        bytes32 depositor,
-        bytes32 withdrawer,
-        bytes32 currency,
-        uint256 amount,
-        bool forcedWithdrawalAllowed
+        uint256 amount
     );
     event TokenWithdrawn(
         uint256 srcChainId,
         uint256 destChainId,
         uint256 depositId,
-        bytes32 withdrawer,
+        bytes32 depositor,
         bytes32 recipient,
         bytes32 currency,
         uint256 amount
@@ -82,31 +69,25 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         uint8 lockType;
     }
 
-    struct RelayedDeposit {
-        bytes32 withdrawer;
-        bytes32 currency;
-        uint256 amount;
-        bool forcedWithdrawalAllowed;
-        bool withdrawn;
-    }
-
     uint256 public currentChainId;
     address public relayer;
     uint256 public depositCount;
     mapping(bytes32 => TokenInfo) public tokenInfos;
-    mapping(bytes32 => mapping(uint256 => bool)) tokenSupportedOnChain;
-    mapping(uint256 => mapping(uint256 => RelayedDeposit)) relayedDeposits;
+    mapping(bytes32 => mapping(uint256 => bool)) public tokenSupportedOnChain;
+    mapping(uint256 => mapping(uint256 => bool)) public withdrawnDeposits;
+
+    bytes32 public DOMAIN_SEPARATOR; // For EIP-712
+
+    bytes32 public constant DEPOSIT_TYPEHASH =
+        keccak256(
+            "Deposit(uint256 srcChainId,uint256 destChainId,uint256 depositId,bytes32 depositor,bytes32 recipient,bytes32 currency,uint256 amount)"
+        );
 
     uint8 public constant TOKEN_LOCK_TYPE_TRANSFER = 1;
     uint8 public constant TOKEN_LOCK_TYPE_MINT_BURN = 2;
 
     bytes4 private constant TRANSFER_SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
     bytes4 private constant TRANSFERFROM_SELECTOR = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
-
-    modifier onlyRelayer {
-        require((msg.sender == relayer), "LnErc20Bridge: not relayer");
-        _;
-    }
 
     function getTokenAddress(bytes32 tokenKey) public view returns (address) {
         return tokenInfos[tokenKey].tokenAddress;
@@ -130,6 +111,15 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             chainId := chainid()
         }
         currentChainId = chainId;
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("Linear")),
+                keccak256(bytes("1")),
+                chainId,
+                address(this)
+            )
+        );
     }
 
     function setRelayer(address _relayer) external onlyAdmin {
@@ -170,53 +160,19 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         emit ChainSupportForTokenDropped(tokenKey, chainId);
     }
 
-    function relay(
-        uint256 srcChainId,
-        uint256 destChainId,
-        uint256 depositId,
-        bytes32 depositor,
-        bytes32 withdrawer,
-        bytes32 currency,
-        uint256 amount,
-        bool forcedWithdrawalAllowed
-    ) external onlyRelayer {
-        require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
-        require(relayedDeposits[srcChainId][depositId].withdrawer == 0, "LnErc20Bridge: deposit already exists");
-
-        relayedDeposits[srcChainId][depositId] = RelayedDeposit({
-            withdrawer: withdrawer,
-            currency: currency,
-            amount: amount,
-            forcedWithdrawalAllowed: forcedWithdrawalAllowed,
-            withdrawn: false
-        });
-
-        emit DepositRelayed(
-            srcChainId,
-            destChainId,
-            depositId,
-            depositor,
-            withdrawer,
-            currency,
-            amount,
-            forcedWithdrawalAllowed
-        );
-    }
-
     function deposit(
         bytes32 token,
         uint256 amount,
         uint256 destChainId,
-        bytes32 withdrawer,
-        bool allowForcedWithdrawal
+        bytes32 recipient
     ) external {
+        TokenInfo memory tokenInfo = tokenInfos[token];
+        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
+
         require(amount > 0, "LnErc20Bridge: amount must be positive");
         require(destChainId != currentChainId, "LnErc20Bridge: dest must be different from src");
         require(isTokenSupportedOnChain(token, destChainId), "LnErc20Bridge: token not supported on chain");
-        require(withdrawer != 0, "LnErc20Bridge: zero address");
-
-        TokenInfo memory tokenInfo = tokenInfos[token];
-        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
+        require(recipient != 0, "LnErc20Bridge: zero address");
 
         depositCount = depositCount + 1;
 
@@ -233,27 +189,68 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             destChainId,
             depositCount,
             bytes32(uint256(msg.sender)),
-            withdrawer,
+            recipient,
             token,
-            amount,
-            allowForcedWithdrawal
+            amount
         );
-    }
-
-    function withdraw(uint256 srcChainId, uint256 depositId) external {
-        _withdraw(srcChainId, depositId, msg.sender, true);
     }
 
     function withdraw(
         uint256 srcChainId,
+        uint256 destChainId,
         uint256 depositId,
-        address recipient
+        bytes32 depositor,
+        bytes32 recipient,
+        bytes32 currency,
+        uint256 amount,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external {
-        _withdraw(srcChainId, depositId, recipient, true);
-    }
+        require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
+        require(!withdrawnDeposits[srcChainId][depositId], "LnErc20Bridge: already withdrawn");
+        require(recipient != 0, "LnErc20Bridge: zero address");
+        require(amount > 0, "LnErc20Bridge: amount must be positive");
 
-    function withdrawFor(uint256 srcChainId, uint256 depositId) external {
-        _withdraw(srcChainId, depositId, address(0), false);
+        TokenInfo memory tokenInfo = tokenInfos[currency];
+        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
+
+        // Verify EIP-712 signature
+        bytes32 digest =
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(
+                        abi.encode(
+                            DEPOSIT_TYPEHASH,
+                            srcChainId,
+                            destChainId,
+                            depositId,
+                            depositor,
+                            recipient,
+                            currency,
+                            amount
+                        )
+                    )
+                )
+            );
+        address recoveredAddress = ecrecover(digest, v, r, s);
+        require(recoveredAddress == relayer, "LnErc20Bridge: invalid signature");
+
+        withdrawnDeposits[srcChainId][depositId] = true;
+
+        address decodedRecipient = address(uint160(uint256(recipient)));
+
+        if (tokenInfo.lockType == TOKEN_LOCK_TYPE_TRANSFER) {
+            safeTransfer(tokenInfo.tokenAddress, decodedRecipient, amount);
+        } else if (tokenInfo.lockType == TOKEN_LOCK_TYPE_MINT_BURN) {
+            IMintBurnToken(tokenInfo.tokenAddress).mint(decodedRecipient, amount);
+        } else {
+            require(false, "LnErc20Bridge: unknown token lock type");
+        }
+
+        emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
     }
 
     function _setRelayer(address _relayer) private {
@@ -264,50 +261,6 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         relayer = _relayer;
 
         emit RelayerChanged(oldRelayer, relayer);
-    }
-
-    function _withdraw(
-        uint256 srcChainId,
-        uint256 depositId,
-        address recipient, // discarded when not withdrawing for self
-        bool isWithdrawingForSelf
-    ) private {
-        RelayedDeposit memory pendingDeposit = relayedDeposits[srcChainId][depositId];
-        require(pendingDeposit.withdrawer != 0, "LnErc20Bridge: deposit not found");
-        require(!pendingDeposit.withdrawn, "LnErc20Bridge: already withdrawn");
-        require(pendingDeposit.amount > 0, "LnErc20Bridge: zero amount");
-
-        if (isWithdrawingForSelf) {
-            require(pendingDeposit.withdrawer == bytes32(uint256(msg.sender)), "LnErc20Bridge: not withdrawer");
-        } else {
-            require(pendingDeposit.forcedWithdrawalAllowed, "LnErc20Bridge: forced withdrawal not allowed");
-        }
-
-        TokenInfo memory tokenInfo = tokenInfos[pendingDeposit.currency];
-        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
-
-        // pendingDeposit.withdrawn won't work as it's just a copy in memory
-        relayedDeposits[srcChainId][depositId].withdrawn = true;
-
-        address actualRecipient = isWithdrawingForSelf ? recipient : address(uint160(uint256(pendingDeposit.withdrawer)));
-
-        if (tokenInfo.lockType == TOKEN_LOCK_TYPE_TRANSFER) {
-            safeTransfer(tokenInfo.tokenAddress, actualRecipient, pendingDeposit.amount);
-        } else if (tokenInfo.lockType == TOKEN_LOCK_TYPE_MINT_BURN) {
-            IMintBurnToken(tokenInfo.tokenAddress).mint(actualRecipient, pendingDeposit.amount);
-        } else {
-            require(false, "LnErc20Bridge: unknown token lock type");
-        }
-
-        emit TokenWithdrawn(
-            srcChainId,
-            currentChainId,
-            depositId,
-            bytes32(uint256(msg.sender)),
-            bytes32(uint256(actualRecipient)),
-            pendingDeposit.currency,
-            pendingDeposit.amount
-        );
     }
 
     function safeTransfer(
