@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
+import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import "./interfaces/IMintBurnToken.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 
@@ -26,6 +27,8 @@ import "./upgradeable/LnAdminUpgradeable.sol";
  * a list of custom IDs might be used instead when non-EVM compatible chains are added.
  */
 contract LnErc20Bridge is LnAdminUpgradeable {
+    using ECDSAUpgradeable for bytes32;
+
     /**
      * @dev Emits when a deposit is made.
      *
@@ -203,9 +206,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         bytes32 recipient,
         bytes32 currency,
         uint256 amount,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external {
         require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
         require(!withdrawnDeposits[srcChainId][depositId], "LnErc20Bridge: already withdrawn");
@@ -235,7 +236,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
                     )
                 )
             );
-        address recoveredAddress = ecrecover(digest, v, r, s);
+        address recoveredAddress = digest.recover(signature);
         require(recoveredAddress == relayer, "LnErc20Bridge: invalid signature");
 
         withdrawnDeposits[srcChainId][depositId] = true;
