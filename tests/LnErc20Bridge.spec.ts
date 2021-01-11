@@ -36,7 +36,7 @@ describe("LnErc20Bridge", function () {
     recipient: string,
     currency: string,
     amount: BigNumber
-  ): Promise<Signature> => {
+  ): Promise<string> => {
     const domain = {
       name: "Linear",
       version: "1",
@@ -68,7 +68,7 @@ describe("LnErc20Bridge", function () {
 
     const signatureHex = await signer._signTypedData(domain, types, value);
 
-    return splitSignature(signatureHex);
+    return signatureHex;
   };
 
   beforeEach(async function () {
@@ -232,9 +232,7 @@ describe("LnErc20Bridge", function () {
         hexlify(zeroPad(alice.address, 32)), // recipient
         formatBytes32String("LINA"), // currency
         expandTo18Decimals(1000), // amount
-        signature.v, // v
-        signature.r, // r
-        signature.s // s
+        signature // signature
       )
     ).to.revertedWith("LnErc20Bridge: invalid signature");
   });
@@ -260,9 +258,7 @@ describe("LnErc20Bridge", function () {
         hexlify(zeroPad(alice.address, 32)), // recipient
         formatBytes32String("LINA"), // currency
         expandTo18Decimals(1000), // amount
-        signature.v, // v
-        signature.r, // r
-        signature.s // s
+        signature // signature
       )
     )
       .to.emit(lina, "Transfer")
@@ -307,9 +303,7 @@ describe("LnErc20Bridge", function () {
         hexlify(zeroPad(alice.address, 32)), // recipient
         formatBytes32String("lUSD"), // currency
         expandTo18Decimals(1000), // amount
-        signature.v, // v
-        signature.r, // r
-        signature.s // s
+        signature // signature
       )
     )
       .to.emit(lusd, "Transfer")
@@ -352,9 +346,7 @@ describe("LnErc20Bridge", function () {
       hexlify(zeroPad(alice.address, 32)), // recipient
       formatBytes32String("LINA"), // currency
       expandTo18Decimals(1000), // amount
-      signature.v, // v
-      signature.r, // r
-      signature.s // s
+      signature // signature
     );
 
     await expect(
@@ -366,9 +358,7 @@ describe("LnErc20Bridge", function () {
         hexlify(zeroPad(alice.address, 32)), // recipient
         formatBytes32String("LINA"), // currency
         expandTo18Decimals(1000), // amount
-        signature.v, // v
-        signature.r, // r
-        signature.s // s
+        signature // signature
       )
     ).to.revertedWith("LnErc20Bridge: already withdrawn");
   });
