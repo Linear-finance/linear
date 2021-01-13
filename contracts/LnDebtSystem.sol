@@ -43,8 +43,8 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     }
 
     event UpdateAddressStorage(address oldAddr, address newAddr);
-    event UpdateUserDebtLog(address addr, uint256 debtProportion, uint256 debtFactor);
-    event PushDebtLog(uint256 index, uint256 newFactor);
+    event UpdateUserDebtLog(address addr, uint256 debtProportion, uint256 debtFactor, uint256 timestamp);
+    event PushDebtLog(uint256 index, uint256 newFactor, uint256 timestamp);
 
     // ------------------ system config ----------------------
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
@@ -70,13 +70,47 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         lastCloseAt = index;
     }
 
+    /**
+     * @dev A temporary method for migrating debt records from Ethereum to Binance Smart Chain.
+     */
+    function importDebtData(
+        address[] calldata users,
+        uint256[] calldata debtProportions,
+        uint256[] calldata debtFactors,
+        uint256[] calldata timestamps
+    ) external onlyAdmin {
+        require(
+            users.length == debtProportions.length &&
+                debtProportions.length == debtFactors.length &&
+                debtFactors.length == timestamps.length,
+            "Length mismatch"
+        );
+
+        for (uint256 ind = 0; ind < users.length; ind++) {
+            address user = users[ind];
+            uint256 debtProportion = debtProportions[ind];
+            uint256 debtFactor = debtFactors[ind];
+            uint256 timestamp = timestamps[ind];
+
+            uint256 currentIndex = debtCurrentIndex + ind;
+
+            lastDebtFactors[currentIndex] = debtFactor;
+            userDebtState[user] = DebtData({debtProportion: debtProportion, debtFactor: debtFactor});
+
+            emit PushDebtLog(currentIndex, debtFactor, timestamp);
+            emit UpdateUserDebtLog(user, debtProportion, debtFactor, timestamp);
+        }
+
+        debtCurrentIndex = debtCurrentIndex + users.length;
+    }
+
     function _pushDebtFactor(uint256 _factor) private {
         if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex-1] == 0) { // init or all debt has be cleared, new set value will be one unit
             lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
         } else {
             lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex-1].multiplyDecimalRoundPrecise(_factor);
         }
-        emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex]);
+        emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
 
         debtCurrentIndex = debtCurrentIndex.add(1);
 
@@ -98,7 +132,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     function _updateUserDebt(address _user, uint256 _debtProportion) private {
         userDebtState[_user].debtProportion = _debtProportion;
         userDebtState[_user].debtFactor = _lastSystemDebtFactor();
-        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor);
+        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
 
         feeSystem.RecordUserDebt(_user, userDebtState[_user].debtProportion, userDebtState[_user].debtFactor);
     }
