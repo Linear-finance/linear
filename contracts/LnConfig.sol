@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 
-contract LnConfig is LnAdmin {
+contract LnConfig is LnAdminUpgradeable {
     mapping(bytes32 => uint) internal mUintConfig;
 
-    constructor(address _admin) public LnAdmin(_admin) {}
+    function __LnConfig_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+    }
 
     //some configue keys
     bytes32 public constant BUILD_RATIO = "BuildRatio"; // percent, base 10e18
@@ -35,4 +37,7 @@ contract LnConfig is LnAdmin {
     }
 
     event SetUintConfig(bytes32 key, uint value);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[49] private __gap;
 }

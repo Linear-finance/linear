@@ -21,6 +21,15 @@ contract LnChainLinkPrices is LnDefaultPrices {
 
     bytes32[] public mOracleArray;
 
+    function __LnChainLinkPrices_init(
+        address _admin,
+        address _oracle,
+        bytes32[] memory _currencyNames,
+        uint[] memory _newPrices
+    ) public initializer {
+        __LnDefaultPrices_init(_admin, _oracle, _currencyNames, _newPrices);
+    }
+
     function addOracle(bytes32 currencyKey, address OracleAddress) external onlyAdmin {
         OracleInterface Oracle = OracleInterface(OracleAddress);
         require(Oracle.latestTimestamp() >= 0, "time stamp error");
@@ -69,6 +78,9 @@ contract LnChainLinkPrices is LnDefaultPrices {
 
     event OracleAdded(bytes32 currencyKey, address Oracle);
     event OracleRemoved(bytes32 currencyKey, address Oracle);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[48] private __gap;
 }
 
 // test Oracle, for test stub

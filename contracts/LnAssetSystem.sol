@@ -14,7 +14,9 @@ contract LnAssetSystem is LnAddressStorage {
     ILnAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
 
-    constructor(address _admin) public LnAddressStorage(_admin) {}
+    function __LnAssetSystem_init(address _admin) public initializer {
+        __LnAddressStorage_init(_admin);
+    }
 
     function addAsset(ILnAsset asset) external onlyAdmin {
         bytes32 name = asset.keyName();
@@ -75,4 +77,7 @@ contract LnAssetSystem is LnAddressStorage {
 
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[48] private __gap;
 }
