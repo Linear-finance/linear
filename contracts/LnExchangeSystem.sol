@@ -6,7 +6,7 @@ import "./LnAddressCache.sol";
 import "./interfaces/ILnAsset.sol";
 import "./interfaces/ILnAddressStorage.sol";
 import "./interfaces/ILnPrices.sol";
-import "./LnConfig.sol";
+import "./interfaces/ILnConfig.sol";
 import "./SafeDecimalMath.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
@@ -21,7 +21,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     ILnAddressStorage mAssets;
     ILnPrices mPrices;
-    LnConfig mConfig;
+    ILnConfig mConfig;
     address mRewardSys;
 
     constructor(address _admin) public LnAdmin(_admin ) {
@@ -33,7 +33,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     {
         mAssets = ILnAddressStorage(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
         mPrices = ILnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
-        mConfig = LnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
+        mConfig = ILnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
         mRewardSys = _addressStorage.getAddressWithRequire( REWARD_SYS_KEY,"" );
 
 
