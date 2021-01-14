@@ -8,7 +8,6 @@ import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnAsset.sol";
-import "./LnAssetSystem.sol";
 import "./LnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
 import "./LnConfig.sol";
@@ -23,7 +22,6 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     ILnAsset private lUSDToken; // this contract need 
 
     LnDebtSystem private debtSystem;
-    LnAssetSystem private assetSys;
     ILnPrices private priceGetter;
     LnCollateralSystem private collaterSys;
     LnConfig private mConfig;
@@ -44,14 +42,12 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     {
         priceGetter =    ILnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
         debtSystem = LnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
-        assetSys =  LnAssetSystem( _addressStorage.getAddressWithRequire( "LnAssetSystem","LnAssetSystem address not valid" ) );
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
         collaterSys = LnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
 
         emit CachedAddressUpdated( "LnPrices",           address(priceGetter) );
         emit CachedAddressUpdated( "LnDebtSystem",       address(debtSystem) );
-        emit CachedAddressUpdated( "LnAssetSystem",      address(assetSys) );
         emit CachedAddressUpdated( "LnCollateralSystem", address(collaterSys) );
         emit CachedAddressUpdated( "LnConfig",           address(mConfig) );
     }

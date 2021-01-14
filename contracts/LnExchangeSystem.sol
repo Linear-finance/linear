@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnAsset.sol";
-import "./LnAssetSystem.sol";
+import "./interfaces/ILnAddressStorage.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnConfig.sol";
+import "./SafeDecimalMath.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
     using SafeMath for uint;
@@ -17,7 +19,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     bytes32 public constant REWARD_SYS_KEY = ("LnRewardSystem");
 
 
-    LnAssetSystem mAssets;
+    ILnAddressStorage mAssets;
     ILnPrices mPrices;
     LnConfig mConfig;
     address mRewardSys;
@@ -29,7 +31,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
     function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
-        mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
+        mAssets = ILnAddressStorage(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
         mPrices = ILnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
         mConfig = LnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
         mRewardSys = _addressStorage.getAddressWithRequire( REWARD_SYS_KEY,"" );
