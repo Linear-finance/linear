@@ -11,7 +11,7 @@ import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
-import "./LnConfig.sol";
+import "./interfaces/ILnConfig.sol";
 import "./LnRewardLocker.sol";
 
 // 单纯抵押进来
@@ -26,7 +26,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     ILnPrices public priceGetter;
     ILnDebtSystem public debtSystem;
     LnBuildBurnSystem public buildBurnSystem;
-    LnConfig public mConfig;
+    ILnConfig public mConfig;
     LnRewardLocker public mRewardLocker;
 
     bytes32 constant public Currency_ETH = "ETH";
@@ -70,7 +70,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         priceGetter =     ILnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
         debtSystem =      ILnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
         buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
-        mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
+        mConfig =         ILnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
         emit CachedAddressUpdated( "LnPrices",          address(priceGetter) );
