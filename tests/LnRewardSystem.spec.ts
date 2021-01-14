@@ -1,7 +1,6 @@
 import { ethers, waffle } from "hardhat";
 import { expect, use } from "chai";
-import { BigNumber, Contract, Signature, Wallet } from "ethers";
-import { splitSignature } from "ethers/lib/utils";
+import { BigNumber, Contract, Wallet } from "ethers";
 import { MockContract } from "ethereum-waffle";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { DateTime, Duration } from "luxon";
@@ -27,7 +26,7 @@ describe("LnRewardSystem", function () {
     lnRewardLocker: Contract,
     lnRewardSystem: Contract;
 
-  let aliceSignaturePeriod1: Signature;
+  let aliceSignaturePeriod1: string;
 
   let firstPeriodStartTime: DateTime;
   const periodDuration: Duration = Duration.fromObject({ weeks: 1 });
@@ -47,7 +46,7 @@ describe("LnRewardSystem", function () {
     recipient: string,
     stakingReward: BigNumber,
     feeReward: BigNumber
-  ): Promise<Signature> => {
+  ): Promise<string> => {
     const domain = {
       name: "Linear",
       version: "1",
@@ -73,7 +72,7 @@ describe("LnRewardSystem", function () {
 
     const signatureHex = await signer._signTypedData(domain, types, value);
 
-    return splitSignature(signatureHex);
+    return signatureHex;
   };
 
   beforeEach(async function () {
@@ -150,9 +149,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     )
       .to.emit(lnRewardSystem, "RewardClaimed")
@@ -201,9 +198,7 @@ describe("LnRewardSystem", function () {
         2, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: invalid signature");
 
@@ -213,9 +208,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(200), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: invalid signature");
 
@@ -225,9 +218,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(300), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: invalid signature");
 
@@ -237,9 +228,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        fakeSignature.v, // v
-        fakeSignature.r, // r
-        fakeSignature.s // s
+        fakeSignature // signature
       )
     ).to.revertedWith("LnRewardSystem: invalid signature");
   });
@@ -255,9 +244,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: period not ended");
   });
@@ -270,9 +257,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: reward expired");
   });
@@ -288,9 +273,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: below target ratio");
   });
@@ -302,9 +285,7 @@ describe("LnRewardSystem", function () {
       1, // periodId
       expandTo18Decimals(100), // stakingReward
       expandTo18Decimals(200), // feeReward
-      aliceSignaturePeriod1.v, // v
-      aliceSignaturePeriod1.r, // r
-      aliceSignaturePeriod1.s // s
+      aliceSignaturePeriod1 // signature
     );
 
     await expect(
@@ -312,9 +293,7 @@ describe("LnRewardSystem", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         expandTo18Decimals(200), // feeReward
-        aliceSignaturePeriod1.v, // v
-        aliceSignaturePeriod1.r, // r
-        aliceSignaturePeriod1.s // s
+        aliceSignaturePeriod1 // signature
       )
     ).to.revertedWith("LnRewardSystem: reward already claimed");
   });
