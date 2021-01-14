@@ -9,13 +9,13 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 contract LnRewardLocker is LnAdminUpgradeable {
     using SafeMath for uint256;
 
-    struct RewardData{
+    struct RewardData {
         uint64 lockToTime;
         uint256 amount;
     }
 
-    mapping (address => RewardData[]) public userRewards; // RewardData[0] is claimable
-    mapping (address => uint256) public balanceOf;
+    mapping(address => RewardData[]) public userRewards; // RewardData[0] is claimable
+    mapping(address => uint256) public balanceOf;
     uint256 public totalNeedToReward;
 
     uint256 public constant maxRewardArrayLen = 100;
@@ -38,7 +38,7 @@ contract LnRewardLocker is LnAdminUpgradeable {
     }
 
     modifier onlyFeeSys() {
-        require( (msg.sender == feeSysAddr), "Only Fee System call");
+        require((msg.sender == feeSysAddr), "Only Fee System call");
         _;
     }
 
@@ -75,7 +75,11 @@ contract LnRewardLocker is LnAdminUpgradeable {
         }
     }
 
-    function appendReward(address _user, uint256 _amount, uint64 _lockTo) external onlyFeeSys {
+    function appendReward(
+        address _user,
+        uint256 _amount,
+        uint64 _lockTo
+    ) external onlyFeeSys {
         if (userRewards[_user].length >= maxRewardArrayLen) {
             Slimming(_user);
         }
@@ -83,18 +87,12 @@ contract LnRewardLocker is LnAdminUpgradeable {
         require(userRewards[_user].length <= maxRewardArrayLen, "user array out of");
         // init cliamable
         if (userRewards[_user].length == 0) {
-            RewardData memory data = RewardData( {
-                lockToTime: 0,
-                amount: 0
-            });
+            RewardData memory data = RewardData({lockToTime: 0, amount: 0});
             userRewards[_user].push(data);
         }
-        
+
         // append new reward
-        RewardData memory data = RewardData( {
-            lockToTime: _lockTo,
-            amount: _amount
-        });
+        RewardData memory data = RewardData({lockToTime: _lockTo, amount: _amount});
         userRewards[_user].push(data);
 
         balanceOf[_user] = balanceOf[_user].add(_amount);
@@ -107,15 +105,15 @@ contract LnRewardLocker is LnAdminUpgradeable {
     function Slimming(address _user) public {
         require(userRewards[_user].length > 1, "not data to slimming");
         RewardData storage claimable = userRewards[_user][0];
-        for (uint256 i=1; i<userRewards[_user].length; ) {
+        for (uint256 i = 1; i < userRewards[_user].length; ) {
             if (now >= userRewards[_user][i].lockToTime) {
                 claimable.amount = claimable.amount.add(userRewards[_user][i].amount);
 
                 //swap last to current position
                 uint256 len = userRewards[_user].length;
-                userRewards[_user][i].lockToTime = userRewards[_user][len-1].lockToTime;
-                userRewards[_user][i].amount = userRewards[_user][len-1].amount;
-                userRewards[_user].pop();// delete last one
+                userRewards[_user][i].lockToTime = userRewards[_user][len - 1].lockToTime;
+                userRewards[_user][i].amount = userRewards[_user][len - 1].amount;
+                userRewards[_user].pop(); // delete last one
             } else {
                 i++;
             }
@@ -134,7 +132,7 @@ contract LnRewardLocker is LnAdminUpgradeable {
 
         balanceOf[_user] = balanceOf[_user].sub(_amount);
         totalNeedToReward = totalNeedToReward.sub(_amount);
-        
+
         linaToken.transfer(_user, _amount);
         emit ClaimLog(_user, _amount);
     }
@@ -142,7 +140,7 @@ contract LnRewardLocker is LnAdminUpgradeable {
     function Claim(uint256 _amount) public {
         address user = msg.sender;
         Slimming(user);
-        require( _amount <= userRewards[user][0].amount, "Claim amount invalid");
+        require(_amount <= userRewards[user][0].amount, "Claim amount invalid");
         _claim(user, _amount);
     }
 
@@ -152,4 +150,3 @@ contract LnRewardLocker is LnAdminUpgradeable {
     // Reserved storage space to allow for layout changes in the future.
     uint256[45] private __gap;
 }
-

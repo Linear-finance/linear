@@ -16,10 +16,6 @@ interface OracleInterface {
     function getTimestamp(uint256 roundId) external view returns (uint256);
 }
 
-
-
-
-
 contract LnChainLinkPrices is LnDefaultPrices {
     mapping(bytes32 => OracleInterface) public mOracles;
 
@@ -55,9 +51,9 @@ contract LnChainLinkPrices is LnDefaultPrices {
             priceAndTime.mTime = uint40(Oracle.latestTimestamp());
             return priceAndTime;
         } else {
-            return super._getPriceData( currencyName );
+            return super._getPriceData(currencyName);
         }
-    }  
+    }
 
     function removeFromArray(bytes32 entry, bytes32[] storage array) internal returns (bool) {
         for (uint i = 0; i < array.length; i++) {
@@ -71,11 +67,9 @@ contract LnChainLinkPrices is LnDefaultPrices {
         return false;
     }
 
-
     event OracleAdded(bytes32 currencyKey, address Oracle);
     event OracleRemoved(bytes32 currencyKey, address Oracle);
 }
-
 
 // test Oracle, for test stub
 contract TestOracle is OracleInterface {

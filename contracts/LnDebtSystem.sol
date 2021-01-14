@@ -24,13 +24,14 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     mapping(address => DebtData) public userDebtState;
 
     //use mapping to store array data
-    mapping (uint256=>uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
+    mapping(uint256 => uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
     uint256 public debtCurrentIndex; // length of array. this index of array no value
     // follow var use to manage array size.
     uint256 public lastCloseAt; // close at array index
     uint256 public lastDeletTo; // delete to array index, lastDeletTo < lastCloseAt
     uint256 public constant MAX_DEL_PER_TIME = 50;
-    // 
+
+    //
 
     // -------------------------------------------------------
     function __LnDebtSystem_init(address _admin) public initializer {
@@ -42,15 +43,16 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     event PushDebtLog(uint256 index, uint256 newFactor, uint256 timestamp);
 
     // ------------------ system config ----------------------
-    function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
-    {
-        accessCtrl = ILnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
-        assetSys =   ILnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
+    function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
+        accessCtrl = ILnAccessControl(
+            _addressStorage.getAddressWithRequire("LnAccessControl", "LnAccessControl address not valid")
+        );
+        assetSys = ILnAssetSystem(_addressStorage.getAddressWithRequire("LnAssetSystem", "LnAssetSystem address not valid"));
 
-        emit CachedAddressUpdated( "LnAccessControl", address(accessCtrl) );
-        emit CachedAddressUpdated( "LnAssetSystem",   address(assetSys) );
+        emit CachedAddressUpdated("LnAccessControl", address(accessCtrl));
+        emit CachedAddressUpdated("LnAssetSystem", address(assetSys));
     }
-    
+
     // -----------------------------------------------
     modifier OnlyDebtSystemRole(address _address) {
         require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
@@ -98,20 +100,22 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     }
 
     function _pushDebtFactor(uint256 _factor) private {
-        if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex-1] == 0) { // init or all debt has be cleared, new set value will be one unit
+        if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex - 1] == 0) {
+            // init or all debt has be cleared, new set value will be one unit
             lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
         } else {
-            lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex-1].multiplyDecimalRoundPrecise(_factor);
+            lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(_factor);
         }
         emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
 
         debtCurrentIndex = debtCurrentIndex.add(1);
 
         // delete out of date data
-        if (lastDeletTo < lastCloseAt) { // safe check 
+        if (lastDeletTo < lastCloseAt) {
+            // safe check
             uint256 delNum = lastCloseAt - lastDeletTo;
             delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
-            for (uint256 i=lastDeletTo; i<delNum; i++) {
+            for (uint256 i = lastDeletTo; i < delNum; i++) {
                 delete lastDebtFactors[i];
             }
             lastDeletTo = lastDeletTo.add(delNum);
@@ -133,7 +137,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _updateUserDebt(_user, _debtProportion);
     }
 
-    function UpdateDebt(address _user, uint256 _debtProportion, uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
+    function UpdateDebt(
+        address _user,
+        uint256 _debtProportion,
+        uint256 _factor
+    ) external OnlyDebtSystemRole(msg.sender) {
         _pushDebtFactor(_factor);
         _updateUserDebt(_user, _debtProportion);
     }
@@ -147,14 +155,14 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         if (debtCurrentIndex == 0) {
             return SafeDecimalMath.preciseUnit();
         }
-        return lastDebtFactors[debtCurrentIndex-1];
+        return lastDebtFactors[debtCurrentIndex - 1];
     }
 
     function LastSystemDebtFactor() external view returns (uint256) {
         return _lastSystemDebtFactor();
     }
 
-    function GetUserCurrentDebtProportion(address _user) public view returns(uint256) {
+    function GetUserCurrentDebtProportion(address _user) public view returns (uint256) {
         uint256 debtProportion = userDebtState[_user].debtProportion;
         uint256 debtFactor = userDebtState[_user].debtFactor;
 
@@ -162,9 +170,8 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             return 0;
         }
 
-        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
-                .divideDecimalRoundPrecise(debtFactor)
-                .multiplyDecimalRoundPrecise(debtProportion);
+        uint256 currentUserDebtProportion =
+            _lastSystemDebtFactor().divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
         return currentUserDebtProportion;
     }
 
@@ -182,10 +189,10 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             return (0, totalAssetSupplyInUsd);
         }
 
-        uint256 currentUserDebtProportion = _lastSystemDebtFactor()
-                .divideDecimalRoundPrecise(debtFactor)
-                .multiplyDecimalRoundPrecise(debtProportion);
-        uint256 userDebtBalance = totalAssetSupplyInUsd
+        uint256 currentUserDebtProportion =
+            _lastSystemDebtFactor().divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
+        uint256 userDebtBalance =
+            totalAssetSupplyInUsd
                 .decimalToPreciseDecimal()
                 .multiplyDecimalRoundPrecise(currentUserDebtProportion)
                 .preciseDecimalToDecimal();
