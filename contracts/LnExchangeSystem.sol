@@ -6,7 +6,6 @@ import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
 import "./LnPrices.sol";
 import "./LnConfig.sol";
-import "./LnFeeSystem.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
     using SafeMath for uint;
@@ -15,13 +14,13 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     bytes32 public constant ASSETS_KEY = ("LnAssetSystem");
     bytes32 public constant PRICES_KEY = ("LnPrices");
     bytes32 public constant CONFIG_KEY = ("LnConfig");
-    bytes32 public constant FEE_SYS_KEY = ("LnFeeSystem");
+    bytes32 public constant REWARD_SYS_KEY = ("LnRewardSystem");
 
 
     LnAssetSystem mAssets;
     LnPrices mPrices;
     LnConfig mConfig;
-    LnFeeSystem mFeeSys;
+    address mRewardSys;
 
     constructor(address _admin) public LnAdmin(_admin ) {
         
@@ -33,13 +32,13 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
         mPrices = LnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
         mConfig = LnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
-        mFeeSys = LnFeeSystem(_addressStorage.getAddressWithRequire( FEE_SYS_KEY,"" ));
+        mRewardSys = _addressStorage.getAddressWithRequire( REWARD_SYS_KEY,"" );
 
 
         emit CachedAddressUpdated( ASSETS_KEY, address(mAssets) );
         emit CachedAddressUpdated( PRICES_KEY, address(mPrices) );
         emit CachedAddressUpdated( CONFIG_KEY, address(mConfig) );
-        emit CachedAddressUpdated( FEE_SYS_KEY, address(mFeeSys) );
+        emit CachedAddressUpdated( REWARD_SYS_KEY, address(mRewardSys) );
     }
 
 
@@ -77,8 +76,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     function _addExchangeFee( uint feeUsd ) internal
     {
         LnAssetUpgradeable lusd = LnAssetUpgradeable( mAssets.getAddressWithRequire( mPrices.LUSD(), ""));
-        lusd.mint( mFeeSys.FEE_DUMMY_ADDRESS(), feeUsd );
-        mFeeSys.addExchangeFee( feeUsd );
+        lusd.mint( mRewardSys, feeUsd );
     }
     
     event ExchangeAsset( address fromAddr, bytes32 sourceKey, uint sourceAmount, address destAddr, bytes32 destKey,  uint destRecived, uint fee );

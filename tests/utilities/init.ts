@@ -22,8 +22,8 @@ export interface DeployedStack {
   lnCollateralSystem: Contract;
   lnConfig: Contract;
   lnDebtSystem: Contract;
-  lnFeeSystem: Contract;
   lnRewardLocker: Contract;
+  lnRewardSystem: Contract;
 }
 
 export const deployLinearStack = async (
@@ -59,9 +59,9 @@ export const deployLinearStack = async (
     LnAssetUpgradeable,
     LnCollateralSystem,
     LnConfig,
-    LnFeeSystem,
     LnProxyERC20,
     LnRewardLocker,
+    LnRewardSystem,
     LnTokenStorage,
   ] = await Promise.all(
     [
@@ -71,9 +71,9 @@ export const deployLinearStack = async (
       "LnAssetUpgradeable",
       "LnCollateralSystem",
       "LnConfig",
-      "LnFeeSystem",
       "LnProxyERC20",
       "LnRewardLocker",
+      "LnRewardSystem",
       "LnTokenStorage",
     ].map((contractName) => ethers.getContractFactory(contractName, deployer))
   );
@@ -187,17 +187,6 @@ export const deployLinearStack = async (
     }
   );
 
-  const lnFeeSystem = await upgrades.deployProxy(
-    LnFeeSystem,
-    [
-      admin.address, // _admin
-    ],
-    {
-      initializer: "__LnFeeSystem_init",
-      unsafeAllowCustomTypes: true,
-    }
-  );
-
   const lnRewardLocker = await upgrades.deployProxy(
     LnRewardLocker,
     [
@@ -235,20 +224,6 @@ export const deployLinearStack = async (
     .SetDebtSystemRole([lnBuildBurnSystem.address], [true]);
 
   /**
-   * `LnFeeSystem` and `LnRewardLocker` have a special Init function that
-   * must be called by admin first.
-   *
-   * TODO: change to use setters or address cache instead
-   */
-  await lnFeeSystem.connect(admin).Init(
-    mockExchangeAddress, // _exchangeSystem
-    admin.address // _rewardDistri
-  );
-  await lnRewardLocker.connect(admin).Init(
-    lnFeeSystem.address // _feeSysAddr
-  );
-
-  /**
    * Fill the contract address registry
    */
   await lnAssetSystem
@@ -262,7 +237,6 @@ export const deployLinearStack = async (
         ethers.utils.formatBytes32String("LnDebtSystem"),
         ethers.utils.formatBytes32String("LnCollateralSystem"),
         ethers.utils.formatBytes32String("LnBuildBurnSystem"),
-        ethers.utils.formatBytes32String("LnFeeSystem"),
         ethers.utils.formatBytes32String("LnRewardLocker"),
         ethers.utils.formatBytes32String("LnExchangeSystem"),
       ],
@@ -274,7 +248,6 @@ export const deployLinearStack = async (
         lnDebtSystem.address,
         lnCollateralSystem.address,
         lnBuildBurnSystem.address,
-        lnFeeSystem.address,
         lnRewardLocker.address,
         mockExchangeAddress,
       ]
@@ -290,7 +263,6 @@ export const deployLinearStack = async (
     .connect(admin)
     .updateAddressCache(lnAssetSystem.address);
   await lnDebtSystem.connect(admin).updateAddressCache(lnAssetSystem.address);
-  await lnFeeSystem.connect(admin).updateAddressCache(lnAssetSystem.address);
 
   /**
    * Create the base synthetic asset lUSD
@@ -329,6 +301,34 @@ export const deployLinearStack = async (
     false // _close
   );
 
+  /**
+   * A contract for distributing rewards calculated and signed off-chain.
+   */
+  const lnRewardSystem = await upgrades.deployProxy(
+    LnRewardSystem,
+    [
+      (await ethers.provider.getBlock("latest")).timestamp, // _firstPeriodStartTime
+      admin.address, // _rewardSigner
+      lusdToken.address, // _lusdAddress
+      lnCollateralSystem.address, // _collateralSystemAddress
+      lnRewardLocker.address, // _rewardLockerAddress
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnRewardSystem_init",
+      unsafeAllowCustomTypes: true,
+    }
+  );
+
+  /**
+   * `LnRewardLocker` has a special Init function that must be called by admin first.
+   *
+   * TODO: change to use setters or address cache instead
+   */
+  await lnRewardLocker.connect(admin).Init(
+    lnRewardSystem.address // _feeSysAddr
+  );
+
   return {
     linaToken,
     linaTokenProxy,
@@ -341,7 +341,7 @@ export const deployLinearStack = async (
     lnCollateralSystem,
     lnConfig,
     lnDebtSystem,
-    lnFeeSystem,
     lnRewardLocker,
+    lnRewardSystem,
   };
 };
