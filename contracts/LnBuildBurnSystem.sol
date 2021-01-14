@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./LnAdmin.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
@@ -13,7 +13,7 @@ import "./interfaces/ILnCollateralSystem.sol";
 import "./interfaces/ILnConfig.sol";
 
 // 根据 LnCollateralSystem 的抵押资产计算相关抵押率，buildable lusd
-contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
+contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
@@ -27,7 +27,9 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     ILnConfig private mConfig;
 
     // -------------------------------------------------------
-    constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
+    function __LnBuildBurnSystem_init(address admin, address _lUSDTokenAddr) public initializer {
+        __LnAdminUpgradeable_init(admin);
+
         lUSDToken = ILnAsset(_lUSDTokenAddr);
     }
 
@@ -160,4 +162,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         _burnAsset(user, needBurn);
         return true;
     }
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[45] private __gap;
 }

@@ -7,9 +7,10 @@ import "./interfaces/ILnAsset.sol";
 import "./interfaces/ILnAddressStorage.sol";
 import "./interfaces/ILnPrices.sol";
 import "./interfaces/ILnConfig.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 
-contract LnExchangeSystem is LnAddressCache, LnAdmin {
+contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
@@ -23,7 +24,9 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     ILnConfig mConfig;
     address mRewardSys;
 
-    constructor(address _admin) public LnAdmin(_admin) {}
+    function __LnExchangeSystem_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+    }
 
     function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
         mAssets = ILnAddressStorage(_addressStorage.getAddressWithRequire(ASSETS_KEY, ""));
@@ -92,4 +95,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
         uint destRecived,
         uint fee
     );
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[46] private __gap;
 }

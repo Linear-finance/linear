@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 // example:
 //LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
 //require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
 
 // contract access control
-contract LnAccessControl is AccessControl {
+contract LnAccessControl is AccessControlUpgradeable {
     // -------------------------------------------------------
     // role type
     bytes32 public constant ISSUE_ASSET_ROLE = ("ISSUE_ASSET"); //keccak256
@@ -17,7 +17,7 @@ contract LnAccessControl is AccessControl {
     bytes32 public constant DEBT_SYSTEM = ("LnDebtSystem");
 
     // -------------------------------------------------------
-    constructor(address admin) public {
+    function __LnAccessControl_init(address admin) public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
@@ -77,4 +77,7 @@ contract LnAccessControl is AccessControl {
     function SetDebtSystemRole(address[] calldata _address, bool[] calldata _setTo) public {
         _setRoles(DEBT_SYSTEM, _address, _setTo);
     }
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[50] private __gap;
 }

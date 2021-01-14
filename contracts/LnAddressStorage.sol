@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./LnAdmin.sol";
 import "./interfaces/ILnAddressStorage.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
 
-contract LnAddressStorage is LnAdmin, ILnAddressStorage {
+contract LnAddressStorage is LnAdminUpgradeable, ILnAddressStorage {
     mapping(bytes32 => address) public mAddrs;
 
-    constructor(address _admin) public LnAdmin(_admin) {}
+    function __LnAddressStorage_init(address _admin) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+    }
 
     function updateAll(bytes32[] calldata names, address[] calldata destinations) external override onlyAdmin {
         require(names.length == destinations.length, "Input lengths must match");
@@ -36,4 +38,7 @@ contract LnAddressStorage is LnAdmin, ILnAddressStorage {
     }
 
     event StorageAddressUpdated(bytes32 name, address addr);
+
+    // Reserved storage space to allow for layout changes in the future.
+    uint256[49] private __gap;
 }

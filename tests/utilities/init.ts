@@ -104,30 +104,56 @@ export const deployLinearStack = async (
    * - An asset registry for recording all synthetic assets
    * - A contract address registry for service discovery
    */
-  const lnAssetSystem = await LnAssetSystem.deploy(
-    admin.address // _admin
+  const lnAssetSystem = await upgrades.deployProxy(
+    LnAssetSystem,
+    [
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnAssetSystem_init",
+    }
   );
 
   /**
    * The contract for controlling issuance and burning of synthetic assets
    */
-  const lnBuildBurnSystem = await LnBuildBurnSystem.deploy(
-    admin.address, // admin
-    zeroAddress // _lUSDTokenAddr
+  const lnBuildBurnSystem = await upgrades.deployProxy(
+    LnBuildBurnSystem,
+    [
+      admin.address, // admin
+      zeroAddress, // _lUSDTokenAddr
+    ],
+    {
+      initializer: "__LnBuildBurnSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
   );
 
   /**
    * A contract for storing configuration values
    */
-  const lnConfig = await LnConfig.deploy(
-    admin.address // _admin
+  const lnConfig = await upgrades.deployProxy(
+    LnConfig,
+    [
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnConfig_init",
+    }
   );
 
   /**
    * A contract for role-based access control
    */
-  const lnAccessControl = await LnAccessControl.deploy(
-    admin.address // admin
+  const lnAccessControl = await upgrades.deployProxy(
+    LnAccessControl,
+    [
+      admin.address, // admin
+    ],
+    {
+      initializer: "__LnAccessControl_init",
+      unsafeAllowCustomTypes: true,
+    }
   );
 
   /**
