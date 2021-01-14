@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./interfaces/IAsset.sol";
-import "./LnAssetUpgradeable.sol";
+import "./interfaces/ILnAsset.sol";
 import "./interfaces/ILnPrices.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
@@ -12,12 +11,12 @@ contract LnAssetSystem is LnAddressStorage {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
-    IAsset[] public mAssetList; // 合约地址数组
+    ILnAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
 
     constructor(address _admin ) public LnAddressStorage(_admin ) {}
 
-    function addAsset( IAsset asset ) external onlyAdmin {
+    function addAsset( ILnAsset asset ) external onlyAdmin {
         bytes32 name = asset.keyName();
 
         require(mAddrs[name] == address(0), "Asset already exists");
@@ -62,7 +61,7 @@ contract LnAssetSystem is LnAddressStorage {
         ILnPrices priceGetter = ILnPrices( mAddrs["LnPrices"] ); //getAddress
         for (uint256 i=0; i< mAssetList.length; i++) {
             uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            rTotal = rTotal.add( LnAssetUpgradeable(address(mAssetList[i])).totalSupply().multiplyDecimal(exchangeRate) );
+            rTotal = rTotal.add( mAssetList[i].totalSupply().multiplyDecimal(exchangeRate) );
         }
     }
 
