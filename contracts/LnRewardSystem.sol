@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
+import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./interfaces/ILnCollateralSystem.sol";
 import "./interfaces/ILnRewardLocker.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @title LnRewardSystem
@@ -19,6 +20,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  * Period ID starts from 1, not zero.
  */
 contract LnRewardSystem is LnAdminUpgradeable {
+    using ECDSAUpgradeable for bytes32;
     using SafeMathUpgradeable for uint256;
 
     event RewardSignerChanged(address oldSigner, address newSigner);
@@ -105,11 +107,9 @@ contract LnRewardSystem is LnAdminUpgradeable {
         uint256 periodId,
         uint256 stakingReward,
         uint256 feeReward,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external {
-        _claimReward(periodId, msg.sender, stakingReward, feeReward, v, r, s);
+        _claimReward(periodId, msg.sender, stakingReward, feeReward, signature);
     }
 
     function claimRewardFor(
@@ -117,11 +117,9 @@ contract LnRewardSystem is LnAdminUpgradeable {
         address recipient,
         uint256 stakingReward,
         uint256 feeReward,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) external {
-        _claimReward(periodId, recipient, stakingReward, feeReward, v, r, s);
+        _claimReward(periodId, recipient, stakingReward, feeReward, signature);
     }
 
     function _setRewardSigner(address _rewardSigner) private {
@@ -139,9 +137,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
         address recipient,
         uint256 stakingReward,
         uint256 feeReward,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes calldata signature
     ) private {
         require(periodId > 0, "LnRewardSystem: period ID must be positive");
         require(stakingReward > 0 || feeReward > 0, "LnRewardSystem: nothing to claim");
@@ -170,7 +166,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
                     keccak256(abi.encode(REWARD_TYPEHASH, periodId, recipient, stakingReward, feeReward))
                 )
             );
-        address recoveredAddress = ecrecover(digest, v, r, s);
+        address recoveredAddress = digest.recover(signature);
         require(recoveredAddress == rewardSigner, "LnRewardSystem: invalid signature");
 
         if (stakingReward > 0) {
