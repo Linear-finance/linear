@@ -4,7 +4,7 @@ pragma solidity ^0.6.12;
 import "./LnAddressCache.sol";
 import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
-import "./LnPrices.sol";
+import "./interfaces/ILnPrices.sol";
 import "./LnConfig.sol";
 
 contract LnExchangeSystem is LnAddressCache, LnAdmin {
@@ -18,7 +18,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
 
 
     LnAssetSystem mAssets;
-    LnPrices mPrices;
+    ILnPrices mPrices;
     LnConfig mConfig;
     address mRewardSys;
 
@@ -30,7 +30,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
         mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
-        mPrices = LnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
+        mPrices = ILnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
         mConfig = LnConfig(_addressStorage.getAddressWithRequire( CONFIG_KEY,"" ));
         mRewardSys = _addressStorage.getAddressWithRequire( REWARD_SYS_KEY,"" );
 
