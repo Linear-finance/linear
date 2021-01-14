@@ -8,7 +8,7 @@ import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnAsset.sol";
-import "./LnDebtSystem.sol";
+import "./interfaces/ILnDebtSystem.sol";
 import "./LnCollateralSystem.sol";
 import "./LnConfig.sol";
 
@@ -21,7 +21,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     // need set before system running value.
     ILnAsset private lUSDToken; // this contract need 
 
-    LnDebtSystem private debtSystem;
+    ILnDebtSystem private debtSystem;
     ILnPrices private priceGetter;
     LnCollateralSystem private collaterSys;
     LnConfig private mConfig;
@@ -41,7 +41,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         priceGetter =    ILnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
-        debtSystem = LnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
+        debtSystem = ILnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
         collaterSys = LnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
-import "./LnDebtSystem.sol";
+import "./interfaces/ILnDebtSystem.sol";
 import "./LnBuildBurnSystem.sol";
 import "./LnConfig.sol";
 import "./LnRewardLocker.sol";
@@ -24,7 +24,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     // -------------------------------------------------------
     // need set before system running value.
     ILnPrices public priceGetter;
-    LnDebtSystem public debtSystem;
+    ILnDebtSystem public debtSystem;
     LnBuildBurnSystem public buildBurnSystem;
     LnConfig public mConfig;
     LnRewardLocker public mRewardLocker;
@@ -68,7 +68,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         priceGetter =     ILnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
-        debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
+        debtSystem =      ILnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
         buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
         mConfig =         LnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
         mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
