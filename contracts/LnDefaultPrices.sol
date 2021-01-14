@@ -2,8 +2,7 @@
 pragma solidity ^0.6.0;
 
 import "./upgradeable/LnAdminUpgradeable.sol";
-import "./LnPrices.sol";
-
+import "./LnBasePrices.sol";
 import "./SafeDecimalMath.sol";
 
 contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {

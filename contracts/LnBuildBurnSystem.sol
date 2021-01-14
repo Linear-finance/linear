@@ -5,7 +5,7 @@ import "./LnAdmin.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./SafeDecimalMath.sol";
-import "./LnPrices.sol";
+import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./LnAssetUpgradeable.sol";
 import "./LnAssetSystem.sol";
@@ -24,7 +24,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     LnDebtSystem private debtSystem;
     LnAssetSystem private assetSys;
-    LnPrices private priceGetter;
+    ILnPrices private priceGetter;
     LnCollateralSystem private collaterSys;
     LnConfig private mConfig;
     // -------------------------------------------------------
@@ -42,7 +42,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
     {
-        priceGetter =    LnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
+        priceGetter =    ILnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
         debtSystem = LnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
         assetSys =  LnAssetSystem( _addressStorage.getAddressWithRequire( "LnAssetSystem","LnAssetSystem address not valid" ) );
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
