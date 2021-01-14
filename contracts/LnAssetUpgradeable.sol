@@ -2,7 +2,6 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "./interfaces/IAsset.sol";
 import "./interfaces/ILnAccessControl.sol";
 import "./LnAddressCache.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
@@ -12,7 +11,7 @@ import "./upgradeable/LnAdminUpgradeable.sol";
  *
  * @dev This is an upgradeable version of `LnAsset`.
  */
-contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnAddressCache {
+contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, LnAddressCache {
     bytes32 mKeyName;
     ILnAccessControl accessCtrl;
 
@@ -37,7 +36,7 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnA
         mKeyName = _key;
     }
 
-    function keyName() external view override returns (bytes32) {
+    function keyName() external view returns (bytes32) {
         return mKeyName;
     }
 
