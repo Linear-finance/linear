@@ -2,7 +2,6 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 // example:
 //LnAccessControl accessCtrl = LnAccessControl(addressStorage.getAddress("LnAccessControl"));
@@ -10,8 +9,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 // contract access control
 contract LnAccessControl is AccessControl {
-    using Address for address;
-
     // -------------------------------------------------------
     // role type
     bytes32 public constant ISSUE_ASSET_ROLE = ("ISSUE_ASSET"); //keccak256

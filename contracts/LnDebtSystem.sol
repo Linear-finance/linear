@@ -3,17 +3,14 @@ pragma solidity ^0.6.12;
 
 import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
 import "./LnAddressCache.sol";
 import "./LnAccessControl.sol";
 import "./LnAssetSystem.sol";
-import "./LnConfig.sol";
 
 contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
-    using Address for address;
 
     // -------------------------------------------------------
     // need set before system running value.
