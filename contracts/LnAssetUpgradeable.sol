@@ -2,7 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "./IAsset.sol";
+import "./interfaces/IAsset.sol";
 import "./LnAccessControl.sol";
 import "./LnAddressCache.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./IAsset.sol";
+import "./interfaces/IAsset.sol";
 import "./LnAssetUpgradeable.sol";
 import "./LnPrices.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
