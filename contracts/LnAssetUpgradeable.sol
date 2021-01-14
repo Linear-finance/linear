@@ -3,7 +3,7 @@ pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "./interfaces/IAsset.sol";
-import "./LnAccessControl.sol";
+import "./interfaces/ILnAccessControl.sol";
 import "./LnAddressCache.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 
@@ -14,7 +14,7 @@ import "./upgradeable/LnAdminUpgradeable.sol";
  */
 contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnAddressCache {
     bytes32 mKeyName;
-    LnAccessControl accessCtrl;
+    ILnAccessControl accessCtrl;
 
     modifier onlyIssueAssetRole(address _address) {
         require(accessCtrl.hasRole(accessCtrl.ISSUE_ASSET_ROLE(), _address), "Need issue access role");
@@ -42,7 +42,7 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnA
     }
 
     function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
-        accessCtrl = LnAccessControl(
+        accessCtrl = ILnAccessControl(
             _addressStorage.getAddressWithRequire("LnAccessControl", "LnAccessControl address not valid")
         );
 
