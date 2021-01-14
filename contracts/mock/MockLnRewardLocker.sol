@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
-import "../interfaces/ILnRewardLocker.sol";
-
 /**
  * @title MockLnRewardLocker
  *
  * @dev A mock LnRewardLocker contract for testing. We wouldn't need this
  * contract if Hardhat supported Waffle's `calledOnContractWith` on mocks.
  */
-contract MockLnRewardLocker is ILnRewardLocker {
+contract MockLnRewardLocker {
     struct AppendRewardArgs {
         address _user;
         uint256 _amount;
@@ -35,7 +33,7 @@ contract MockLnRewardLocker is ILnRewardLocker {
         address _user,
         uint256 _amount,
         uint64 _lockTo
-    ) external override {
+    ) external {
         appendRewardCalls.push(AppendRewardArgs({_user: _user, _amount: _amount, _lockTo: _lockTo}));
     }
 }

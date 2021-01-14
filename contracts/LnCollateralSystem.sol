@@ -10,9 +10,8 @@ import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnDebtSystem.sol";
-import "./LnBuildBurnSystem.sol";
 import "./interfaces/ILnConfig.sol";
-import "./LnRewardLocker.sol";
+import "./interfaces/ILnRewardLocker.sol";
 
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
@@ -25,9 +24,8 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     // need set before system running value.
     ILnPrices public priceGetter;
     ILnDebtSystem public debtSystem;
-    LnBuildBurnSystem public buildBurnSystem;
     ILnConfig public mConfig;
-    LnRewardLocker public mRewardLocker;
+    ILnRewardLocker public mRewardLocker;
 
     bytes32 constant public Currency_ETH = "ETH";
     bytes32 constant public Currency_LINA = "LINA";
@@ -69,13 +67,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     {
         priceGetter =     ILnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
         debtSystem =      ILnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));
-        buildBurnSystem = LnBuildBurnSystem(_addressStorage.getAddressWithRequire( "LnBuildBurnSystem", "LnBuildBurnSystem address not valid" ));
         mConfig =         ILnConfig(         _addressStorage.getAddressWithRequire( "LnConfig",          "LnConfig address not valid" ) );
-        mRewardLocker =   LnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
+        mRewardLocker =   ILnRewardLocker(   _addressStorage.getAddressWithRequire( "LnRewardLocker",    "LnRewardLocker address not valid" ));
 
         emit CachedAddressUpdated( "LnPrices",          address(priceGetter) );
         emit CachedAddressUpdated( "LnDebtSystem",      address(debtSystem) );
-        emit CachedAddressUpdated( "LnBuildBurnSystem", address(buildBurnSystem) );
         emit CachedAddressUpdated( "LnConfig",          address(mConfig) );
         emit CachedAddressUpdated( "LnRewardLocker",    address(mRewardLocker) );
     }
@@ -350,5 +346,5 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[41] private __gap;
+    uint256[42] private __gap;
 }
