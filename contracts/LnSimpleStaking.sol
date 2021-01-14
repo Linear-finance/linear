@@ -3,12 +3,9 @@ pragma solidity ^0.6.12;
 
 import "./IERC20.sol";
 import "./LnAdmin.sol";
-import "./LnOperatorModifier.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./LnAccessControl.sol";
 import "./LnLinearStaking.sol";
-import "./SafeDecimalMath.sol";
 
 contract LnRewardCalculator {
     using SafeMath for uint256;
@@ -245,9 +242,6 @@ contract LnSimpleStaking is
     ILinearStaking,
     LnRewardCalculator
 {
-    using SafeMath for uint256;
-    using SafeDecimalMath for uint256;
-
     IERC20 public linaToken; // lina token proxy address
     LnLinearStakingStorage public stakingStorage;
     uint256 public mEndBlock;
@@ -652,9 +646,6 @@ contract LnSimpleStakingExtension is
     ILinearStaking,
     LnRewardCalculator
 {
-    using SafeMath for uint256;
-    using SafeDecimalMath for uint256;
-
     IERC20 public linaToken; // lina token proxy address
     uint256 public mEndBlock;
 
@@ -998,9 +989,6 @@ contract LnSimpleStakingNew is
     ILinearStaking,
     LnRewardCalculator
 {
-    using SafeMath for uint256;
-    using SafeDecimalMath for uint256;
-
     IERC20 public linaToken; // lina token proxy address
     LnSimpleStaking public simpleStaking;
     uint256 public mEndBlock;

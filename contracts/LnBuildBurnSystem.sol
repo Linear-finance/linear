@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
-import "./IERC20.sol";
 import "./LnAdmin.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "./SafeDecimalMath.sol";
 import "./LnPrices.sol";
 import "./LnAddressCache.sol";
@@ -19,7 +17,6 @@ import "./LnConfig.sol";
 contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
-    using Address for address;
 
     // -------------------------------------------------------
     // need set before system running value.

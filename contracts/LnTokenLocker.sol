@@ -3,10 +3,8 @@ pragma solidity ^0.6.12;
 
 import "./IERC20.sol";
 import "./LnAdmin.sol";
-import "./SafeDecimalMath.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 // approve
 contract LnTokenLocker is LnAdmin, Pausable {
