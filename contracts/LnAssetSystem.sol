@@ -6,6 +6,7 @@ import "./LnAssetUpgradeable.sol";
 import "./interfaces/ILnPrices.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
+import "./LnAddressStorage.sol";
 
 contract LnAssetSystem is LnAddressStorage {
     using SafeMath for uint;

@@ -65,7 +65,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
     // ------------------ system config ----------------------
-    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         priceGetter =     ILnPrices(         _addressStorage.getAddressWithRequire( "LnPrices",          "LnPrices address not valid" ));
         debtSystem =      LnDebtSystem(     _addressStorage.getAddressWithRequire( "LnDebtSystem",      "LnDebtSystem address not valid" ));

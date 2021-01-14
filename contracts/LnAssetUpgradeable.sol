@@ -41,7 +41,7 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, IAsset, LnA
         return mKeyName;
     }
 
-    function updateAddressCache(LnAddressStorage _addressStorage) public override onlyAdmin {
+    function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
         accessCtrl = LnAccessControl(
             _addressStorage.getAddressWithRequire("LnAccessControl", "LnAccessControl address not valid")
         );
