@@ -12,8 +12,6 @@ import { expandTo18Decimals, zeroAddress } from ".";
 
 export interface DeployedStack {
   linaToken: Contract;
-  linaTokenProxy: Contract;
-  linaTokenStorage: Contract;
   lusdToken: Contract;
   lnAccessControl: Contract;
   lnAssetSystem: Contract;
@@ -59,10 +57,8 @@ export const deployLinearStack = async (
     LnAssetUpgradeable,
     LnCollateralSystem,
     LnConfig,
-    LnProxyERC20,
     LnRewardLocker,
     LnRewardSystem,
-    LnTokenStorage,
   ] = await Promise.all(
     [
       "LinearFinance",
@@ -71,10 +67,8 @@ export const deployLinearStack = async (
       "LnAssetUpgradeable",
       "LnCollateralSystem",
       "LnConfig",
-      "LnProxyERC20",
       "LnRewardLocker",
       "LnRewardSystem",
-      "LnTokenStorage",
     ].map((contractName) => ethers.getContractFactory(contractName, deployer))
   );
 
@@ -93,28 +87,17 @@ export const deployLinearStack = async (
   );
 
   /**
-   * Deploy proxy, logic and storage contracts for LINA token and hook
-   * them up.
-   *
-   * NOTE: these contracts follow the "call-style" proxy pattern, which
-   * is no longer used in the system. However, we're keeping it this way
-   * to mimic what's deployed on mainnet.
+   * LINA token contract
    */
-  const linaTokenProxy: Contract = await LnProxyERC20.deploy(
-    admin.address // _admin
+  const linaToken: Contract = await upgrades.deployProxy(
+    LinearFinance,
+    [
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LinearFinance_init",
+    }
   );
-  const linaTokenStorage: Contract = await LnTokenStorage.deploy(
-    admin.address, // _admin
-    zeroAddress // _operator
-  );
-  const linaToken: Contract = await LinearFinance.deploy(
-    linaTokenProxy.address, // _proxy
-    linaTokenStorage.address, // _tokenStorage
-    admin.address, // _admin
-    0 // _totalSupply
-  );
-  await linaTokenProxy.connect(admin).setTarget(linaToken.address);
-  await linaTokenStorage.connect(admin).setOperator(linaToken.address);
 
   /**
    * This contract serves two purposes:
@@ -191,7 +174,7 @@ export const deployLinearStack = async (
     LnRewardLocker,
     [
       admin.address, // _admin
-      linaTokenProxy.address, // linaAddress
+      linaToken.address, // linaAddress
     ],
     {
       initializer: "__LnRewardLocker_init",
@@ -296,7 +279,7 @@ export const deployLinearStack = async (
    */
   await lnCollateralSystem.connect(admin).UpdateTokenInfo(
     ethers.utils.formatBytes32String("LINA"), // _currency
-    linaTokenProxy.address, // _tokenAddr
+    linaToken.address, // _tokenAddr
     expandTo18Decimals(1), // _minCollateral
     false // _close
   );
@@ -331,8 +314,6 @@ export const deployLinearStack = async (
 
   return {
     linaToken,
-    linaTokenProxy,
-    linaTokenStorage,
     lusdToken,
     lnAccessControl,
     lnAssetSystem,
