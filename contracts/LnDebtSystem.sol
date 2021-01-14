@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnAccessControl.sol";
-import "./LnAssetSystem.sol";
+import "./interfaces/ILnAssetSystem.sol";
 
 contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint;
@@ -15,7 +15,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     // -------------------------------------------------------
     // need set before system running value.
     ILnAccessControl private accessCtrl;
-    LnAssetSystem private assetSys;
+    ILnAssetSystem private assetSys;
     // -------------------------------------------------------
     struct DebtData {
         uint256 debtProportion;
@@ -45,7 +45,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         accessCtrl = ILnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
-        assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
+        assetSys =   ILnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));
 
         emit CachedAddressUpdated( "LnAccessControl", address(accessCtrl) );
         emit CachedAddressUpdated( "LnAssetSystem",   address(assetSys) );
