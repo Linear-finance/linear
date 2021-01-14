@@ -9,7 +9,7 @@ import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
 import "./interfaces/ILnAsset.sol";
 import "./interfaces/ILnDebtSystem.sol";
-import "./LnCollateralSystem.sol";
+import "./interfaces/ILnCollateralSystem.sol";
 import "./LnConfig.sol";
 
 // 根据 LnCollateralSystem 的抵押资产计算相关抵押率，buildable lusd
@@ -23,7 +23,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
 
     ILnDebtSystem private debtSystem;
     ILnPrices private priceGetter;
-    LnCollateralSystem private collaterSys;
+    ILnCollateralSystem private collaterSys;
     LnConfig private mConfig;
     // -------------------------------------------------------
     constructor(address admin, address _lUSDTokenAddr) public LnAdmin(admin) {
@@ -43,7 +43,7 @@ contract LnBuildBurnSystem is LnAdmin, Pausable, LnAddressCache {
         priceGetter =    ILnPrices( _addressStorage.getAddressWithRequire( "LnPrices",     "LnPrices address not valid" ) );
         debtSystem = ILnDebtSystem( _addressStorage.getAddressWithRequire( "LnDebtSystem", "LnDebtSystem address not valid" ) );
         address payable collateralAddress = payable(_addressStorage.getAddressWithRequire( "LnCollateralSystem","LnCollateralSystem address not valid" ));
-        collaterSys = LnCollateralSystem( collateralAddress );
+        collaterSys = ILnCollateralSystem( collateralAddress );
         mConfig =        LnConfig( _addressStorage.getAddressWithRequire( "LnConfig",     "LnConfig address not valid" ) );
 
         emit CachedAddressUpdated( "LnPrices",           address(priceGetter) );
