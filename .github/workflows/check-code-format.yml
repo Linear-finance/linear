@@ -1,0 +1,27 @@
+name: Check Code Format
+
+on:
+  push:
+    branches:
+      - "master"
+
+  pull_request:
+    branches:
+      - "master"
+
+jobs:
+  validate-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Source Code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Validate Format of Contracts
+        run: yarn prettier --check ./contracts/
+
+      - name: Validate Format of Tests
+        run: yarn prettier --check ./tests/
