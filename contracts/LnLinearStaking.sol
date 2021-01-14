@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./LnAdmin.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./LnAccessControl.sol";
+import "./interfaces/ILnAccessControl.sol";
 
 interface ILinearStaking {
     function staking(uint256 amount) external returns (bool);
@@ -17,7 +17,7 @@ interface ILinearStaking {
 contract LnLinearStakingStorage is LnAdmin {
     using SafeMath for uint256;
 
-    LnAccessControl public accessCtrl;
+    ILnAccessControl public accessCtrl;
 
     bytes32 public constant DATA_ACCESS_ROLE = "LinearStakingStorage";
 
@@ -35,7 +35,7 @@ contract LnLinearStakingStorage is LnAdmin {
     uint256 public weekRewardAmount = 18750000e18;
 
     constructor(address _admin, address _accessCtrl) public LnAdmin(_admin) {
-        accessCtrl = LnAccessControl(_accessCtrl);
+        accessCtrl = ILnAccessControl(_accessCtrl);
     }
 
     modifier OnlyLinearStakingStorageRole(address _address) {
@@ -44,7 +44,7 @@ contract LnLinearStakingStorage is LnAdmin {
     }
 
     function setAccessControl(address _accessCtrl) external onlyAdmin {
-        accessCtrl = LnAccessControl(_accessCtrl);
+        accessCtrl = ILnAccessControl(_accessCtrl);
     }
 
     function weekTotalStaking() public view returns (uint256[] memory) {
