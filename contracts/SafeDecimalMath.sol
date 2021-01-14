@@ -23,7 +23,6 @@ library SafeDecimalMath {
     }
 
     function multiplyDecimal(uint x, uint y) internal pure returns (uint) {
-        
         return x.mul(y) / UNIT;
     }
 
@@ -32,7 +31,6 @@ library SafeDecimalMath {
         uint y,
         uint precisionUnit
     ) private pure returns (uint) {
-        
         uint quotientTimesTen = x.mul(y) / (precisionUnit / 10);
 
         if (quotientTimesTen % 10 >= 5) {
@@ -51,7 +49,6 @@ library SafeDecimalMath {
     }
 
     function divideDecimal(uint x, uint y) internal pure returns (uint) {
-        
         return x.mul(UNIT).div(y);
     }
 
@@ -91,4 +88,3 @@ library SafeDecimalMath {
         return quotientTimesTen / 10;
     }
 }
-

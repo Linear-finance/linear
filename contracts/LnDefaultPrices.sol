@@ -54,27 +54,40 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
         return (priceAndTime.mPrice, priceAndTime.mTime);
     }
 
-    function exchange( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view override returns (uint value) {
+    function exchange(
+        bytes32 sourceName,
+        uint sourceAmount,
+        bytes32 destName
+    ) external view override returns (uint value) {
         (value, , ) = _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
 
-    function exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) external view override
-        returns (uint value, uint sourcePrice, uint destPrice )
+    function exchangeAndPrices(
+        bytes32 sourceName,
+        uint sourceAmount,
+        bytes32 destName
+    )
+        external
+        view
+        override
+        returns (
+            uint value,
+            uint sourcePrice,
+            uint destPrice
+        )
     {
         return _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
 
     function isStale(bytes32 currencyName) external view override returns (bool) {
-        if (currencyName == LUSD ) return false;
+        if (currencyName == LUSD) return false;
         return _getUpdatedTime(currencyName).add(stalePeriod) < now;
     }
-
 
     /* functions */
     function getCurrentRoundId(bytes32 currencyName) external view returns (uint) {
         return mPricesLastRound[currencyName];
     }
-
 
     function setOracle(address _oracle) external onlyAdmin {
         oracle = _oracle;
@@ -87,13 +100,16 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
     }
 
     // 外部调用，更新汇率 oracle是一个地址，从外部用脚本定期调用这个接口
-    function updateAll( bytes32[] calldata currencyNames, uint[] calldata newPrices, uint timeSent ) external onlyOracle returns (bool) {
+    function updateAll(
+        bytes32[] calldata currencyNames,
+        uint[] calldata newPrices,
+        uint timeSent
+    ) external onlyOracle returns (bool) {
         _updateAll(currencyNames, newPrices, timeSent);
     }
 
-    
     function deletePrice(bytes32 currencyName) external onlyOracle {
-        require( _getPrice(currencyName) > 0, "price is zero");
+        require(_getPrice(currencyName) > 0, "price is zero");
 
         delete mPricesStorage[currencyName][mPricesLastRound[currencyName]];
 
@@ -102,16 +118,24 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
         emit PriceDeleted(currencyName);
     }
 
-
-    function _setPrice( bytes32 currencyName, uint256 price, uint256 time ) internal {
+    function _setPrice(
+        bytes32 currencyName,
+        uint256 price,
+        uint256 time
+    ) internal {
         // start from 1
         mPricesLastRound[currencyName]++;
-        mPricesStorage[currencyName][mPricesLastRound[currencyName]] = 
-            PriceData({ mPrice: uint216(price), mTime: uint40(time) });
+        mPricesStorage[currencyName][mPricesLastRound[currencyName]] = PriceData({
+            mPrice: uint216(price),
+            mTime: uint40(time)
+        });
     }
 
-
-    function _updateAll( bytes32[] memory currencyNames, uint[] memory newPrices, uint timeSent ) internal returns (bool) {
+    function _updateAll(
+        bytes32[] memory currencyNames,
+        uint[] memory newPrices,
+        uint timeSent
+    ) internal returns (bool) {
         require(currencyNames.length == newPrices.length, "array length error, not match.");
         require(timeSent < (now + ORACLE_TIME_LIMIT), "Time error");
 
@@ -133,23 +157,32 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
         return true;
     }
 
-
     function _getPriceData(bytes32 currencyName) internal view virtual returns (PriceData memory) {
         return mPricesStorage[currencyName][mPricesLastRound[currencyName]];
     }
 
-     function _getPrice(bytes32 currencyName ) internal view returns (uint256) {
+    function _getPrice(bytes32 currencyName) internal view returns (uint256) {
         PriceData memory priceAndTime = _getPriceData(currencyName);
         return priceAndTime.mPrice;
     }
 
-    function _getUpdatedTime(bytes32 currencyName ) internal view returns (uint256) {
+    function _getUpdatedTime(bytes32 currencyName) internal view returns (uint256) {
         PriceData memory priceAndTime = _getPriceData(currencyName);
         return priceAndTime.mTime;
     }
 
-    function _exchangeAndPrices( bytes32 sourceName, uint sourceAmount, bytes32 destName ) internal view 
-        returns ( uint value, uint sourcePrice, uint destPrice )
+    function _exchangeAndPrices(
+        bytes32 sourceName,
+        uint sourceAmount,
+        bytes32 destName
+    )
+        internal
+        view
+        returns (
+            uint value,
+            uint sourcePrice,
+            uint destPrice
+        )
     {
         sourcePrice = _getPrice(sourceName);
         // If there's no change in the currency, then just return the amount they gave us

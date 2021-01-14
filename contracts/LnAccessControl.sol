@@ -15,6 +15,7 @@ contract LnAccessControl is AccessControl {
     bytes32 public constant BURN_ASSET_ROLE = ("BURN_ASSET");
 
     bytes32 public constant DEBT_SYSTEM = ("LnDebtSystem");
+
     // -------------------------------------------------------
     constructor(address admin) public {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
@@ -32,16 +33,24 @@ contract LnAccessControl is AccessControl {
 
     // -------------------------------------------------------
     // this func need admin role. grantRole and revokeRole need admin role
-    function SetRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) external {
+    function SetRoles(
+        bytes32 roleType,
+        address[] calldata addresses,
+        bool[] calldata setTo
+    ) external {
         require(IsAdmin(msg.sender), "Only admin");
 
         _setRoles(roleType, addresses, setTo);
     }
 
-    function _setRoles(bytes32 roleType, address[] calldata addresses, bool[] calldata setTo) private {
+    function _setRoles(
+        bytes32 roleType,
+        address[] calldata addresses,
+        bool[] calldata setTo
+    ) private {
         require(addresses.length == setTo.length, "parameter address length not eq");
 
-        for (uint256 i=0; i < addresses.length; i++) {
+        for (uint256 i = 0; i < addresses.length; i++) {
             //require(addresses[i].isContract(), "Role address need contract only");
             if (setTo[i]) {
                 grantRole(roleType, addresses[i]);
@@ -63,7 +72,7 @@ contract LnAccessControl is AccessControl {
     function SetBurnAssetRole(address[] calldata burner, bool[] calldata setTo) public {
         _setRoles(BURN_ASSET_ROLE, burner, setTo);
     }
-    
+
     //
     function SetDebtSystemRole(address[] calldata _address, bool[] calldata _setTo) public {
         _setRoles(DEBT_SYSTEM, _address, _setTo);

@@ -14,22 +14,21 @@ contract LnAdmin {
     function setCandidate(address _candidate) external onlyAdmin {
         address old = candidate;
         candidate = _candidate;
-        emit CandidateChanged( old, candidate);
+        emit CandidateChanged(old, candidate);
     }
 
-    function becomeAdmin( ) external {
-        require( msg.sender == candidate, "Only candidate can become admin");
+    function becomeAdmin() external {
+        require(msg.sender == candidate, "Only candidate can become admin");
         address old = admin;
         admin = candidate;
-        emit AdminChanged( old, admin ); 
+        emit AdminChanged(old, admin);
     }
 
     modifier onlyAdmin {
-        require( (msg.sender == admin), "Only the contract admin can perform this action");
+        require((msg.sender == admin), "Only the contract admin can perform this action");
         _;
     }
 
-    event CandidateChanged(address oldCandidate, address newCandidate );
+    event CandidateChanged(address oldCandidate, address newCandidate);
     event AdminChanged(address oldAdmin, address newAdmin);
 }
-

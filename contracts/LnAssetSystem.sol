@@ -14,9 +14,9 @@ contract LnAssetSystem is LnAddressStorage {
     ILnAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
 
-    constructor(address _admin ) public LnAddressStorage(_admin ) {}
+    constructor(address _admin) public LnAddressStorage(_admin) {}
 
-    function addAsset( ILnAsset asset ) external onlyAdmin {
+    function addAsset(ILnAsset asset) external onlyAdmin {
         bytes32 name = asset.keyName();
 
         require(mAddrs[name] == address(0), "Asset already exists");
@@ -32,7 +32,7 @@ contract LnAssetSystem is LnAddressStorage {
     function removeAsset(bytes32 name) external onlyAdmin {
         address assetToRemove = address(mAddrs[name]);
 
-        require( assetToRemove != address(0), "asset does not exist");
+        require(assetToRemove != address(0), "asset does not exist");
 
         // Remove from list
         for (uint i = 0; i < mAssetList.length; i++) {
@@ -45,7 +45,7 @@ contract LnAssetSystem is LnAddressStorage {
         }
 
         // And remove it from the assets mapping
-        delete mAddress2Names[ assetToRemove ];
+        delete mAddress2Names[assetToRemove];
         delete mAddrs[name];
 
         emit AssetRemoved(name, assetToRemove);
@@ -58,16 +58,16 @@ contract LnAssetSystem is LnAddressStorage {
     // check exchange rate invalid condition ? invalid just fail.
     function totalAssetsInUsd() public view returns (uint256 rTotal) {
         require(mAddrs["LnPrices"] != address(0), "LnPrices address cannot access");
-        ILnPrices priceGetter = ILnPrices( mAddrs["LnPrices"] ); //getAddress
-        for (uint256 i=0; i< mAssetList.length; i++) {
+        ILnPrices priceGetter = ILnPrices(mAddrs["LnPrices"]); //getAddress
+        for (uint256 i = 0; i < mAssetList.length; i++) {
             uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            rTotal = rTotal.add( mAssetList[i].totalSupply().multiplyDecimal(exchangeRate) );
+            rTotal = rTotal.add(mAssetList[i].totalSupply().multiplyDecimal(exchangeRate));
         }
     }
 
-    function getAssetAddresses() external view returns(address[] memory) {
+    function getAssetAddresses() external view returns (address[] memory) {
         address[] memory addr = new address[](mAssetList.length);
-        for (uint256 i=0; i<mAssetList.length; i++) {
+        for (uint256 i = 0; i < mAssetList.length; i++) {
             addr[i] = address(mAssetList[i]);
         }
         return addr;
@@ -76,4 +76,3 @@ contract LnAssetSystem is LnAddressStorage {
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
 }
-
