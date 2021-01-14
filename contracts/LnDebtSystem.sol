@@ -42,7 +42,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     event PushDebtLog(uint256 index, uint256 newFactor, uint256 timestamp);
 
     // ------------------ system config ----------------------
-    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         accessCtrl = LnAccessControl(_addressStorage.getAddressWithRequire( "LnAccessControl", "LnAccessControl address not valid" ));
         assetSys =   LnAssetSystem(  _addressStorage.getAddressWithRequire( "LnAssetSystem",   "LnAssetSystem address not valid" ));

@@ -27,7 +27,7 @@ contract LnExchangeSystem is LnAddressCache, LnAdmin {
     }
 
 
-    function updateAddressCache( LnAddressStorage _addressStorage ) onlyAdmin public override
+    function updateAddressCache( ILnAddressStorage _addressStorage ) onlyAdmin public override
     {
         mAssets = LnAssetSystem(_addressStorage.getAddressWithRequire( ASSETS_KEY,"" ));
         mPrices = ILnPrices(_addressStorage.getAddressWithRequire( PRICES_KEY,"" ));
