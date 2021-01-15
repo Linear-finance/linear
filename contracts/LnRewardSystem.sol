@@ -69,7 +69,12 @@ contract LnRewardSystem is LnAdminUpgradeable {
     ) public initializer {
         __LnAdminUpgradeable_init(_admin);
 
-        require(block.timestamp < _firstPeriodStartTime + PERIOD_LENGTH, "LnRewardSystem: first period already ended");
+        /**
+         * The next line is commented out to make migration from Ethereum to Binance Smart
+         * chain possible.
+         */
+        // require(block.timestamp < _firstPeriodStartTime + PERIOD_LENGTH, "LnRewardSystem: first period already ended");
+
         firstPeriodStartTime = _firstPeriodStartTime;
 
         _setRewardSigner(_rewardSigner);
