@@ -1,0 +1,1332 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "b9d494edca3005eae995e2c36a6d5764f20a716a031227ef5a324865b4428dfe": {
+      "address": "0x2ae9952c1038dA3DafebA026B96053F24CBc03b3",
+      "txHash": "0xd1b786db821810c47a42f2c74709a4fcc7307662b987c19957578f64ccad236c",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_totalSupply",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:41"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:44"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:45"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:312"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "b10aab82b8202a10ecf51e72820d5d8a73c316e28516bab549aed2fa0a05fa42": {
+      "address": "0xB97363f2866c4cbDDCfb68C86B94Cc5b68eaF508",
+      "txHash": "0xbd1d41bb39b8fbebbf515bd67ee57342f21bc61cd44a2f992c0ba71ae6cdb2de",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnAddressStorage",
+            "label": "mAddrs",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "src": "contracts/LnAddressStorage.sol:8"
+          },
+          {
+            "contract": "LnAddressStorage",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts/LnAddressStorage.sol:43"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "mAssetList",
+            "type": "t_array(t_contract(ILnAsset)9851)dyn_storage",
+            "src": "contracts/LnAssetSystem.sol:14"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "mAddress2Names",
+            "type": "t_mapping(t_address,t_bytes32)",
+            "src": "contracts/LnAssetSystem.sol:15"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/LnAssetSystem.sol:83"
+          }
+        ],
+        "types": {
+          "t_array(t_contract(ILnAsset)9851)dyn_storage": {
+            "label": "contract ILnAsset[]"
+          },
+          "t_mapping(t_address,t_bytes32)": {
+            "label": "mapping(address => bytes32)"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "2105c1fb065a2e977ca9bdd325545596b9af9e910c43687cc92d614c73afa6e9": {
+      "address": "0x9cD500b634cB1b93acA1a3D71437CAfD1c2819b5",
+      "txHash": "0xace9ec4f709ae9f1e0b7049d60a14f2c596c805fa5f46378f1e689daf31d51f5",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:28"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:96"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "lUSDToken",
+            "type": "t_contract(ILnAsset)9851",
+            "src": "contracts/LnBuildBurnSystem.sol:22"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "debtSystem",
+            "type": "t_contract(ILnDebtSystem)9919",
+            "src": "contracts/LnBuildBurnSystem.sol:24"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "priceGetter",
+            "type": "t_contract(ILnPrices)9986",
+            "src": "contracts/LnBuildBurnSystem.sol:25"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "collaterSys",
+            "type": "t_contract(ILnCollateralSystem)9883",
+            "src": "contracts/LnBuildBurnSystem.sol:26"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "mConfig",
+            "type": "t_contract(ILnConfig)9898",
+            "src": "contracts/LnBuildBurnSystem.sol:29"
+          },
+          {
+            "contract": "LnBuildBurnSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)45_storage",
+            "src": "contracts/LnBuildBurnSystem.sol:169"
+          }
+        ],
+        "types": {
+          "t_contract(ILnAsset)9851": {
+            "label": "contract ILnAsset"
+          },
+          "t_contract(ILnDebtSystem)9919": {
+            "label": "contract ILnDebtSystem"
+          },
+          "t_contract(ILnPrices)9986": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnCollateralSystem)9883": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnConfig)9898": {
+            "label": "contract ILnConfig"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
+    },
+    "7b04d4fbfee4c558ed36035959550a29d8f6c1372d377197b931003342b1b25b": {
+      "address": "0xfF5d76ecDD6998Fe1e93d15911a9eAF638742E30",
+      "txHash": "0x051af97ac5b857d2920acc9fdd5c5a04b2de0d5fdb6fa8b4b577fed0a11e1074",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnConfig",
+            "label": "mUintConfig",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "src": "contracts/LnConfig.sol:7"
+          },
+          {
+            "contract": "LnConfig",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts/LnConfig.sol:42"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "469d006b51d0ae3c5171603991c88212da523e46b58a4590690e4f4b60e8c0a3": {
+      "address": "0xF579Bf0cB6998cad138dBd7510582c3d1297E6FF",
+      "txHash": "0xf5eafd3732bfe4db57f8020b4340afd26fe0eb4bb4383b2db5c0366965dfe980",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "LnAccessControl",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "contracts/LnAccessControl.sol:82"
+          }
+        ],
+        "types": {
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "9f5b42dabc08e53013e3d4adb70dfbd0378c006bb442a33bfef5441883b1cdcb": {
+      "address": "0xf9684Fca286892Ddf0dd934b31EC3af1DBB31Cb6",
+      "txHash": "0xbd2ce72ea6d5de1731cb307c1eaa0f5b7fc3b71a19ee6ef49168c67fdc174706",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "oracle",
+            "type": "t_address",
+            "src": "contracts/LnDefaultPrices.sol:12"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "stalePeriod",
+            "type": "t_uint256",
+            "src": "contracts/LnDefaultPrices.sol:14"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "mPricesLastRound",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "src": "contracts/LnDefaultPrices.sol:16"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "mPricesStorage",
+            "type": "t_mapping(t_bytes32,t_mapping(t_uint256,t_struct(PriceData)7978_storage))",
+            "src": "contracts/LnDefaultPrices.sol:23"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "__gap",
+            "type": "t_array(t_uint256)46_storage",
+            "src": "contracts/LnDefaultPrices.sol:214"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandOracleMap",
+            "type": "t_mapping(t_bytes32,t_contract(IBandProtocolOracle)9712)",
+            "src": "contracts/LnBandProtocol.sol:12"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandOracleMapKeys",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "src": "contracts/LnBandProtocol.sol:13"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandCurrencyKeys",
+            "type": "t_mapping(t_bytes32,t_string_storage)",
+            "src": "contracts/LnBandProtocol.sol:15"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "__gap",
+            "type": "t_array(t_uint256)47_storage",
+            "src": "contracts/LnBandProtocol.sol:76"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_contract(IBandProtocolOracle)9712)": {
+            "label": "mapping(bytes32 => contract IBandProtocolOracle)"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_mapping(t_bytes32,t_string_storage)": {
+            "label": "mapping(bytes32 => string)"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_uint256,t_struct(PriceData)7978_storage))": {
+            "label": "mapping(bytes32 => mapping(uint256 => struct LnDefaultPrices.PriceData))"
+          },
+          "t_array(t_uint256)46_storage": {
+            "label": "uint256[46]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "c05e884ffd86b51dd27834dac635fc5285263244d87aa3c7eb9cc3a19a30a0ba": {
+      "address": "0x0D41af2D0DCBCDD9BC84cd03C70F2E16E0665AEA",
+      "txHash": "0xbdf35ad989d0efe1e48cb94dc1516f6e83458eef4010785cac4f7faecf63e917",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "accessCtrl",
+            "type": "t_contract(ILnAccessControl)9791",
+            "src": "contracts/LnDebtSystem.sol:17"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "assetSys",
+            "type": "t_contract(ILnAssetSystem)9859",
+            "src": "contracts/LnDebtSystem.sol:18"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "userDebtState",
+            "type": "t_mapping(t_address,t_struct(DebtData)7331_storage)",
+            "src": "contracts/LnDebtSystem.sol:24"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "lastDebtFactors",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/LnDebtSystem.sol:27"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "debtCurrentIndex",
+            "type": "t_uint256",
+            "src": "contracts/LnDebtSystem.sol:28"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "lastCloseAt",
+            "type": "t_uint256",
+            "src": "contracts/LnDebtSystem.sol:30"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "lastDeletTo",
+            "type": "t_uint256",
+            "src": "contracts/LnDebtSystem.sol:31"
+          },
+          {
+            "contract": "LnDebtSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)42_storage",
+            "src": "contracts/LnDebtSystem.sol:204"
+          }
+        ],
+        "types": {
+          "t_contract(ILnAccessControl)9791": {
+            "label": "contract ILnAccessControl"
+          },
+          "t_contract(ILnAssetSystem)9859": {
+            "label": "contract ILnAssetSystem"
+          },
+          "t_mapping(t_address,t_struct(DebtData)7331_storage)": {
+            "label": "mapping(address => struct LnDebtSystem.DebtData)"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)42_storage": {
+            "label": "uint256[42]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "d682c382d93135939d47a4d220f0d7a8797f14b57db162efb544aad300eec30e": {
+      "address": "0xAe5a7dE7683eA3282aE67cf355FF60c6086bAfC2",
+      "txHash": "0xb0a9e2b1134fdd558ef35a9321bd45ca16877f40f13c260d38812fb0078218ec",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:28"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:96"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "priceGetter",
+            "type": "t_contract(ILnPrices)9986",
+            "src": "contracts/LnCollateralSystem.sol:27"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "debtSystem",
+            "type": "t_contract(ILnDebtSystem)9919",
+            "src": "contracts/LnCollateralSystem.sol:28"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "mConfig",
+            "type": "t_contract(ILnConfig)9898",
+            "src": "contracts/LnCollateralSystem.sol:30"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "mRewardLocker",
+            "type": "t_contract(ILnRewardLocker)10010",
+            "src": "contracts/LnCollateralSystem.sol:30"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "uniqueId",
+            "type": "t_uint256",
+            "src": "contracts/LnCollateralSystem.sol:37"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "tokenInfos",
+            "type": "t_mapping(t_bytes32,t_struct(TokenInfo)5874_storage)",
+            "src": "contracts/LnCollateralSystem.sol:44"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "tokenSymbol",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "src": "contracts/LnCollateralSystem.sol:47"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "userCollateralData",
+            "type": "t_mapping(t_address,t_mapping(t_bytes32,t_struct(CollateralData)5884_storage))",
+            "src": "contracts/LnCollateralSystem.sol:53"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)42_storage",
+            "src": "contracts/LnCollateralSystem.sol:341"
+          }
+        ],
+        "types": {
+          "t_contract(ILnPrices)9986": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnDebtSystem)9919": {
+            "label": "contract ILnDebtSystem"
+          },
+          "t_contract(ILnConfig)9898": {
+            "label": "contract ILnConfig"
+          },
+          "t_contract(ILnRewardLocker)10010": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_bytes32,t_struct(TokenInfo)5874_storage)": {
+            "label": "mapping(bytes32 => struct LnCollateralSystem.TokenInfo)"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_mapping(t_address,t_mapping(t_bytes32,t_struct(CollateralData)5884_storage))": {
+            "label": "mapping(address => mapping(bytes32 => struct LnCollateralSystem.CollateralData))"
+          },
+          "t_array(t_uint256)42_storage": {
+            "label": "uint256[42]"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
+    },
+    "e493f3e046a81a360e18d252c55242ca04063147e9b4b9c3a01be9724aca8232": {
+      "address": "0x7acCEdF8D106C2668821E74b42fF03996A83C266",
+      "txHash": "0x06dc1e71f24f99c51e3c5d635e532698b7cbd28196e9d3d01d4a861845f1e23f",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "userRewards",
+            "type": "t_mapping(t_address,t_array(t_struct(RewardData)8860_storage)dyn_storage)",
+            "src": "contracts/LnRewardLocker.sol:17"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "balanceOf",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardLocker.sol:18"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "totalNeedToReward",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardLocker.sol:19"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "feeSysAddr",
+            "type": "t_address",
+            "src": "contracts/LnRewardLocker.sol:23"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "linaToken",
+            "type": "t_contract(IERC20)2935",
+            "src": "contracts/LnRewardLocker.sol:24"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "__gap",
+            "type": "t_array(t_uint256)45_storage",
+            "src": "contracts/LnRewardLocker.sol:151"
+          }
+        ],
+        "types": {
+          "t_mapping(t_address,t_array(t_struct(RewardData)8860_storage)dyn_storage)": {
+            "label": "mapping(address => struct LnRewardLocker.RewardData[])"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IERC20)2935": {
+            "label": "contract IERC20"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "6cfbaf77129e855799a490b9bcdde11451b7cbdf27a00e04c910d20624aa3017": {
+      "address": "0x2AdBD412F4cdb731020a21b5A4823600219f73ad",
+      "txHash": "0x6102d3666df59e60c25caccd8ade3020d3da8ed3c5e9649dc9be8e666f68fde9",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_totalSupply",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:41"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:44"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:45"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:312"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnAssetUpgradeable",
+            "label": "mKeyName",
+            "type": "t_bytes32",
+            "src": "contracts/LnAssetUpgradeable.sol:15"
+          },
+          {
+            "contract": "LnAssetUpgradeable",
+            "label": "accessCtrl",
+            "type": "t_contract(ILnAccessControl)9791",
+            "src": "contracts/LnAssetUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAssetUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/LnAssetUpgradeable.sol:60"
+          }
+        ],
+        "types": {
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_contract(ILnAccessControl)9791": {
+            "label": "contract ILnAccessControl"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "d156b3405ccfb158d5f6bc9a2a9ee63ee3b2b1e7fbe7d5911947df233e69c353": {
+      "address": "0xE2aEFe664F383235bb0260eBf35F2642a88D18D9",
+      "txHash": "0x4cc8ca540ebff000440fd541c274b69c5fbf8f8e3e0135cb74319ff7301c06cc",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "firstPeriodStartTime",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardSystem.sol:29"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardSigner",
+            "type": "t_address",
+            "src": "contracts/LnRewardSystem.sol:30"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "userLastClaimPeriodIds",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardSystem.sol:31"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "lusd",
+            "type": "t_contract(IERC20Upgradeable)1321",
+            "src": "contracts/LnRewardSystem.sol:33"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "collateralSystem",
+            "type": "t_contract(ILnCollateralSystem)4482",
+            "src": "contracts/LnRewardSystem.sol:34"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardLocker",
+            "type": "t_contract(ILnRewardLocker)4573",
+            "src": "contracts/LnRewardSystem.sol:35"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnRewardSystem.sol:37"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)43_storage",
+            "src": "contracts/LnRewardSystem.sol:193"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(IERC20Upgradeable)1321": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_contract(ILnCollateralSystem)4482": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnRewardLocker)4573": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)43_storage": {
+            "label": "uint256[43]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "c98346cc8f20b73b950efc6f0e4c86486deeea6b927133eb145e5641e0d2ced6": {
+      "address": "0x6722e333D6e1171f0C36Cb9a1E6B8F40E1D4E42d",
+      "txHash": "0x2d71a9490f6fb209ec3a83a1a9debca8b9285e0cc392a98a7c1025fdd0dd6da7",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "currentChainId",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:75"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "relayer",
+            "type": "t_address",
+            "src": "contracts/LnErc20Bridge.sol:76"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "depositCount",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:77"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenInfos",
+            "type": "t_mapping(t_bytes32,t_struct(TokenInfo)3196_storage)",
+            "src": "contracts/LnErc20Bridge.sol:78"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenSupportedOnChain",
+            "type": "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:79"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "withdrawnDeposits",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:80"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnErc20Bridge.sol:82"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(TokenInfo)3196_storage)": {
+            "label": "mapping(bytes32 => struct LnErc20Bridge.TokenInfo)"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(bytes32 => mapping(uint256 => bool))"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0x528986416f9C49f04D461B0dB3B8584a2D2964D2",
+    "txHash": "0xcc32f3d6f5c2db4f4d598a31d373cec53ac6551b32d792bde1ea1115ed1408ca"
+  }
+}
