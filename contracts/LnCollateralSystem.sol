@@ -331,45 +331,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
-    receive() external payable whenNotPaused {
-        address user = msg.sender;
-        uint256 ethAmount = msg.value;
-        _CollateralEth(user, ethAmount);
-    }
-
-    function _CollateralEth(address user, uint256 ethAmount) internal {
-        require(ethAmount > 0, "ETH amount need more than zero");
-
-        userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.add(ethAmount);
-
-        emit CollateralLog(user, Currency_ETH, ethAmount, userCollateralData[user][Currency_ETH].collateral);
-    }
-
-    // payable eth receive,
-    function CollateralEth() external payable whenNotPaused returns (bool) {
-        address user = msg.sender;
-        uint256 ethAmount = msg.value;
-        _CollateralEth(user, ethAmount);
-        return true;
-    }
-
-    function RedeemETH(uint256 _amount) external whenNotPaused returns (bool) {
-        address payable user = msg.sender;
-        require(_amount <= userCollateralData[user][Currency_ETH].collateral, "Can not redeem more than collateral");
-        require(_amount > 0, "Redeem amount need larger than zero");
-
-        uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-
-        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(Currency_ETH));
-        require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
-
-        userCollateralData[user][Currency_ETH].collateral = userCollateralData[user][Currency_ETH].collateral.sub(_amount);
-        user.transfer(_amount);
-
-        emit RedeemCollateral(user, Currency_ETH, _amount, userCollateralData[user][Currency_ETH].collateral);
-        return true;
-    }
-
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
