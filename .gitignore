@@ -14,4 +14,7 @@ artifacts/
 # OpenZeppelin dev files
 .openzeppelin/unknown-*.json
 
+# Binance Smart Chain
+!.openzeppelin/unknown-56.json
+
 typechain/
