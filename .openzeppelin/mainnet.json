@@ -1427,6 +1427,112 @@
           }
         }
       }
+    },
+    "09cc629a06c2689498f2026125b10e0b840e3f2cfc083e9411a0ebb00c7a9841": {
+      "address": "0xC6182b7f3d23140Ca0e4005E97b2AbfaBA3Ed041",
+      "txHash": "0x8a29f9ab786f228f1a5afd5396a01dcc9bba1ce2cdaf85de6dec5d5e09a9d2b6",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "currentChainId",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:75"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "relayer",
+            "type": "t_address",
+            "src": "contracts/LnErc20Bridge.sol:76"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "depositCount",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:77"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenInfos",
+            "type": "t_mapping(t_bytes32,t_struct(TokenInfo)3196_storage)",
+            "src": "contracts/LnErc20Bridge.sol:78"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenSupportedOnChain",
+            "type": "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:79"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "withdrawnDeposits",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:80"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnErc20Bridge.sol:82"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(TokenInfo)3196_storage)": {
+            "label": "mapping(bytes32 => struct LnErc20Bridge.TokenInfo)"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(bytes32 => mapping(uint256 => bool))"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
