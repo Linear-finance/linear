@@ -270,7 +270,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         uint256 amount
     ) private {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(TRANSFER_SELECTOR, recipient, amount));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "HbtcStakingPool: transfer failed");
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "LnErc20Bridge: transfer failed");
     }
 
     function safeTransferFrom(
@@ -281,6 +281,6 @@ contract LnErc20Bridge is LnAdminUpgradeable {
     ) private {
         (bool success, bytes memory data) =
             token.call(abi.encodeWithSelector(TRANSFERFROM_SELECTOR, sender, recipient, amount));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "HbtcStakingPool: transfer from failed");
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "LnErc20Bridge: transfer from failed");
     }
 }
