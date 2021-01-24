@@ -12,3 +12,6 @@ artifacts/
 
 # OpenZeppelin dev files
 .openzeppelin/unknown-*.json
+
+# Flattened contract sources
+flat/
