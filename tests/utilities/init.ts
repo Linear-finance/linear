@@ -13,6 +13,7 @@ import { expandTo18Decimals, zeroAddress } from ".";
 export interface DeployedStack {
   linaToken: Contract;
   lusdToken: Contract;
+  lbtcToken: Contract;
   lnAccessControl: Contract;
   lnAssetSystem: Contract;
   lnBuildBurnSystem: Contract;
@@ -20,6 +21,7 @@ export interface DeployedStack {
   lnCollateralSystem: Contract;
   lnConfig: Contract;
   lnDebtSystem: Contract;
+  lnExchangeSystem: Contract;
   lnRewardLocker: Contract;
   lnRewardSystem: Contract;
 }
@@ -30,14 +32,6 @@ export const deployLinearStack = async (
 ): Promise<DeployedStack> => {
   // Disable OpenZepplin upgrade warnings for test runs
   upgrades.silenceWarnings();
-
-  /**
-   * For Buildr launch we're not deploying `LnExchangeSystem`. However, `LnFeeSystem`
-   * requires the exchange contract's address to be non-zero to function, so we're
-   * putting a mock address here instead.
-   */
-  const mockExchangeAddress: string =
-    "0x0000000000000000000000000000000000000001";
 
   /**
    * Reusable SafeDecimalMath library. Contracts that depend on it must link
@@ -73,16 +67,25 @@ export const deployLinearStack = async (
   );
 
   // Load contract factories with external libraries
-  const [LnBuildBurnSystem, LnDefaultPrices, LnDebtSystem] = await Promise.all(
-    ["LnBuildBurnSystem", "LnDefaultPrices", "LnDebtSystem"].map(
-      (contractName) =>
-        ethers.getContractFactory(contractName, {
-          signer: deployer,
-          libraries: {
-            "contracts/SafeDecimalMath.sol:SafeDecimalMath":
-              safeDecimalMath.address,
-          },
-        })
+  const [
+    LnBuildBurnSystem,
+    LnDefaultPrices,
+    LnDebtSystem,
+    LnExchangeSystem,
+  ] = await Promise.all(
+    [
+      "LnBuildBurnSystem",
+      "LnDefaultPrices",
+      "LnDebtSystem",
+      "LnExchangeSystem",
+    ].map((contractName) =>
+      ethers.getContractFactory(contractName, {
+        signer: deployer,
+        libraries: {
+          "contracts/SafeDecimalMath.sol:SafeDecimalMath":
+            safeDecimalMath.address,
+        },
+      })
     )
   );
 
@@ -208,6 +211,17 @@ export const deployLinearStack = async (
     }
   );
 
+  const lnExchangeSystem = await upgrades.deployProxy(
+    LnExchangeSystem,
+    [
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnExchangeSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
   /**
    * Set BUILD_RATIO config value to 0.2 (18 decimals)
    */
@@ -231,6 +245,18 @@ export const deployLinearStack = async (
   await lnAccessControl
     .connect(admin)
     .SetDebtSystemRole([lnBuildBurnSystem.address], [true]);
+
+  /**
+   * Assign the following roles to contract `LnExchangeSystem`:
+   * - ISSUE_ASSET
+   * - BURN_ASSET
+   */
+  await lnAccessControl
+    .connect(admin)
+    .SetIssueAssetRole([lnExchangeSystem.address], [true]);
+  await lnAccessControl
+    .connect(admin)
+    .SetBurnAssetRole([lnExchangeSystem.address], [true]);
 
   /**
    * Fill the contract address registry
@@ -258,7 +284,7 @@ export const deployLinearStack = async (
         lnCollateralSystem.address,
         lnBuildBurnSystem.address,
         lnRewardLocker.address,
-        mockExchangeAddress,
+        lnExchangeSystem.address,
       ]
     );
 
@@ -290,15 +316,37 @@ export const deployLinearStack = async (
   );
 
   /**
-   * Update lUSD address cache
+   * Create synthetic asset lBTC
    */
-  await lusdToken.connect(admin).updateAddressCache(lnAssetSystem.address);
+  const lbtcToken = await upgrades.deployProxy(
+    LnAssetUpgradeable,
+    [
+      ethers.utils.formatBytes32String("lBTC"), // bytes32 _key,
+      "lBTC", // _name,
+      "lBTC", // _symbol
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnAssetUpgradeable_init",
+    }
+  );
 
   /**
-   * Register lUSD on `LnAssetSystem` and `kLnBuildBurnSystem`
+   * Update synth address cache
+   */
+  await lusdToken.connect(admin).updateAddressCache(lnAssetSystem.address);
+  await lbtcToken.connect(admin).updateAddressCache(lnAssetSystem.address);
+
+  /**
+   * Register lUSD on `LnBuildBurnSystem`
+   */
+  await lnBuildBurnSystem.connect(admin).SetLusdTokenAddress(lusdToken.address);
+
+  /**
+   * Register synth assets on `LnAssetSystem`
    */
   await lnAssetSystem.connect(admin).addAsset(lusdToken.address);
-  await lnBuildBurnSystem.connect(admin).SetLusdTokenAddress(lusdToken.address);
+  await lnAssetSystem.connect(admin).addAsset(lbtcToken.address);
 
   /**
    * Register LINA on `LnCollateralSystem`
@@ -338,9 +386,23 @@ export const deployLinearStack = async (
     lnRewardSystem.address // _feeSysAddr
   );
 
+  /**
+   * Synchronize LnExchangeAddress cache
+   */
+  await lnAssetSystem
+    .connect(admin)
+    .updateAll(
+      [ethers.utils.formatBytes32String("LnRewardSystem")],
+      [lnRewardSystem.address]
+    );
+  await lnExchangeSystem
+    .connect(admin)
+    .updateAddressCache(lnAssetSystem.address);
+
   return {
     linaToken,
     lusdToken,
+    lbtcToken,
     lnAccessControl,
     lnAssetSystem,
     lnBuildBurnSystem,
@@ -348,6 +410,7 @@ export const deployLinearStack = async (
     lnCollateralSystem,
     lnConfig,
     lnDebtSystem,
+    lnExchangeSystem,
     lnRewardLocker,
     lnRewardSystem,
   };
