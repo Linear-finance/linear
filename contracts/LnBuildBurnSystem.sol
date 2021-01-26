@@ -26,6 +26,11 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     ILnCollateralSystem private collaterSys;
     ILnConfig private mConfig;
 
+    modifier onlyCollaterSys {
+        require((msg.sender == address(collaterSys)), "LnBuildBurnSystem: not collateral system");
+        _;
+    }
+
     // -------------------------------------------------------
     function __LnBuildBurnSystem_init(address admin, address _lUSDTokenAddr) public initializer {
         __LnAdminUpgradeable_init(admin);
@@ -69,8 +74,12 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     }
 
     // build lusd
-    function BuildAsset(uint256 amount) public whenNotPaused returns (bool) {
+    function BuildAsset(uint256 amount) external whenNotPaused returns (bool) {
         address user = msg.sender;
+        return _buildAsset(user, amount);
+    }
+
+    function _buildAsset(address user, uint256 amount) internal returns (bool) {
         uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         uint256 maxCanBuild = collaterSys.MaxRedeemableInUsd(user).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
@@ -98,9 +107,12 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     }
 
     function BuildMaxAsset() external whenNotPaused {
-        address user = msg.sender;
+        _buildMaxAsset(msg.sender);
+    }
+
+    function _buildMaxAsset(address user) private {
         uint256 max = MaxCanBuildAsset(user);
-        BuildAsset(max);
+        _buildAsset(user, max);
     }
 
     function _burnAsset(address user, uint256 amount) internal {
@@ -161,6 +173,18 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         }
         _burnAsset(user, needBurn);
         return true;
+    }
+
+    function buildFromCollateralSys(address user, uint256 amount) external whenNotPaused onlyCollaterSys {
+        _buildAsset(user, amount);
+    }
+
+    function buildMaxFromCollateralSys(address user) external whenNotPaused onlyCollaterSys {
+        _buildMaxAsset(user);
+    }
+
+    function burnFromCollateralSys(address user, uint256 amount) external whenNotPaused onlyCollaterSys {
+        _burnAsset(user, amount);
     }
 
     // Reserved storage space to allow for layout changes in the future.

@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./SafeDecimalMath.sol";
 import "./interfaces/ILnPrices.sol";
 import "./LnAddressCache.sol";
+import "./interfaces/ILnBuildBurnSystem.sol";
 import "./interfaces/ILnDebtSystem.sol";
 import "./interfaces/ILnConfig.sol";
 import "./interfaces/ILnRewardLocker.sol";
@@ -50,6 +51,9 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     // [user] => ([token=> collateraldata])
     mapping(address => mapping(bytes32 => CollateralData)) public userCollateralData;
 
+    // State variables added by upgrades
+    ILnBuildBurnSystem public buildBurnSystem;
+
     // -------------------------------------------------------
     function __LnCollateralSystem_init(address _admin) public initializer {
         __LnAdminUpgradeable_init(_admin);
@@ -71,11 +75,15 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         mRewardLocker = ILnRewardLocker(
             _addressStorage.getAddressWithRequire("LnRewardLocker", "LnRewardLocker address not valid")
         );
+        buildBurnSystem = ILnBuildBurnSystem(
+            _addressStorage.getAddressWithRequire("LnBuildBurnSystem", "LnBuildBurnSystem address not valid")
+        );
 
         emit CachedAddressUpdated("LnPrices", address(priceGetter));
         emit CachedAddressUpdated("LnDebtSystem", address(debtSystem));
         emit CachedAddressUpdated("LnConfig", address(mConfig));
         emit CachedAddressUpdated("LnRewardLocker", address(mRewardLocker));
+        emit CachedAddressUpdated("LnBuildBurnSystem", address(buildBurnSystem));
     }
 
     function updateTokenInfo(
@@ -224,14 +232,95 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
+    /**
+     * @dev A unified function for staking collateral and building lUSD atomically. Only up to one of
+     * `stakeAmount` and `buildAmount` can be zero.
+     *
+     * @param stakeCurrency ID of the collateral currency
+     * @param stakeAmount Amount of collateral currency to stake, can be zero
+     * @param buildAmount Amount of lUSD to build, can be zero
+     */
+    function stakeAndBuild(
+        bytes32 stakeCurrency,
+        uint256 stakeAmount,
+        uint256 buildAmount
+    ) external whenNotPaused {
+        require(stakeAmount > 0 || buildAmount > 0, "LnCollateralSystem: zero amount");
+
+        if (stakeAmount > 0) {
+            _collateral(msg.sender, stakeCurrency, stakeAmount);
+        }
+
+        if (buildAmount > 0) {
+            buildBurnSystem.buildFromCollateralSys(msg.sender, buildAmount);
+        }
+    }
+
+    /**
+     * @dev A unified function for staking collateral and building the maximum amount of lUSD atomically.
+     *
+     * @param stakeCurrency ID of the collateral currency
+     * @param stakeAmount Amount of collateral currency to stake
+     */
+    function stakeAndBuildMax(bytes32 stakeCurrency, uint256 stakeAmount) external whenNotPaused {
+        require(stakeAmount > 0, "LnCollateralSystem: zero amount");
+
+        _collateral(msg.sender, stakeCurrency, stakeAmount);
+        buildBurnSystem.buildMaxFromCollateralSys(msg.sender);
+    }
+
+    /**
+     * @dev A unified function for burning lUSD and unstaking collateral atomically. Only up to one of
+     * `burnAmount` and `unstakeAmount` can be zero.
+     *
+     * @param burnAmount Amount of lUSD to burn, can be zero
+     * @param unstakeCurrency ID of the collateral currency
+     * @param unstakeAmount Amount of collateral currency to unstake, can be zero
+     */
+    function burnAndUnstake(
+        uint256 burnAmount,
+        bytes32 unstakeCurrency,
+        uint256 unstakeAmount
+    ) external whenNotPaused {
+        require(burnAmount > 0 || unstakeAmount > 0, "LnCollateralSystem: zero amount");
+
+        if (burnAmount > 0) {
+            buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount);
+        }
+
+        if (unstakeAmount > 0) {
+            _Redeem(msg.sender, unstakeCurrency, unstakeAmount);
+        }
+    }
+
+    /**
+     * @dev A unified function for burning lUSD and unstaking the maximum amount of collateral atomically.
+     *
+     * @param burnAmount Amount of lUSD to burn
+     * @param unstakeCurrency ID of the collateral currency
+     */
+    function burnAndUnstakeMax(uint256 burnAmount, bytes32 unstakeCurrency) external whenNotPaused {
+        require(burnAmount > 0, "LnCollateralSystem: zero amount");
+
+        buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount);
+        _redeemMax(msg.sender, unstakeCurrency);
+    }
+
     // need approve
     function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
+        address user = msg.sender;
+        return _collateral(user, _currency, _amount);
+    }
+
+    function _collateral(
+        address user,
+        bytes32 _currency,
+        uint256 _amount
+    ) private whenNotPaused returns (bool) {
         require(tokenInfos[_currency].tokenAddr.isContract(), "Invalid token symbol");
         TokenInfo storage tokeninfo = tokenInfos[_currency];
         require(_amount > tokeninfo.minCollateral, "Collateral amount too small");
         require(tokeninfo.bClose == false, "This token is closed");
-
-        address user = msg.sender;
 
         IERC20 erc20 = IERC20(tokenInfos[_currency].tokenAddr);
         require(erc20.balanceOf(user) >= _amount, "insufficient balance");
@@ -296,7 +385,10 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     function RedeemMax(bytes32 _currency) external whenNotPaused {
-        address user = msg.sender;
+        _redeemMax(msg.sender, _currency);
+    }
+
+    function _redeemMax(address user, bytes32 _currency) private {
         uint256 maxRedeem = MaxRedeemable(user, _currency);
         _Redeem(user, _currency, maxRedeem);
     }
@@ -325,7 +417,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     // 1. After redeem, collateral ratio need bigger than target ratio.
     // 2. Cannot redeem more than collateral.
-    function Redeem(bytes32 _currency, uint256 _amount) public whenNotPaused returns (bool) {
+    function Redeem(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         address user = msg.sender;
         _Redeem(user, _currency, _amount);
         return true;
@@ -336,5 +428,5 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[42] private __gap;
+    uint256[41] private __gap;
 }
