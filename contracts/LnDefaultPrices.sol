@@ -184,14 +184,24 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
             uint destPrice
         )
     {
-        sourcePrice = _getPrice(sourceName);
+        PriceData memory sourcePriceData = _getPriceData(sourceName);
+        sourcePrice = sourcePriceData.mPrice;
+
         // If there's no change in the currency, then just return the amount they gave us
         if (sourceName == destName) {
             destPrice = sourcePrice;
             value = sourceAmount;
         } else {
             // Calculate the effective value by going from source -> USD -> destination
-            destPrice = _getPrice(destName);
+            PriceData memory destPriceData = _getPriceData(destName);
+            destPrice = destPriceData.mPrice;
+
+            require(
+                (sourceName == LUSD || sourcePriceData.mTime + stalePeriod >= block.timestamp) &&
+                    (destName == LUSD || destPriceData.mTime + stalePeriod >= block.timestamp),
+                "LnDefaultPrices: staled price data"
+            );
+
             value = sourceAmount.multiplyDecimalRound(sourcePrice).divideDecimalRound(destPrice);
         }
     }
