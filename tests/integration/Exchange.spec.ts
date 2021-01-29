@@ -1,10 +1,14 @@
+import { DateTime, Duration } from "luxon";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
 import { expandTo18Decimals, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
-import { getBlockDateTime } from "../utilities/timeTravel";
+import {
+  getBlockDateTime,
+  setNextBlockTimestamp,
+} from "../utilities/timeTravel";
 
 describe("Integration | Exchange", function () {
   let deployer: SignerWithAddress,
@@ -14,23 +18,29 @@ describe("Integration | Exchange", function () {
 
   let stack: DeployedStack;
 
+  const stalePeriod: Duration = Duration.fromObject({ hours: 12 });
+  let priceUpdateTime: DateTime;
+
   beforeEach(async function () {
     [deployer, alice, bob] = await ethers.getSigners();
     admin = deployer;
 
     stack = await deployLinearStack(deployer, admin);
+
+    priceUpdateTime = await getBlockDateTime(ethers.provider);
+
     // Set LINA price to $0.01
     await stack.lnDefaultPrices.connect(admin).updateAll(
       [ethers.utils.formatBytes32String("LINA")], // currencyNames
       [expandTo18Decimals(0.01)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+      priceUpdateTime.toSeconds() // timeSent
     );
 
     // Set lBTC price to $20,000
     await stack.lnDefaultPrices.connect(admin).updateAll(
       [ethers.utils.formatBytes32String("lBTC")], // currencyNames
       [expandTo18Decimals(20_000)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+      priceUpdateTime.toSeconds() // timeSent
     );
 
     // Set BTC exchange fee rate to 1%
@@ -169,6 +179,32 @@ describe("Integration | Exchange", function () {
     );
     expect(await stack.lbtcToken.balanceOf(alice.address)).to.equal(
       expandTo18Decimals(0.02475)
+    );
+  });
+
+  it("cannot exchange when price is staled", async () => {
+    const exchangeAction = () =>
+      stack.lnExchangeSystem.connect(alice).exchange(
+        ethers.utils.formatBytes32String("lUSD"), // sourceKey
+        expandTo18Decimals(500), // sourceAmount
+        alice.address, // destAddr
+        ethers.utils.formatBytes32String("lBTC") // destKey
+      );
+
+    // Can exchange when price is not staled
+    await setNextBlockTimestamp(
+      ethers.provider,
+      priceUpdateTime.plus(stalePeriod)
+    );
+    await exchangeAction();
+
+    // Cannot exchange once price becomes staled
+    await setNextBlockTimestamp(
+      ethers.provider,
+      priceUpdateTime.plus(stalePeriod).plus({ seconds: 1 })
+    );
+    await expect(exchangeAction()).to.be.revertedWith(
+      "LnDefaultPrices: staled price data"
     );
   });
 });
