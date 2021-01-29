@@ -1816,6 +1816,133 @@
           }
         }
       }
+    },
+    "af700fe160dd1129b64f0d0cf05be7eadc475f4b7beb18a4e54e326b6890aa5a": {
+      "address": "0xCEbaf6Cd749Ba7d92C3DCd92C8f0d0D96866c40f",
+      "txHash": "0xbc036b59caca7f9660271b3ca781e381977551577d5274de320da2739875330c",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "oracle",
+            "type": "t_address",
+            "src": "contracts/LnDefaultPrices.sol:12"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "stalePeriod",
+            "type": "t_uint256",
+            "src": "contracts/LnDefaultPrices.sol:14"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "mPricesLastRound",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "src": "contracts/LnDefaultPrices.sol:16"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "mPricesStorage",
+            "type": "t_mapping(t_bytes32,t_mapping(t_uint256,t_struct(PriceData)8276_storage))",
+            "src": "contracts/LnDefaultPrices.sol:23"
+          },
+          {
+            "contract": "LnDefaultPrices",
+            "label": "__gap",
+            "type": "t_array(t_uint256)46_storage",
+            "src": "contracts/LnDefaultPrices.sol:224"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandOracleMap",
+            "type": "t_mapping(t_bytes32,t_contract(IBandProtocolOracle)10149)",
+            "src": "contracts/LnBandProtocol.sol:12"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandOracleMapKeys",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "src": "contracts/LnBandProtocol.sol:13"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "bandCurrencyKeys",
+            "type": "t_mapping(t_bytes32,t_string_storage)",
+            "src": "contracts/LnBandProtocol.sol:15"
+          },
+          {
+            "contract": "LnBandProtocol",
+            "label": "__gap",
+            "type": "t_array(t_uint256)47_storage",
+            "src": "contracts/LnBandProtocol.sol:76"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_contract(IBandProtocolOracle)10149)": {
+            "label": "mapping(bytes32 => contract IBandProtocolOracle)"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_mapping(t_bytes32,t_string_storage)": {
+            "label": "mapping(bytes32 => string)"
+          },
+          "t_array(t_uint256)47_storage": {
+            "label": "uint256[47]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_uint256,t_struct(PriceData)8276_storage))": {
+            "label": "mapping(bytes32 => mapping(uint256 => struct LnDefaultPrices.PriceData))"
+          },
+          "t_array(t_uint256)46_storage": {
+            "label": "uint256[46]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
