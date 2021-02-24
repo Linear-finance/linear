@@ -25,6 +25,7 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         uint feeForFoundation
     );
     event FoundationFeeHolderChanged(address oldHolder, address newHolder);
+    event ExitPositionOnlyChanged(bool oldValue, bool newValue);
 
     ILnAddressStorage mAssets;
     ILnPrices mPrices;
@@ -32,11 +33,15 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     address mRewardSys;
     address foundationFeeHolder;
 
+    bool public exitPositionOnly;
+
     bytes32 private constant ASSETS_KEY = "LnAssetSystem";
     bytes32 private constant PRICES_KEY = "LnPrices";
     bytes32 private constant CONFIG_KEY = "LnConfig";
     bytes32 private constant REWARD_SYS_KEY = "LnRewardSystem";
     bytes32 private constant CONFIG_FEE_SPLIT = "FoundationFeeSplit";
+
+    bytes32 private constant LUSD_KEY = "lUSD";
 
     function __LnExchangeSystem_init(address _admin) public initializer {
         __LnAdminUpgradeable_init(_admin);
@@ -64,6 +69,15 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         emit FoundationFeeHolderChanged(oldHolder, foundationFeeHolder);
     }
 
+    function setExitPositionOnly(bool newValue) public onlyAdmin {
+        require(exitPositionOnly != newValue, "LnExchangeSystem: value not changed");
+
+        bool oldValue = exitPositionOnly;
+        exitPositionOnly = newValue;
+
+        emit ExitPositionOnlyChanged(oldValue, newValue);
+    }
+
     function exchange(
         bytes32 sourceKey,
         uint sourceAmount,
@@ -80,6 +94,10 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         address destAddr,
         bytes32 destKey
     ) internal {
+        if (exitPositionOnly) {
+            require(destKey == LUSD_KEY, "LnExchangeSystem: can only exit position");
+        }
+
         ILnAsset source = ILnAsset(mAssets.getAddressWithRequire(sourceKey, ""));
         ILnAsset dest = ILnAsset(mAssets.getAddressWithRequire(destKey, ""));
         uint destAmount = mPrices.exchange(sourceKey, sourceAmount, destKey);
@@ -131,5 +149,5 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 }
