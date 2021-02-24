@@ -1943,6 +1943,109 @@
           }
         }
       }
+    },
+    "1f2815aefe3fc1788440f94dcecc304dd766ea24360c0964f5f700f707494030": {
+      "address": "0x51Eee73CC898bFC3a0410E70618e84C5627AB163",
+      "txHash": "0xe92d239f7f366fcb2a8d445ca29ae32ce85b262725a9f1e3a32edc5addd593c2",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mAssets",
+            "type": "t_contract(ILnAddressStorage)10312",
+            "src": "contracts/LnExchangeSystem.sol:30"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mPrices",
+            "type": "t_contract(ILnPrices)10494",
+            "src": "contracts/LnExchangeSystem.sol:31"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mConfig",
+            "type": "t_contract(ILnConfig)10406",
+            "src": "contracts/LnExchangeSystem.sol:32"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mRewardSys",
+            "type": "t_address",
+            "src": "contracts/LnExchangeSystem.sol:33"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "foundationFeeHolder",
+            "type": "t_address",
+            "src": "contracts/LnExchangeSystem.sol:34"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "exitPositionOnly",
+            "type": "t_bool",
+            "src": "contracts/LnExchangeSystem.sol:36"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "contracts/LnExchangeSystem.sol:152"
+          }
+        ],
+        "types": {
+          "t_contract(ILnAddressStorage)10312": {
+            "label": "contract ILnAddressStorage"
+          },
+          "t_contract(ILnPrices)10494": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnConfig)10406": {
+            "label": "contract ILnConfig"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
     }
   },
   "admin": {
