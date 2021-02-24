@@ -207,4 +207,44 @@ describe("Integration | Exchange", function () {
       "LnDefaultPrices: staled price data"
     );
   });
+
+  it("can sell when position entrance is disabled", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    await stack.lnExchangeSystem.connect(admin).setExitPositionOnly(true);
+
+    // Can still sell
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lBTC"), // sourceKey
+      expandTo18Decimals(0.01), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lUSD") // destKey
+    );
+  });
+
+  it("cannot buy when position entrance is disabled", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    await stack.lnExchangeSystem.connect(admin).setExitPositionOnly(true);
+
+    // Can no longer buy
+    await expect(
+      stack.lnExchangeSystem.connect(alice).exchange(
+        ethers.utils.formatBytes32String("lUSD"), // sourceKey
+        expandTo18Decimals(500), // sourceAmount
+        alice.address, // destAddr
+        ethers.utils.formatBytes32String("lBTC") // destKey
+      )
+    ).to.be.revertedWith("LnExchangeSystem: can only exit position");
+  });
 });
