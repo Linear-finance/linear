@@ -14,15 +14,35 @@ describe("Integration | Exchange", function () {
   let deployer: SignerWithAddress,
     admin: SignerWithAddress,
     alice: SignerWithAddress,
-    bob: SignerWithAddress;
+    bob: SignerWithAddress,
+    settler: SignerWithAddress;
 
   let stack: DeployedStack;
 
+  const settlementDelay: Duration = Duration.fromObject({ minutes: 1 });
   const stalePeriod: Duration = Duration.fromObject({ hours: 12 });
   let priceUpdateTime: DateTime;
 
+  const passSettlementDelay = async (): Promise<void> => {
+    await setNextBlockTimestamp(
+      ethers.provider,
+      (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
+    );
+  };
+
+  const settleTrade = (entryId: number): Promise<any> => {
+    return stack.lnExchangeSystem.connect(settler).settle(
+      entryId // pendingExchangeEntryId
+    );
+  };
+
+  const settleTradeWithDelay = async (entryId: number): Promise<any> => {
+    await passSettlementDelay();
+    await settleTrade(entryId);
+  };
+
   beforeEach(async function () {
-    [deployer, alice, bob] = await ethers.getSigners();
+    [deployer, alice, bob, settler] = await ethers.getSigners();
     admin = deployer;
 
     stack = await deployLinearStack(deployer, admin);
@@ -47,6 +67,12 @@ describe("Integration | Exchange", function () {
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("lBTC"), // key
       expandTo18Decimals(0.01) // value
+    );
+
+    // Set settlement delay
+    await stack.lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String("TradeSettlementDelay"), // key
+      settlementDelay.as("seconds")
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -83,6 +109,7 @@ describe("Integration | Exchange", function () {
       alice.address, // destAddr
       ethers.utils.formatBytes32String("lBTC") // destKey
     );
+    await settleTradeWithDelay(1);
 
     // All fees (0.025 * 0.01 * 20000 = 5) go to pool
     expect(
@@ -111,6 +138,7 @@ describe("Integration | Exchange", function () {
       alice.address, // destAddr
       ethers.utils.formatBytes32String("lBTC") // destKey
     );
+    await settleTradeWithDelay(1);
 
     // All fees (0.025 * 0.01 * 20000 = 5) go to pool
     expect(
@@ -140,21 +168,18 @@ describe("Integration | Exchange", function () {
     );
 
     // Alice exchanges 500 lUSD for 0.025 lBTC
-    await expect(
-      stack.lnExchangeSystem.connect(alice).exchange(
-        ethers.utils.formatBytes32String("lUSD"), // sourceKey
-        expandTo18Decimals(500), // sourceAmount
-        alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
-      )
-    )
-      .to.emit(stack.lnExchangeSystem, "ExchangeAsset")
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+    await passSettlementDelay();
+    await expect(settleTrade(1))
+      .to.emit(stack.lnExchangeSystem, "PendingExchangeSettled")
       .withArgs(
-        alice.address, // fromAddr
-        ethers.utils.formatBytes32String("lUSD"), // sourceKey
-        expandTo18Decimals(500), // sourceAmount
-        alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC"), // destKey
+        1, // id
+        settler.address, // settler
         expandTo18Decimals(0.02475), // destRecived
         expandTo18Decimals(3.5), // feeForPool
         expandTo18Decimals(1.5) // feeForFoundation
@@ -182,7 +207,7 @@ describe("Integration | Exchange", function () {
     );
   });
 
-  it("cannot exchange when price is staled", async () => {
+  it("cannot settle when price is staled", async () => {
     const exchangeAction = () =>
       stack.lnExchangeSystem.connect(alice).exchange(
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
@@ -191,19 +216,23 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lBTC") // destKey
       );
 
-    // Can exchange when price is not staled
+    // Make 2 exchanges
+    await exchangeAction();
+    await exchangeAction();
+
+    // Can settle when price is not staled
     await setNextBlockTimestamp(
       ethers.provider,
       priceUpdateTime.plus(stalePeriod)
     );
-    await exchangeAction();
+    await settleTrade(1);
 
-    // Cannot exchange once price becomes staled
+    // Cannot settle once price becomes staled
     await setNextBlockTimestamp(
       ethers.provider,
       priceUpdateTime.plus(stalePeriod).plus({ seconds: 1 })
     );
-    await expect(exchangeAction()).to.be.revertedWith(
+    await expect(settleTrade(2)).to.be.revertedWith(
       "LnDefaultPrices: staled price data"
     );
   });
@@ -215,6 +244,7 @@ describe("Integration | Exchange", function () {
       alice.address, // destAddr
       ethers.utils.formatBytes32String("lBTC") // destKey
     );
+    await settleTradeWithDelay(1);
 
     await stack.lnExchangeSystem.connect(admin).setExitPositionOnly(true);
 
