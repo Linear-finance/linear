@@ -8,5 +8,11 @@ interface ILnAsset is IERC20 {
 
     function mint(address account, uint256 amount) external;
 
-    function burn(address account, uint amount) external;
+    function burn(address account, uint256 amount) external;
+
+    function move(
+        address from,
+        address to,
+        uint256 amount
+    ) external;
 }
