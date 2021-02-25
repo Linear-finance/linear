@@ -9,6 +9,7 @@ import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
 import { expandTo18Decimals, zeroAddress } from ".";
+import { formatBytes32String } from "ethers/lib/utils";
 
 export interface DeployedStack {
   linaToken: Contract;
@@ -218,6 +219,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnExchangeSystem_init",
+      unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
   );
@@ -250,6 +252,7 @@ export const deployLinearStack = async (
    * Assign the following roles to contract `LnExchangeSystem`:
    * - ISSUE_ASSET
    * - BURN_ASSET
+   * - MOVE_ASSET
    */
   await lnAccessControl
     .connect(admin)
@@ -257,6 +260,11 @@ export const deployLinearStack = async (
   await lnAccessControl
     .connect(admin)
     .SetBurnAssetRole([lnExchangeSystem.address], [true]);
+  await lnAccessControl.connect(admin).SetRoles(
+    formatBytes32String("MOVE_ASSET"), // roleType
+    [lnExchangeSystem.address], // addresses
+    [true] // setTo
+  );
 
   /**
    * Fill the contract address registry
