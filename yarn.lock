@@ -471,12 +471,12 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.3.0.tgz#ffdb693c5c349fc33bba420248dd3ac0a2d7c408"
   integrity sha512-AemZEsQYtUp1WRkcmZm1div5ORfTpLquLaziCIrSagjxyKdmObxuaY1yjQ5SHFMctR8rLwp706NXTbiIRJg7pw==
 
-"@openzeppelin/hardhat-upgrades@^1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/hardhat-upgrades/-/hardhat-upgrades-1.4.3.tgz#dfd0f7668cbc343455c2a6b2d3ba4d68034e5dc2"
-  integrity sha512-CWrHE/3ThKjap2yrG03tiqv1rHWCLko6N7LZy7ApYxUJdBZzkFlZyWbKYg0HdZf49xgFHBV7CnFSS7L/eqtdXw==
+"@openzeppelin/hardhat-upgrades@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/hardhat-upgrades/-/hardhat-upgrades-1.6.0.tgz#735e1c70aea859e284937995e238fcfdea7b69d7"
+  integrity sha512-4oRB5lH3d5RAUIWKX5wuJvgo06IOgndUoPKYUuLTKW2BmyrMTPc6GZycKf7UCxU0GYeUC9BjsohUAIjqJwMnww==
   dependencies:
-    "@openzeppelin/upgrades-core" "^1.4.2"
+    "@openzeppelin/upgrades-core" "^1.5.0"
 
 "@openzeppelin/test-helpers@^0.5.6":
   version "0.5.9"
@@ -494,13 +494,13 @@
     web3 "^1.2.5"
     web3-utils "^1.2.5"
 
-"@openzeppelin/upgrades-core@^1.4.2":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades-core/-/upgrades-core-1.4.3.tgz#e84335b70823a8779747f1d8e745bc7b79a620b8"
-  integrity sha512-90QJ0PP0VYlT0WQlQM4ClqpJN1NnG8sKBhHWKUkmt4H9LIKyLKkaBNwJVCugzHLx1ttvW3CYp+kwMmF6BUxmgw==
+"@openzeppelin/upgrades-core@^1.5.0":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/upgrades-core/-/upgrades-core-1.5.1.tgz#2165f0c2961cc748e7d1c2bce1ba96589d31390b"
+  integrity sha512-rL0h/+Yfcky98XaxLRcxKunmC2uVP+dr9tVxzZfbjDpIco7VkmyODsI1YBPZTn3e5kCj7A6cmgNrFmao/UkQyA==
   dependencies:
     bn.js "^5.1.2"
-    cbor "^5.0.2"
+    cbor "^7.0.0"
     chalk "^4.1.0"
     compare-versions "^3.6.0"
     debug "^4.1.1"
@@ -508,7 +508,7 @@
     fp-ts "^2.7.1"
     io-ts "^2.2.9"
     proper-lockfile "^4.1.1"
-    solidity-ast "^0.4.4"
+    solidity-ast "^0.4.15"
 
 "@openzeppelin/upgrades@^2.8.0":
   version "2.8.0"
@@ -2101,13 +2101,12 @@ cbor@^4.1.5:
     json-text-sequence "^0.1"
     nofilter "^1.0.3"
 
-cbor@^5.0.2:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/cbor/-/cbor-5.1.0.tgz#c3be220dcbbd96a338d279a664237aed3f596904"
-  integrity sha512-qzEc7kUShdMbWTaUH7X+aHW8owvBU3FS0dfYR1lGYpoZr0mGJhhojLlZJH653x/DfeMZ56h315FRNBUIG1R7qg==
+cbor@^7.0.0:
+  version "7.0.2"
+  resolved "https://registry.yarnpkg.com/cbor/-/cbor-7.0.2.tgz#9f0b74f3dfc5896775e0802e7d68f9b6af530ce3"
+  integrity sha512-YR6TF7LBhTqdz0vjtoY5lDnOhHXg8/mdHd2qZYQz5q8Pl7i56/ndiIGLkms1RpkFAqrT9IHGO3cjo58SfFsF2A==
   dependencies:
-    bignumber.js "^9.0.0"
-    nofilter "^1.0.4"
+    nofilter "^2.0.0"
 
 chai-bn@^0.2.1:
   version "0.2.1"
@@ -5794,10 +5793,15 @@ node-gyp-build@^4.2.0:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.2.3.tgz#ce6277f853835f718829efb47db20f3e4d9c4739"
   integrity sha512-MN6ZpzmfNCRM+3t57PTJHgHyw/h4OWnZ6mR8P5j/uZtqQr46RRuDE/P+g3n0YR/AiYXeWixZZzaip77gdICfRg==
 
-nofilter@^1.0.3, nofilter@^1.0.4:
+nofilter@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/nofilter/-/nofilter-1.0.4.tgz#78d6f4b6a613e7ced8b015cec534625f7667006e"
   integrity sha512-N8lidFp+fCz+TD51+haYdbDGrcBWwuHX40F5+z0qkUjMJ5Tp+rdSuAkMJ9N9eoolDlEVTf6u5icM+cNKkKW2mA==
+
+nofilter@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/nofilter/-/nofilter-2.0.0.tgz#57a2d7c6fcd34dd396f490d6942c4f58640b5823"
+  integrity sha512-i3ck2PUWBa+trsGGBvwS3msnTowbFei5G++BgpOpT7y7VTrprXphMQP5svTdsMLdttKDZFo+5RqVWRqhmf+BwQ==
 
 normalize-package-data@^2.3.2:
   version "2.5.0"
@@ -7104,10 +7108,10 @@ solc@^0.6.12, solc@^0.6.3:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solidity-ast@^0.4.4:
-  version "0.4.16"
-  resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.16.tgz#2873d0c8dac2835bf95646652794d563419cb95e"
-  integrity sha512-CBPH6nfsOA/1AmjGLWrYLFZNWuZHWZXUCeJ6YaXR5ogLqVmMD1Lzkt67b1GydKbCS3sd6A25gqAvJ8VEFOVy1g==
+solidity-ast@^0.4.15:
+  version "0.4.17"
+  resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.17.tgz#e857b4f64466f3eb94da78fe961c0d256c84b228"
+  integrity sha512-5jkkabmjPdy9W9c2DMQBlKobVBz7KDnipxn+0zW191uD6BML3w7dQ+ihUvwA9XOm9ILDECrb5Y8z2vu47STqCg==
 
 solidity-comments-extractor@^0.0.4:
   version "0.0.4"

@@ -156,7 +156,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAccessControl_init",
-      unsafeAllowCustomTypes: true,
     }
   );
 
@@ -173,7 +172,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnDefaultPrices_init",
-      unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
   );
@@ -183,7 +181,6 @@ export const deployLinearStack = async (
     [admin.address],
     {
       initializer: "__LnDebtSystem_init",
-      unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
   );
@@ -195,7 +192,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnCollateralSystem_init",
-      unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
   );
@@ -208,7 +204,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardLocker_init",
-      unsafeAllowCustomTypes: true,
     }
   );
 
@@ -219,7 +214,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnExchangeSystem_init",
-      unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
   );
@@ -381,7 +375,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardSystem_init",
-      unsafeAllowCustomTypes: true,
     }
   );
 
