@@ -23,6 +23,14 @@ describe("Integration | Exchange", function () {
   const stalePeriod: Duration = Duration.fromObject({ hours: 12 });
   let priceUpdateTime: DateTime;
 
+  const setLbtcPrice = async (price: number): Promise<void> => {
+    await stack.lnDefaultPrices.connect(admin).updateAll(
+      [ethers.utils.formatBytes32String("lBTC")], // currencyNames
+      [expandTo18Decimals(price)], // newPrices
+      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+    );
+  };
+
   const passSettlementDelay = async (): Promise<void> => {
     await setNextBlockTimestamp(
       ethers.provider,
@@ -49,17 +57,13 @@ describe("Integration | Exchange", function () {
 
     priceUpdateTime = await getBlockDateTime(ethers.provider);
 
-    // Set LINA price to $0.01
+    // Set LINA price to $0.01 and lBTC to $20,000
     await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("LINA")], // currencyNames
-      [expandTo18Decimals(0.01)], // newPrices
-      priceUpdateTime.toSeconds() // timeSent
-    );
-
-    // Set lBTC price to $20,000
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("lBTC")], // currencyNames
-      [expandTo18Decimals(20_000)], // newPrices
+      [
+        ethers.utils.formatBytes32String("LINA"),
+        ethers.utils.formatBytes32String("lBTC"),
+      ], // currencyNames
+      [expandTo18Decimals(0.01), expandTo18Decimals(20_000)], // newPrices
       priceUpdateTime.toSeconds() // timeSent
     );
 
@@ -276,5 +280,110 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lBTC") // destKey
       )
     ).to.be.revertedWith("LnExchangeSystem: can only exit position");
+  });
+
+  it("events should be emitted for exchange and settlement", async () => {
+    await expect(
+      stack.lnExchangeSystem.connect(alice).exchange(
+        ethers.utils.formatBytes32String("lUSD"), // sourceKey
+        expandTo18Decimals(500), // sourceAmount
+        alice.address, // destAddr
+        ethers.utils.formatBytes32String("lBTC") // destKey
+      )
+    )
+      .to.emit(stack.lnExchangeSystem, "PendingExchangeAdded")
+      .withArgs(
+        1, // id
+        alice.address, // fromAddr
+        alice.address, // destAddr
+        expandTo18Decimals(500), // fromAmount
+        ethers.utils.formatBytes32String("lUSD"), // fromCurrency
+        ethers.utils.formatBytes32String("lBTC") // toCurrency
+      );
+
+    /**
+     * lBTC price changes to 40,000. Will only receive:
+     *     500 / 40000 * 0.99 = 0.012375 lBTC
+     */
+    await passSettlementDelay();
+    await setLbtcPrice(40_000);
+
+    await expect(settleTrade(1))
+      .to.emit(stack.lnExchangeSystem, "PendingExchangeSettled")
+      .withArgs(
+        1, // id
+        settler.address, // settler
+        expandTo18Decimals(0.012375), // destRecived
+        expandTo18Decimals(5), // feeForPool
+        0 // feeForFoundation
+      );
+  });
+
+  it("cannot settle trade before delay is passed", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    // Cannot settle before delay is reached
+    await setNextBlockTimestamp(
+      ethers.provider,
+      (await getBlockDateTime(ethers.provider))
+        .plus(settlementDelay)
+        .minus({ seconds: 1 })
+    );
+    await expect(settleTrade(1)).to.be.revertedWith(
+      "LnExchangeSystem: settlement delay not passed"
+    );
+
+    // Can settle once delay is reached
+    await setNextBlockTimestamp(
+      ethers.provider,
+      (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
+    );
+    await settleTrade(1);
+  });
+
+  it("source asset should be locked up on exchange", async () => {
+    await expect(
+      stack.lnExchangeSystem.connect(alice).exchange(
+        ethers.utils.formatBytes32String("lUSD"), // sourceKey
+        expandTo18Decimals(400), // sourceAmount
+        alice.address, // destAddr
+        ethers.utils.formatBytes32String("lBTC") // destKey
+      )
+    )
+      .to.emit(stack.lusdToken, "Transfer")
+      .withArgs(
+        alice.address, // from
+        stack.lnExchangeSystem.address, // to
+        expandTo18Decimals(400) // value
+      );
+
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(600)
+    );
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address)
+    ).to.equal(expandTo18Decimals(400));
+  });
+
+  it("trade cannot be settled twice", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    // Trade settled
+    await settleTradeWithDelay(1);
+
+    // Cannot double-settle a trade
+    await expect(settleTrade(1)).to.be.revertedWith(
+      "LnExchangeSystem: pending entry not found"
+    );
   });
 });
