@@ -26,6 +26,31 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     );
     event FoundationFeeHolderChanged(address oldHolder, address newHolder);
     event ExitPositionOnlyChanged(bool oldValue, bool newValue);
+    event PendingExchangeAdded(
+        uint256 id,
+        address fromAddr,
+        address destAddr,
+        uint256 fromAmount,
+        bytes32 fromCurrency,
+        bytes32 toCurrency
+    );
+    event PendingExchangeSettled(
+        uint256 id,
+        address settler,
+        uint256 destRecived,
+        uint256 feeForPool,
+        uint256 feeForFoundation
+    );
+
+    struct PendingExchangeEntry {
+        uint64 id;
+        uint64 timestamp;
+        address fromAddr;
+        address destAddr;
+        uint256 fromAmount;
+        bytes32 fromCurrency;
+        bytes32 toCurrency;
+    }
 
     ILnAddressStorage mAssets;
     ILnPrices mPrices;
@@ -35,11 +60,15 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
 
     bool public exitPositionOnly;
 
+    uint256 public lastPendingExchangeEntryId;
+    mapping(uint256 => PendingExchangeEntry) public pendingExchangeEntries;
+
     bytes32 private constant ASSETS_KEY = "LnAssetSystem";
     bytes32 private constant PRICES_KEY = "LnPrices";
     bytes32 private constant CONFIG_KEY = "LnConfig";
     bytes32 private constant REWARD_SYS_KEY = "LnRewardSystem";
     bytes32 private constant CONFIG_FEE_SPLIT = "FoundationFeeSplit";
+    bytes32 private constant CONFIG_TRADE_SETTLEMENT_DELAY = "TradeSettlementDelay";
 
     bytes32 private constant LUSD_KEY = "lUSD";
 
@@ -87,28 +116,73 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         return _exchange(msg.sender, sourceKey, sourceAmount, destAddr, destKey);
     }
 
+    function settle(uint256 pendingExchangeEntryId) external {
+        _settle(pendingExchangeEntryId, msg.sender);
+    }
+
     function _exchange(
         address fromAddr,
         bytes32 sourceKey,
         uint sourceAmount,
         address destAddr,
         bytes32 destKey
-    ) internal {
+    ) private {
         if (exitPositionOnly) {
             require(destKey == LUSD_KEY, "LnExchangeSystem: can only exit position");
         }
 
-        ILnAsset source = ILnAsset(mAssets.getAddressWithRequire(sourceKey, ""));
-        ILnAsset dest = ILnAsset(mAssets.getAddressWithRequire(destKey, ""));
-        uint destAmount = mPrices.exchange(sourceKey, sourceAmount, destKey);
-        require(destAmount > 0, "dest amount must > 0");
+        // We don't need the return value here. It's just for preventing entering invalid trades
+        mAssets.getAddressWithRequire(destKey, "LnExchangeSystem: dest asset not found");
 
-        uint feeRate = mConfig.getUint(destKey);
+        ILnAsset source = ILnAsset(mAssets.getAddressWithRequire(sourceKey, "LnExchangeSystem: source asset not found"));
+
+        // Only lock up the source amount here. Everything else will be performed in settlement.
+        // The `move` method is a special variant of `transferForm` that doesn't require approval.
+        source.move(fromAddr, address(this), sourceAmount);
+
+        // Record the pending entry
+        PendingExchangeEntry memory newPendingEntry =
+            PendingExchangeEntry({
+                id: uint64(++lastPendingExchangeEntryId),
+                timestamp: uint64(block.timestamp),
+                fromAddr: fromAddr,
+                destAddr: destAddr,
+                fromAmount: sourceAmount,
+                fromCurrency: sourceKey,
+                toCurrency: destKey
+            });
+        pendingExchangeEntries[uint256(newPendingEntry.id)] = newPendingEntry;
+
+        // Emit event for off-chain indexing
+        emit PendingExchangeAdded(newPendingEntry.id, fromAddr, destAddr, sourceAmount, sourceKey, destKey);
+    }
+
+    function _settle(uint256 pendingExchangeEntryId, address settler) private {
+        PendingExchangeEntry memory exchangeEntry = pendingExchangeEntries[pendingExchangeEntryId];
+        require(exchangeEntry.id > 0, "LnExchangeSystem: pending entry not found");
+
+        uint settlementDelay = mConfig.getUint(CONFIG_TRADE_SETTLEMENT_DELAY);
+        require(settlementDelay > 0, "LnExchangeSystem: settlement delay not set");
+        require(
+            block.timestamp >= exchangeEntry.timestamp + settlementDelay,
+            "LnExchangeSystem: settlement delay not passed"
+        );
+
+        ILnAsset source =
+            ILnAsset(mAssets.getAddressWithRequire(exchangeEntry.fromCurrency, "LnExchangeSystem: source asset not found"));
+        ILnAsset dest =
+            ILnAsset(mAssets.getAddressWithRequire(exchangeEntry.toCurrency, "LnExchangeSystem: dest asset not found"));
+        uint destAmount = mPrices.exchange(exchangeEntry.fromCurrency, exchangeEntry.fromAmount, exchangeEntry.toCurrency);
+
+        // This might cause a transaction to deadlock, but impact would be negligible
+        require(destAmount > 0, "LnExchangeSystem: zero dest amount");
+
+        uint feeRate = mConfig.getUint(exchangeEntry.toCurrency);
         uint destRecived = destAmount.multiplyDecimal(SafeDecimalMath.unit().sub(feeRate));
         uint fee = destAmount.sub(destRecived);
 
         // Fee going into the pool, to be adjusted based on foundation split
-        uint feeForPoolInUsd = mPrices.exchange(destKey, fee, mPrices.LUSD());
+        uint feeForPoolInUsd = mPrices.exchange(exchangeEntry.toCurrency, fee, mPrices.LUSD());
 
         // Split the fee between pool and foundation when both holder and ratio are set
         uint256 foundationSplit;
@@ -131,23 +205,14 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         if (feeForPoolInUsd > 0) lusd.mint(mRewardSys, feeForPoolInUsd);
         if (foundationSplit > 0) lusd.mint(foundationFeeHolder, foundationSplit);
 
-        // 先不考虑预言机套利的问题
-        source.burn(fromAddr, sourceAmount);
+        source.burn(address(this), exchangeEntry.fromAmount);
+        dest.mint(exchangeEntry.destAddr, destRecived);
 
-        dest.mint(destAddr, destRecived);
+        delete pendingExchangeEntries[pendingExchangeEntryId];
 
-        emit ExchangeAsset(
-            fromAddr,
-            sourceKey,
-            sourceAmount,
-            destAddr,
-            destKey,
-            destRecived,
-            feeForPoolInUsd,
-            foundationSplit
-        );
+        emit PendingExchangeSettled(exchangeEntry.id, settler, destRecived, feeForPoolInUsd, foundationSplit);
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[44] private __gap;
+    uint256[42] private __gap;
 }

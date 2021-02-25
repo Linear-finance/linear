@@ -15,12 +15,22 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, LnAddressCa
     bytes32 mKeyName;
     ILnAccessControl accessCtrl;
 
-    modifier onlyIssueAssetRole(address _address) {
-        require(accessCtrl.hasRole(accessCtrl.ISSUE_ASSET_ROLE(), _address), "Need issue access role");
+    bytes32 private constant ROLE_ISSUE_ASSET = "ISSUE_ASSET";
+    bytes32 private constant ROLE_BURN_ASSET = "BURN_ASSET";
+    bytes32 private constant ROLE_MOVE_ASSET = "MOVE_ASSET";
+
+    modifier onlyIssueAssetRole() {
+        require(accessCtrl.hasRole(ROLE_ISSUE_ASSET, msg.sender), "LnAssetUpgradeable: not ISSUE_ASSET role");
         _;
     }
-    modifier onlyBurnAssetRole(address _address) {
-        require(accessCtrl.hasRole(accessCtrl.BURN_ASSET_ROLE(), _address), "Need burn access role");
+
+    modifier onlyBurnAssetRole() {
+        require(accessCtrl.hasRole(ROLE_BURN_ASSET, msg.sender), "LnAssetUpgradeable: not BURN_ASSET role");
+        _;
+    }
+
+    modifier onlyMoveAssetRole() {
+        require(accessCtrl.hasRole(ROLE_MOVE_ASSET, msg.sender), "LnAssetUpgradeable: not MOVE_ASSET role");
         _;
     }
 
@@ -48,12 +58,20 @@ contract LnAssetUpgradeable is ERC20Upgradeable, LnAdminUpgradeable, LnAddressCa
         emit CachedAddressUpdated("LnAccessControl", address(accessCtrl));
     }
 
-    function mint(address account, uint256 amount) external onlyIssueAssetRole(msg.sender) {
+    function mint(address account, uint256 amount) external onlyIssueAssetRole {
         _mint(account, amount);
     }
 
-    function burn(address account, uint amount) external onlyBurnAssetRole(msg.sender) {
+    function burn(address account, uint256 amount) external onlyBurnAssetRole {
         _burn(account, amount);
+    }
+
+    function move(
+        address from,
+        address to,
+        uint256 amount
+    ) external onlyMoveAssetRole {
+        _transfer(from, to, amount);
     }
 
     // Reserved storage space to allow for layout changes in the future.
