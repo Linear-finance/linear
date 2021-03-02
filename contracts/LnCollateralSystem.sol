@@ -147,7 +147,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             bytes32 currency = tokenSymbol[i];
             uint256 collateralAmount = tokenInfos[currency].totalCollateral;
             if (Currency_LINA == currency) {
-                collateralAmount = collateralAmount.add(mRewardLocker.totalNeedToReward());
+                collateralAmount = collateralAmount.add(mRewardLocker.totalLockedAmount());
             }
             if (collateralAmount > 0) {
                 rTotal = rTotal.add(collateralAmount.multiplyDecimal(priceGetter.getPrice(currency)));

@@ -11,7 +11,7 @@ contract MockLnRewardLocker {
     struct AppendRewardArgs {
         address _user;
         uint256 _amount;
-        uint64 _lockTo;
+        uint256 _lockTo;
     }
 
     AppendRewardArgs[] appendRewardCalls;
@@ -22,17 +22,17 @@ contract MockLnRewardLocker {
         returns (
             address _user,
             uint256 _amount,
-            uint64 _lockTo
+            uint256 _lockTo
         )
     {
         AppendRewardArgs memory args = appendRewardCalls[appendRewardCalls.length - 1];
         return (args._user, args._amount, args._lockTo);
     }
 
-    function appendReward(
+    function addReward(
         address _user,
         uint256 _amount,
-        uint64 _lockTo
+        uint256 _lockTo
     ) external {
         appendRewardCalls.push(AppendRewardArgs({_user: _user, _amount: _amount, _lockTo: _lockTo}));
     }

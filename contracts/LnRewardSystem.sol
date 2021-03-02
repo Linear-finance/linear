@@ -175,11 +175,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
         require(recoveredAddress == rewardSigner, "LnRewardSystem: invalid signature");
 
         if (stakingReward > 0) {
-            rewardLocker.appendReward(
-                recipient,
-                stakingReward,
-                uint64(getPeriodEndTime(periodId) + STAKING_REWARD_LOCK_PERIOD)
-            );
+            rewardLocker.addReward(recipient, stakingReward, getPeriodEndTime(periodId) + STAKING_REWARD_LOCK_PERIOD);
         }
 
         if (feeReward > 0) {

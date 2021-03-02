@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity >=0.6.12 <0.8.0;
 
 interface ILnAccessControl {
     function hasRole(bytes32 role, address account) external view returns (bool);

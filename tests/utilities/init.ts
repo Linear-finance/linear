@@ -199,8 +199,9 @@ export const deployLinearStack = async (
   const lnRewardLocker = await upgrades.deployProxy(
     LnRewardLocker,
     [
+      linaToken.address, // _linaTokenAddr
+      lnAccessControl.address, // _accessCtrl
       admin.address, // _admin
-      linaToken.address, // linaAddress
     ],
     {
       initializer: "__LnRewardLocker_init",
@@ -376,15 +377,6 @@ export const deployLinearStack = async (
     {
       initializer: "__LnRewardSystem_init",
     }
-  );
-
-  /**
-   * `LnRewardLocker` has a special Init function that must be called by admin first.
-   *
-   * TODO: change to use setters or address cache instead
-   */
-  await lnRewardLocker.connect(admin).Init(
-    lnRewardSystem.address // _feeSysAddr
   );
 
   /**
