@@ -1,152 +1,108 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "./interfaces/ILnAccessControl.sol";
+import "./interfaces/ILnRewardLocker.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 
-// Reward Distributor
-contract LnRewardLocker is LnAdminUpgradeable {
-    using SafeMath for uint256;
+/**
+ * @title LnRewardLocker
+ *
+ * @dev A contract for locking LINA rewards. The current version only supports adding rewards.
+ * Reward claiming will be added in a later iteration.
+ */
+contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
-    struct RewardData {
-        uint64 lockToTime;
-        uint256 amount;
+    event RewardEntryAdded(uint256 entryId, address user, uint256 amount, uint256 unlockTime);
+
+    /**
+     * @dev The struct used to store reward data. Address is deliberately left out and put in the
+     * mapping key of `rewardEntries` to minimize struct size. Struct fields are padded to 256 bits
+     * to save storage space, and thus gas fees.
+     */
+    struct RewardEntry {
+        uint216 amount;
+        uint40 unlockTime;
     }
 
-    mapping(address => RewardData[]) public userRewards; // RewardData[0] is claimable
-    mapping(address => uint256) public balanceOf;
-    uint256 public totalNeedToReward;
+    uint256 public lastRewardEntryId;
+    mapping(uint256 => mapping(address => RewardEntry)) public rewardEntries;
+    mapping(address => uint256) public lockedAmountByAddresses;
+    uint256 public override totalLockedAmount;
 
-    uint256 public constant maxRewardArrayLen = 100;
+    address public linaTokenAddr;
+    ILnAccessControl public accessCtrl;
 
-    address feeSysAddr;
-    IERC20 public linaToken;
+    bytes32 private constant ROLE_LOCK_REWARD = "LOCK_REWARD";
 
-    function __LnRewardLocker_init(address _admin, address linaAddress) public initializer {
-        __LnAdminUpgradeable_init(_admin);
-
-        linaToken = IERC20(linaAddress);
-    }
-
-    function setLinaAddress(address _token) external onlyAdmin {
-        linaToken = IERC20(_token);
-    }
-
-    function Init(address _feeSysAddr) external onlyAdmin {
-        feeSysAddr = _feeSysAddr;
-    }
-
-    modifier onlyFeeSys() {
-        require((msg.sender == feeSysAddr), "Only Fee System call");
+    modifier onlyLockRewardRole() {
+        require(accessCtrl.hasRole(ROLE_LOCK_REWARD, msg.sender), "LnAssetUpgradeable: not LOCK_REWARD role");
         _;
     }
 
-    function bulkAppendReward(
-        address[] calldata _users,
-        uint256[] calldata _amounts,
-        uint64 _lockTo
+    function balanceOf(address user) external view override returns (uint256) {
+        return lockedAmountByAddresses[user];
+    }
+
+    function __LnRewardLocker_init(
+        address _linaTokenAddr,
+        ILnAccessControl _accessCtrl,
+        address _admin
+    ) public initializer {
+        __LnAdminUpgradeable_init(_admin);
+
+        require(_linaTokenAddr != address(0), "LnRewardLocker: zero address");
+        require(address(_accessCtrl) != address(0), "LnRewardLocker: zero address");
+
+        linaTokenAddr = _linaTokenAddr;
+        accessCtrl = _accessCtrl;
+    }
+
+    function addReward(
+        address user,
+        uint256 amount,
+        uint256 unlockTime
+    ) external override onlyLockRewardRole {
+        _addReward(user, amount, unlockTime);
+    }
+
+    /**
+     * @dev A temporary function for migrating reward entries in bulk from the old contract.
+     * To be removed via a contract upgrade after migration.
+     */
+    function migrateRewards(
+        address[] calldata users,
+        uint256[] calldata amounts,
+        uint256[] calldata unlockTimes
     ) external onlyAdmin {
-        require(_users.length == _amounts.length, "Length mismatch");
+        require(users.length > 0, "LnRewardLocker: empty array");
+        require(users.length == amounts.length && amounts.length == unlockTimes.length, "LnRewardLocker: length mismatch");
 
-        for (uint256 ind = 0; ind < _users.length; ind++) {
-            address _user = _users[ind];
-            uint256 _amount = _amounts[ind];
-
-            if (userRewards[_user].length >= maxRewardArrayLen) {
-                Slimming(_user);
-            }
-
-            require(userRewards[_user].length <= maxRewardArrayLen, "user array out of");
-            // init cliamable
-            if (userRewards[_user].length == 0) {
-                RewardData memory data = RewardData({lockToTime: 0, amount: 0});
-                userRewards[_user].push(data);
-            }
-
-            // append new reward
-            RewardData memory data = RewardData({lockToTime: _lockTo, amount: _amount});
-            userRewards[_user].push(data);
-
-            balanceOf[_user] = balanceOf[_user].add(_amount);
-            totalNeedToReward = totalNeedToReward.add(_amount);
-
-            emit AppendReward(_user, _amount, _lockTo);
+        for (uint256 ind = 0; ind < users.length; ind++) {
+            _addReward(users[ind], amounts[ind], unlockTimes[ind]);
         }
     }
 
-    function appendReward(
-        address _user,
-        uint256 _amount,
-        uint64 _lockTo
-    ) external onlyFeeSys {
-        if (userRewards[_user].length >= maxRewardArrayLen) {
-            Slimming(_user);
-        }
+    function _addReward(
+        address user,
+        uint256 amount,
+        uint256 unlockTime
+    ) private {
+        require(amount > 0, "LnRewardLocker: zero amount");
 
-        require(userRewards[_user].length <= maxRewardArrayLen, "user array out of");
-        // init cliamable
-        if (userRewards[_user].length == 0) {
-            RewardData memory data = RewardData({lockToTime: 0, amount: 0});
-            userRewards[_user].push(data);
-        }
+        uint216 trimmedAmount = uint216(amount);
+        uint40 trimmedUnlockTime = uint40(unlockTime);
+        require(uint256(trimmedAmount) == amount, "LnRewardLocker: reward amount overflow");
+        require(uint256(trimmedUnlockTime) == unlockTime, "LnRewardLocker: unlock time overflow");
 
-        // append new reward
-        RewardData memory data = RewardData({lockToTime: _lockTo, amount: _amount});
-        userRewards[_user].push(data);
+        lastRewardEntryId++;
 
-        balanceOf[_user] = balanceOf[_user].add(_amount);
-        totalNeedToReward = totalNeedToReward.add(_amount);
+        rewardEntries[lastRewardEntryId][user] = RewardEntry({amount: trimmedAmount, unlockTime: trimmedUnlockTime});
+        lockedAmountByAddresses[user] = lockedAmountByAddresses[user].add(amount);
+        totalLockedAmount = totalLockedAmount.add(amount);
 
-        emit AppendReward(_user, _amount, _lockTo);
+        emit RewardEntryAdded(lastRewardEntryId, user, amount, unlockTime);
     }
-
-    // move claimable to RewardData[0]
-    function Slimming(address _user) public {
-        require(userRewards[_user].length > 1, "not data to slimming");
-        RewardData storage claimable = userRewards[_user][0];
-        for (uint256 i = 1; i < userRewards[_user].length; ) {
-            if (now >= userRewards[_user][i].lockToTime) {
-                claimable.amount = claimable.amount.add(userRewards[_user][i].amount);
-
-                //swap last to current position
-                uint256 len = userRewards[_user].length;
-                userRewards[_user][i].lockToTime = userRewards[_user][len - 1].lockToTime;
-                userRewards[_user][i].amount = userRewards[_user][len - 1].amount;
-                userRewards[_user].pop(); // delete last one
-            } else {
-                i++;
-            }
-        }
-    }
-
-    // if lock lina is collateral, claimable need calc to fix target ratio
-    function ClaimMaxable() public {
-        address user = msg.sender;
-        Slimming(user);
-        _claim(user, userRewards[user][0].amount);
-    }
-
-    function _claim(address _user, uint256 _amount) internal {
-        userRewards[_user][0].amount = userRewards[_user][0].amount.sub(_amount);
-
-        balanceOf[_user] = balanceOf[_user].sub(_amount);
-        totalNeedToReward = totalNeedToReward.sub(_amount);
-
-        linaToken.transfer(_user, _amount);
-        emit ClaimLog(_user, _amount);
-    }
-
-    function Claim(uint256 _amount) public {
-        address user = msg.sender;
-        Slimming(user);
-        require(_amount <= userRewards[user][0].amount, "Claim amount invalid");
-        _claim(user, _amount);
-    }
-
-    event AppendReward(address user, uint256 amount, uint64 lockTo);
-    event ClaimLog(address user, uint256 amount);
-
-    // Reserved storage space to allow for layout changes in the future.
-    uint256[45] private __gap;
 }

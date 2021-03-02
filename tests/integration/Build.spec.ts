@@ -30,10 +30,10 @@ describe("Integration | Build", function () {
 
   it("can build lUSD with just locked reward", async function () {
     // Lock 10,000 LINA of rewards for Alice
-    await stack.lnRewardLocker.connect(admin).bulkAppendReward(
+    await stack.lnRewardLocker.connect(admin).migrateRewards(
       [alice.address], // _users
       [expandTo18Decimals(10_000)], // _amounts
-      (await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds() // _lockTo
+      [(await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds()] // _lockTo
     );
 
     // Alice can build 1 lUSD without staking
