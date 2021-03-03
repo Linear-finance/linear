@@ -41,6 +41,7 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         uint256 feeForPool,
         uint256 feeForFoundation
     );
+    event PendingExchangeReverted(uint256 id);
 
     struct PendingExchangeEntry {
         uint64 id;
@@ -69,6 +70,7 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     bytes32 private constant REWARD_SYS_KEY = "LnRewardSystem";
     bytes32 private constant CONFIG_FEE_SPLIT = "FoundationFeeSplit";
     bytes32 private constant CONFIG_TRADE_SETTLEMENT_DELAY = "TradeSettlementDelay";
+    bytes32 private constant CONFIG_TRADE_REVERT_DELAY = "TradeRevertDelay";
 
     bytes32 private constant LUSD_KEY = "lUSD";
 
@@ -120,6 +122,10 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         _settle(pendingExchangeEntryId, msg.sender);
     }
 
+    function revert(uint256 pendingExchangeEntryId) external {
+        _revert(pendingExchangeEntryId, msg.sender);
+    }
+
     function _exchange(
         address fromAddr,
         bytes32 sourceKey,
@@ -162,10 +168,16 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         require(exchangeEntry.id > 0, "LnExchangeSystem: pending entry not found");
 
         uint settlementDelay = mConfig.getUint(CONFIG_TRADE_SETTLEMENT_DELAY);
+        uint256 revertDelay = mConfig.getUint(CONFIG_TRADE_REVERT_DELAY);
         require(settlementDelay > 0, "LnExchangeSystem: settlement delay not set");
+        require(revertDelay > 0, "LnExchangeSystem: revert delay not set");
         require(
             block.timestamp >= exchangeEntry.timestamp + settlementDelay,
             "LnExchangeSystem: settlement delay not passed"
+        );
+        require(
+            block.timestamp <= exchangeEntry.timestamp + revertDelay,
+            "LnExchangeSystem: trade can only be reverted now"
         );
 
         ILnAsset source =
@@ -211,6 +223,25 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         delete pendingExchangeEntries[pendingExchangeEntryId];
 
         emit PendingExchangeSettled(exchangeEntry.id, settler, destRecived, feeForPoolInUsd, foundationSplit);
+    }
+
+    function _revert(uint256 pendingExchangeEntryId, address reverter) private {
+        PendingExchangeEntry memory exchangeEntry = pendingExchangeEntries[pendingExchangeEntryId];
+        require(exchangeEntry.id > 0, "LnExchangeSystem: pending entry not found");
+
+        uint256 revertDelay = mConfig.getUint(CONFIG_TRADE_REVERT_DELAY);
+        require(revertDelay > 0, "LnExchangeSystem: revert delay not set");
+        require(block.timestamp > exchangeEntry.timestamp + revertDelay, "LnExchangeSystem: revert delay not passed");
+
+        ILnAsset source =
+            ILnAsset(mAssets.getAddressWithRequire(exchangeEntry.fromCurrency, "LnExchangeSystem: source asset not found"));
+
+        // Refund the amount locked
+        source.move(address(this), exchangeEntry.fromAddr, exchangeEntry.fromAmount);
+
+        delete pendingExchangeEntries[pendingExchangeEntryId];
+
+        emit PendingExchangeReverted(exchangeEntry.id);
     }
 
     // Reserved storage space to allow for layout changes in the future.

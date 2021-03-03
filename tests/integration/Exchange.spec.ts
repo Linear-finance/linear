@@ -20,6 +20,7 @@ describe("Integration | Exchange", function () {
   let stack: DeployedStack;
 
   const settlementDelay: Duration = Duration.fromObject({ minutes: 1 });
+  const revertDelay: Duration = Duration.fromObject({ minutes: 10 });
   const stalePeriod: Duration = Duration.fromObject({ hours: 12 });
   let priceUpdateTime: DateTime;
 
@@ -77,6 +78,12 @@ describe("Integration | Exchange", function () {
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeSettlementDelay"), // key
       settlementDelay.as("seconds")
+    );
+
+    // Set revert delay
+    await stack.lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String("TradeRevertDelay"), // key
+      revertDelay.as("seconds")
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -219,6 +226,12 @@ describe("Integration | Exchange", function () {
         alice.address, // destAddr
         ethers.utils.formatBytes32String("lBTC") // destKey
       );
+
+    // Temporarily set delay to avoid settlement issue
+    await stack.lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String("TradeRevertDelay"), // key
+      Duration.fromObject({ days: 10 }).as("seconds")
+    );
 
     // Make 2 exchanges
     await exchangeAction();
