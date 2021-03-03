@@ -2348,6 +2348,166 @@
           }
         }
       }
+    },
+    "d7ffcfa08969be9288759c5dc2bcbf51be5f96b9fe461041e58803120fabb524": {
+      "address": "0x371Ff0C8fC1BeD1a454FeBe7E17E432F32D38767",
+      "txHash": "0x3ee4560610f12628070c8e75fefd8175f86b48bc70fbc62d33d96e47760db9e1",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mAssets",
+            "type": "t_contract(ILnAddressStorage)10105",
+            "src": "contracts/LnExchangeSystem.sol:56"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mPrices",
+            "type": "t_contract(ILnPrices)10296",
+            "src": "contracts/LnExchangeSystem.sol:57"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mConfig",
+            "type": "t_contract(ILnConfig)10208",
+            "src": "contracts/LnExchangeSystem.sol:58"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "mRewardSys",
+            "type": "t_address",
+            "src": "contracts/LnExchangeSystem.sol:59"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "foundationFeeHolder",
+            "type": "t_address",
+            "src": "contracts/LnExchangeSystem.sol:60"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "exitPositionOnly",
+            "type": "t_bool",
+            "src": "contracts/LnExchangeSystem.sol:62"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "lastPendingExchangeEntryId",
+            "type": "t_uint256",
+            "src": "contracts/LnExchangeSystem.sol:64"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "pendingExchangeEntries",
+            "type": "t_mapping(t_uint256,t_struct(PendingExchangeEntry)8991_storage)",
+            "src": "contracts/LnExchangeSystem.sol:65"
+          },
+          {
+            "contract": "LnExchangeSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)42_storage",
+            "src": "contracts/LnExchangeSystem.sol:248"
+          }
+        ],
+        "types": {
+          "t_contract(ILnAddressStorage)10105": {
+            "label": "contract ILnAddressStorage"
+          },
+          "t_contract(ILnPrices)10296": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnConfig)10208": {
+            "label": "contract ILnConfig"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_struct(PendingExchangeEntry)8991_storage)": {
+            "label": "mapping(uint256 => struct LnExchangeSystem.PendingExchangeEntry)"
+          },
+          "t_struct(PendingExchangeEntry)8991_storage": {
+            "label": "struct LnExchangeSystem.PendingExchangeEntry",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint64"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint64"
+              },
+              {
+                "label": "fromAddr",
+                "type": "t_address"
+              },
+              {
+                "label": "destAddr",
+                "type": "t_address"
+              },
+              {
+                "label": "fromAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "fromCurrency",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "toCurrency",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)42_storage": {
+            "label": "uint256[42]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
     }
   },
   "admin": {
