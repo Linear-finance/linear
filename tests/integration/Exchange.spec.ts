@@ -399,4 +399,97 @@ describe("Integration | Exchange", function () {
       "LnExchangeSystem: pending entry not found"
     );
   });
+
+  it("can only revert trade after revert delay", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    const exchangeTime = await getBlockDateTime(ethers.provider);
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      exchangeTime.plus(revertDelay)
+    );
+    await expect(
+      stack.lnExchangeSystem.connect(settler).revert(
+        1 // pendingExchangeEntryId
+      )
+    ).to.be.revertedWith("LnExchangeSystem: revert delay not passed");
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+    );
+    await expect(
+      stack.lnExchangeSystem.connect(settler).revert(
+        1 // pendingExchangeEntryId
+      )
+    )
+      .to.emit(stack.lnExchangeSystem, "PendingExchangeReverted")
+      .withArgs(
+        1 // id
+      )
+      .and.emit(stack.lusdToken, "Transfer")
+      .withArgs(
+        stack.lnExchangeSystem.address, // from
+        alice.address, // to
+        expandTo18Decimals(500) // value
+      );
+
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(1_000)
+    );
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address)
+    ).to.equal(0);
+  });
+
+  it("cannot settle trade after revert delay", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    const exchangeTime = await getBlockDateTime(ethers.provider);
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+    );
+    await expect(settleTrade(1)).to.be.revertedWith(
+      "LnExchangeSystem: trade can only be reverted now"
+    );
+  });
+
+  it("cannot revert trade twice", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    const exchangeTime = await getBlockDateTime(ethers.provider);
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+    );
+    await stack.lnExchangeSystem.connect(settler).revert(
+      1 // pendingExchangeEntryId
+    );
+
+    // Cannot revert again
+    await expect(
+      stack.lnExchangeSystem.connect(settler).revert(
+        1 // pendingExchangeEntryId
+      )
+    ).to.be.revertedWith("LnExchangeSystem: pending entry not found");
+  });
 });
