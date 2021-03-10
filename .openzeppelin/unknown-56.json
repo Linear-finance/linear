@@ -2508,6 +2508,125 @@
           }
         }
       }
+    },
+    "639e38d1b3ae5bd48c51a610e35d09a329427366a7471a074da90a47ac5df227": {
+      "address": "0xEe97A3b50a0822EBb5852E5fA29b794bFE2094bC",
+      "txHash": "0xdf593a89ee961a9fc66060e498d0301f8750f2d80665b40818931abcfef4355d",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "lastRewardEntryId",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardLocker.sol:30"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "rewardEntries",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)3963_storage))",
+            "src": "contracts/LnRewardLocker.sol:31"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "lockedAmountByAddresses",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardLocker.sol:32"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "totalLockedAmount",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardLocker.sol:33"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "linaTokenAddr",
+            "type": "t_address",
+            "src": "contracts/LnRewardLocker.sol:35"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "accessCtrl",
+            "type": "t_contract(ILnAccessControl)4833",
+            "src": "contracts/LnRewardLocker.sol:36"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)3963_storage))": {
+            "label": "mapping(uint256 => mapping(address => struct LnRewardLocker.RewardEntry))"
+          },
+          "t_mapping(t_address,t_struct(RewardEntry)3963_storage)": {
+            "label": "mapping(address => struct LnRewardLocker.RewardEntry)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_struct(RewardEntry)3963_storage": {
+            "label": "struct LnRewardLocker.RewardEntry",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint216"
+              },
+              {
+                "label": "unlockTime",
+                "type": "t_uint40"
+              }
+            ]
+          },
+          "t_uint216": {
+            "label": "uint216"
+          },
+          "t_uint40": {
+            "label": "uint40"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(ILnAccessControl)4833": {
+            "label": "contract ILnAccessControl"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
