@@ -24,6 +24,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     event RewardSignerChanged(address oldSigner, address newSigner);
+    event RewardLockerAddressChanged(address oldAddress, address newAddress);
     event RewardClaimed(address recipient, uint256 periodId, uint256 stakingReward, uint256 feeReward);
 
     uint256 public firstPeriodStartTime;
@@ -108,6 +109,10 @@ contract LnRewardSystem is LnAdminUpgradeable {
         _setRewardSigner(_rewardSigner);
     }
 
+    function setRewardLockerAddress(address _rewardLockerAddress) external onlyAdmin {
+        _setRewardLockerAddress(_rewardLockerAddress);
+    }
+
     function claimReward(
         uint256 periodId,
         uint256 stakingReward,
@@ -135,6 +140,16 @@ contract LnRewardSystem is LnAdminUpgradeable {
         rewardSigner = _rewardSigner;
 
         emit RewardSignerChanged(oldSigner, rewardSigner);
+    }
+
+    function _setRewardLockerAddress(address _rewardLockerAddress) private {
+        require(_rewardLockerAddress != address(0), "LnRewardSystem: zero address");
+        require(_rewardLockerAddress != address(rewardLocker), "LnRewardSystem: address not changed");
+
+        address oldAddress = address(rewardLocker);
+        rewardLocker = ILnRewardLocker(_rewardLockerAddress);
+
+        emit RewardLockerAddressChanged(oldAddress, address(rewardLocker));
     }
 
     function _claimReward(
