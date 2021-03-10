@@ -2627,6 +2627,323 @@
           }
         }
       }
+    },
+    "590268ba1ab1e4f3f2e3a94971f7116f4f02fcf1a1f639e671134db0ed530169": {
+      "address": "0x7B2e10F871E00fe47c0f2Dc1461d4Bb14215C97a",
+      "txHash": "0x83787b0c0e76bd1e35c6be91437e4c43f56f46d79f3c9feba0fd497af734a734",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:28"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:96"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "priceGetter",
+            "type": "t_contract(ILnPrices)10296",
+            "src": "contracts/LnCollateralSystem.sol:28"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "debtSystem",
+            "type": "t_contract(ILnDebtSystem)10229",
+            "src": "contracts/LnCollateralSystem.sol:29"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "mConfig",
+            "type": "t_contract(ILnConfig)10208",
+            "src": "contracts/LnCollateralSystem.sol:31"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "mRewardLocker",
+            "type": "t_contract(ILnRewardLocker)10320",
+            "src": "contracts/LnCollateralSystem.sol:31"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "uniqueId",
+            "type": "t_uint256",
+            "src": "contracts/LnCollateralSystem.sol:38"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "tokenInfos",
+            "type": "t_mapping(t_bytes32,t_struct(TokenInfo)5992_storage)",
+            "src": "contracts/LnCollateralSystem.sol:45"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "tokenSymbol",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "src": "contracts/LnCollateralSystem.sol:48"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "userCollateralData",
+            "type": "t_mapping(t_address,t_mapping(t_bytes32,t_struct(CollateralData)6002_storage))",
+            "src": "contracts/LnCollateralSystem.sol:54"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "buildBurnSystem",
+            "type": "t_contract(ILnBuildBurnSystem)10169",
+            "src": "contracts/LnCollateralSystem.sol:58"
+          },
+          {
+            "contract": "LnCollateralSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)41_storage",
+            "src": "contracts/LnCollateralSystem.sol:433"
+          }
+        ],
+        "types": {
+          "t_contract(ILnPrices)10296": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnDebtSystem)10229": {
+            "label": "contract ILnDebtSystem"
+          },
+          "t_contract(ILnConfig)10208": {
+            "label": "contract ILnConfig"
+          },
+          "t_contract(ILnRewardLocker)10320": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_bytes32,t_struct(TokenInfo)5992_storage)": {
+            "label": "mapping(bytes32 => struct LnCollateralSystem.TokenInfo)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(TokenInfo)5992_storage": {
+            "label": "struct LnCollateralSystem.TokenInfo",
+            "members": [
+              {
+                "label": "tokenAddr",
+                "type": "t_address"
+              },
+              {
+                "label": "minCollateral",
+                "type": "t_uint256"
+              },
+              {
+                "label": "totalCollateral",
+                "type": "t_uint256"
+              },
+              {
+                "label": "bClose",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_mapping(t_address,t_mapping(t_bytes32,t_struct(CollateralData)6002_storage))": {
+            "label": "mapping(address => mapping(bytes32 => struct LnCollateralSystem.CollateralData))"
+          },
+          "t_mapping(t_bytes32,t_struct(CollateralData)6002_storage)": {
+            "label": "mapping(bytes32 => struct LnCollateralSystem.CollateralData)"
+          },
+          "t_struct(CollateralData)6002_storage": {
+            "label": "struct LnCollateralSystem.CollateralData",
+            "members": [
+              {
+                "label": "collateral",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_contract(ILnBuildBurnSystem)10169": {
+            "label": "contract ILnBuildBurnSystem"
+          },
+          "t_array(t_uint256)41_storage": {
+            "label": "uint256[41]"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
+    },
+    "0a1a03b3b0529f9754141dbb2e3c04ee4e50dbdde978d695af378ae1288e5b67": {
+      "address": "0xBE5bFC6C17B051989dA094e394fb5f7E3aF40a3A",
+      "txHash": "0xb846d21a37e02ff68543d0f1e90f37c0f08a441c6d8858964e072c3c652581e2",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "firstPeriodStartTime",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardSystem.sol:30"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardSigner",
+            "type": "t_address",
+            "src": "contracts/LnRewardSystem.sol:31"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "userLastClaimPeriodIds",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardSystem.sol:32"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "lusd",
+            "type": "t_contract(IERC20Upgradeable)1321",
+            "src": "contracts/LnRewardSystem.sol:34"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "collateralSystem",
+            "type": "t_contract(ILnCollateralSystem)4922",
+            "src": "contracts/LnRewardSystem.sol:35"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardLocker",
+            "type": "t_contract(ILnRewardLocker)5013",
+            "src": "contracts/LnRewardSystem.sol:36"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnRewardSystem.sol:38"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)43_storage",
+            "src": "contracts/LnRewardSystem.sol:204"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(IERC20Upgradeable)1321": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_contract(ILnCollateralSystem)4922": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnRewardLocker)5013": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_uint256)43_storage": {
+            "label": "uint256[43]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
