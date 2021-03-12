@@ -43,7 +43,7 @@ describe("LnRewardLocker", function () {
         10, // amount
         20 // unlockTime
       )
-    ).to.be.revertedWith("LnAssetUpgradeable: not LOCK_REWARD role");
+    ).to.be.revertedWith("LnRewardLocker: not LOCK_REWARD role");
 
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
