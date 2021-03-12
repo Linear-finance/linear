@@ -53,6 +53,12 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     // State variables added by upgrades
     ILnBuildBurnSystem public buildBurnSystem;
+    address public liquidation;
+
+    modifier onlyLiquidation() {
+        require(msg.sender == liquidation, "LnCollateralSystem: not liquidation");
+        _;
+    }
 
     // -------------------------------------------------------
     function __LnCollateralSystem_init(address _admin) public initializer {
@@ -78,12 +84,14 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         buildBurnSystem = ILnBuildBurnSystem(
             _addressStorage.getAddressWithRequire("LnBuildBurnSystem", "LnBuildBurnSystem address not valid")
         );
+        liquidation = _addressStorage.getAddressWithRequire("LnLiquidation", "LnLiquidation address not valid");
 
         emit CachedAddressUpdated("LnPrices", address(priceGetter));
         emit CachedAddressUpdated("LnDebtSystem", address(debtSystem));
         emit CachedAddressUpdated("LnConfig", address(mConfig));
         emit CachedAddressUpdated("LnRewardLocker", address(mRewardLocker));
         emit CachedAddressUpdated("LnBuildBurnSystem", address(buildBurnSystem));
+        emit CachedAddressUpdated("LnLiquidation", liquidation);
     }
 
     function updateTokenInfo(
@@ -183,6 +191,10 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             return userCollateralData[_user][_currency].collateral;
         }
         return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
+    }
+
+    function getUserLinaCollateralBreakdown(address _user) external view returns (uint256 staked, uint256 locked) {
+        return (userCollateralData[_user]["LINA"].collateral, mRewardLocker.balanceOf(_user));
     }
 
     // NOTE: LINA collateral not include reward in locker
@@ -423,9 +435,21 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
+    function moveCollateral(
+        address fromUser,
+        address toUser,
+        bytes32 currency,
+        uint256 amount
+    ) external whenNotPaused onlyLiquidation {
+        userCollateralData[fromUser][currency].collateral = userCollateralData[fromUser][currency].collateral.sub(amount);
+        userCollateralData[toUser][currency].collateral = userCollateralData[toUser][currency].collateral.add(amount);
+        emit CollateralMoved(fromUser, toUser, currency, amount);
+    }
+
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
+    event CollateralMoved(address fromUser, address toUser, bytes32 currency, uint256 amount);
 
     // Reserved storage space to allow for layout changes in the future.
     uint256[41] private __gap;

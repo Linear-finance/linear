@@ -25,9 +25,15 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     ILnPrices private priceGetter;
     ILnCollateralSystem private collaterSys;
     ILnConfig private mConfig;
+    address private liquidation;
 
     modifier onlyCollaterSys {
         require((msg.sender == address(collaterSys)), "LnBuildBurnSystem: not collateral system");
+        _;
+    }
+
+    modifier onlyLiquidation {
+        require((msg.sender == liquidation), "LnBuildBurnSystem: not liquidation");
         _;
     }
 
@@ -53,11 +59,13 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
             payable(_addressStorage.getAddressWithRequire("LnCollateralSystem", "LnCollateralSystem address not valid"));
         collaterSys = ILnCollateralSystem(collateralAddress);
         mConfig = ILnConfig(_addressStorage.getAddressWithRequire("LnConfig", "LnConfig address not valid"));
+        liquidation = _addressStorage.getAddressWithRequire("LnLiquidation", "LnLiquidation address not valid");
 
         emit CachedAddressUpdated("LnPrices", address(priceGetter));
         emit CachedAddressUpdated("LnDebtSystem", address(debtSystem));
         emit CachedAddressUpdated("LnCollateralSystem", address(collaterSys));
         emit CachedAddressUpdated("LnConfig", address(mConfig));
+        emit CachedAddressUpdated("LnLiquidation", liquidation);
     }
 
     function SetLusdTokenAddress(address _address) public onlyAdmin {
@@ -115,15 +123,19 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         _buildAsset(user, max);
     }
 
-    function _burnAsset(address user, uint256 amount) internal {
+    function _burnAsset(
+        address debtUser,
+        address burnUser,
+        uint256 amount
+    ) internal {
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         require(amount > 0, "amount need > 0");
         // calc debt
-        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user);
+        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(debtUser);
         require(oldUserDebtBalance > 0, "no debt, no burn");
         uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
         // burn asset
-        lUSDToken.burn(user, burnAmount);
+        lUSDToken.burn(burnUser, burnAmount);
 
         uint newTotalDebtIssued = totalAssetSupplyInUsd.sub(burnAmount);
 
@@ -140,13 +152,13 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         }
 
         // update debt
-        debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion);
+        debtSystem.UpdateDebt(debtUser, newUserDebtProportion, oldTotalProportion);
     }
 
     // burn
     function BurnAsset(uint256 amount) external whenNotPaused returns (bool) {
         address user = msg.sender;
-        _burnAsset(user, amount);
+        _burnAsset(user, user, amount);
         return true;
     }
 
@@ -171,7 +183,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         if (balance < needBurn) {
             needBurn = balance;
         }
-        _burnAsset(user, needBurn);
+        _burnAsset(user, user, needBurn);
         return true;
     }
 
@@ -184,9 +196,17 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     }
 
     function burnFromCollateralSys(address user, uint256 amount) external whenNotPaused onlyCollaterSys {
-        _burnAsset(user, amount);
+        _burnAsset(user, user, amount);
+    }
+
+    function burnForLiquidation(
+        address user,
+        address liquidator,
+        uint256 amount
+    ) external whenNotPaused onlyLiquidation {
+        _burnAsset(user, liquidator, amount);
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 }

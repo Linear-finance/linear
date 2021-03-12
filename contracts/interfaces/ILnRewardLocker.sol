@@ -11,4 +11,20 @@ interface ILnRewardLocker {
         uint256 amount,
         uint256 unlockTime
     ) external;
+
+    function moveReward(
+        address from,
+        address recipient,
+        uint256 amount,
+        uint256[] calldata rewardEntryIds
+    ) external;
+
+    function moveRewardProRata(
+        address from,
+        address recipient1,
+        uint256 amount1,
+        address recipient2,
+        uint256 amount2,
+        uint256[] calldata rewardEntryIds
+    ) external;
 }
