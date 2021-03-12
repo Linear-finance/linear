@@ -1,3 +1,4 @@
+import Big, { RoundingMode } from "big.js";
 import { BigNumber } from "ethers";
 
 export const zeroAddress: string = "0x0000000000000000000000000000000000000000";
@@ -9,10 +10,12 @@ export function expandTo18Decimals(num: number): BigNumber {
 }
 
 function expandToNDecimals(num: number, n: number): BigNumber {
-  while (!Number.isInteger(num)) {
-    num *= 10;
+  let bigNum = new Big(num);
+
+  while (!bigNum.round(0, RoundingMode.RoundDown).eq(bigNum)) {
+    bigNum = bigNum.mul(10);
     if (--n < 0) return BigNumber.from(0);
   }
 
-  return BigNumber.from(num).mul(BigNumber.from(10).pow(n));
+  return BigNumber.from(bigNum.toString()).mul(BigNumber.from(10).pow(n));
 }

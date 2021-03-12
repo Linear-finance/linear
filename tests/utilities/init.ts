@@ -4,6 +4,7 @@
  * to use mocks etc. to isolate the module under test.
  */
 
+import { Duration } from "luxon";
 import { ethers, upgrades } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
@@ -25,6 +26,7 @@ export interface DeployedStack {
   lnExchangeSystem: Contract;
   lnRewardLocker: Contract;
   lnRewardSystem: Contract;
+  lnLiquidation: Contract;
 }
 
 export const deployLinearStack = async (
@@ -73,12 +75,14 @@ export const deployLinearStack = async (
     LnDefaultPrices,
     LnDebtSystem,
     LnExchangeSystem,
+    LnLiquidation,
   ] = await Promise.all(
     [
       "LnBuildBurnSystem",
       "LnDefaultPrices",
       "LnDebtSystem",
       "LnExchangeSystem",
+      "LnLiquidation",
     ].map((contractName) =>
       ethers.getContractFactory(contractName, {
         signer: deployer,
@@ -219,13 +223,58 @@ export const deployLinearStack = async (
     }
   );
 
-  /**
-   * Set BUILD_RATIO config value to 0.2 (18 decimals)
-   */
-  await lnConfig.connect(admin).setUint(
-    ethers.utils.formatBytes32String("BuildRatio"), // key
-    expandTo18Decimals(0.2) // value
+  const lnLiquidation = await upgrades.deployProxy(
+    LnLiquidation,
+    [
+      lnBuildBurnSystem.address, // _lnBuildBurnSystem
+      lnCollateralSystem.address, // _lnCollateralSystem
+      lnConfig.address, // _lnConfig
+      lnDebtSystem.address, // _lnDebtSystem
+      lnDefaultPrices.address, // _lnPrices
+      lnRewardLocker.address, // _lnRewardLocker
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnLiquidation_init",
+      unsafeAllowLinkedLibraries: true,
+    }
   );
+
+  /**
+   * Set config items:
+   *
+   * - BuildRatio: 0.2
+   * - LiquidationRatio: 0.5
+   * - LiquidationMarkerReward: 0.05
+   * - LiquidationLiquidatorReward: 0.1
+   * - LiquidationDelay: 3 days
+   */
+  for (const config of [
+    {
+      key: "BuildRatio",
+      value: expandTo18Decimals(0.2),
+    },
+    {
+      key: "LiquidationRatio",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "LiquidationMarkerReward",
+      value: expandTo18Decimals(0.05),
+    },
+    {
+      key: "LiquidationLiquidatorReward",
+      value: expandTo18Decimals(0.1),
+    },
+    {
+      key: "LiquidationDelay",
+      value: Duration.fromObject({ days: 3 }).as("seconds"),
+    },
+  ])
+    await lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String(config.key), // key
+      config.value // value
+    );
 
   /**
    * Assign the following roles to contract `LnBuildBurnSystem`:
@@ -262,6 +311,16 @@ export const deployLinearStack = async (
   );
 
   /**
+   * Assign the following role to contract `LnLiquidation`:
+   * - MOVE_REWARD
+   */
+  await lnAccessControl.connect(admin).SetRoles(
+    formatBytes32String("MOVE_REWARD"), // roleType
+    [lnLiquidation.address], // addresses
+    [true] // setTo
+  );
+
+  /**
    * Fill the contract address registry
    */
   await lnAssetSystem
@@ -277,6 +336,7 @@ export const deployLinearStack = async (
         ethers.utils.formatBytes32String("LnBuildBurnSystem"),
         ethers.utils.formatBytes32String("LnRewardLocker"),
         ethers.utils.formatBytes32String("LnExchangeSystem"),
+        ethers.utils.formatBytes32String("LnLiquidation"),
       ],
       [
         lnAssetSystem.address,
@@ -288,6 +348,7 @@ export const deployLinearStack = async (
         lnBuildBurnSystem.address,
         lnRewardLocker.address,
         lnExchangeSystem.address,
+        lnLiquidation.address,
       ]
     );
 
@@ -406,5 +467,6 @@ export const deployLinearStack = async (
     lnExchangeSystem,
     lnRewardLocker,
     lnRewardSystem,
+    lnLiquidation,
   };
 };

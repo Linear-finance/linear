@@ -52,12 +52,12 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
     bytes32 private constant ROLE_MOVE_REWARD = "MOVE_REWARD";
 
     modifier onlyLockRewardRole() {
-        require(accessCtrl.hasRole(ROLE_LOCK_REWARD, msg.sender), "LnAssetUpgradeable: not LOCK_REWARD role");
+        require(accessCtrl.hasRole(ROLE_LOCK_REWARD, msg.sender), "LnRewardLocker: not LOCK_REWARD role");
         _;
     }
 
     modifier onlyMoveRewardRole() {
-        require(accessCtrl.hasRole(ROLE_MOVE_REWARD, msg.sender), "LnAssetUpgradeable: not MOVE_REWARD role");
+        require(accessCtrl.hasRole(ROLE_MOVE_REWARD, msg.sender), "LnRewardLocker: not MOVE_REWARD role");
         _;
     }
 
@@ -193,7 +193,7 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
             /**
              * This reward entry is gone. We're not reverting the tx here because it's possible for
              * moveReward() or moveRewardProRata() to be called multiple times in a single transaction.
-             * Instead of asking the calling to precisely track used entries, we just ignore them here.
+             * Instead of asking the caller to precisely track used entries, we just ignore them here.
              */
             return (params.amount1Left, params.amount2Left);
         }
