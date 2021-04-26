@@ -4,6 +4,7 @@ pragma solidity ^0.6.12;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./SafeDecimalMath.sol";
@@ -55,9 +56,55 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     ILnBuildBurnSystem public buildBurnSystem;
     address public liquidation;
 
+    bytes32 private constant BUILD_RATIO_KEY = "BuildRatio";
+
     modifier onlyLiquidation() {
         require(msg.sender == liquidation, "LnCollateralSystem: not liquidation");
         _;
+    }
+
+    /**
+     * @notice This function is deprecated as it doesn't do what its name suggests. Use
+     * `getFreeCollateralInUsd()` instead. This function is not removed since it's still
+     * used by `LnBuildBurnSystem`.
+     */
+    function MaxRedeemableInUsd(address _user) public view returns (uint256) {
+        return getFreeCollateralInUsd(_user);
+    }
+
+    function getFreeCollateralInUsd(address user) public view returns (uint256) {
+        uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(user);
+
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
+        if (debtBalance == 0) {
+            return totalCollateralInUsd;
+        }
+
+        uint256 buildRatio = mConfig.getUint(BUILD_RATIO_KEY);
+        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
+        if (totalCollateralInUsd < minCollateral) {
+            return 0;
+        }
+
+        return totalCollateralInUsd.sub(minCollateral);
+    }
+
+    function maxRedeemableLina(address user) public view returns (uint256) {
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
+        uint256 stakedLinaAmount = userCollateralData[user][Currency_LINA].collateral;
+
+        if (debtBalance == 0) {
+            // User doesn't have debt. All staked collateral is withdrawable
+            return stakedLinaAmount;
+        } else {
+            // User has debt. Must keep a certain amount
+            uint256 buildRatio = mConfig.getUint(BUILD_RATIO_KEY);
+            uint256 minCollateralUsd = debtBalance.divideDecimal(buildRatio);
+            uint256 minCollateralLina = minCollateralUsd.divideDecimal(priceGetter.getPrice(Currency_LINA));
+            uint256 lockedLinaAmount = mRewardLocker.balanceOf(user);
+
+            return MathUpgradeable.min(stakedLinaAmount, stakedLinaAmount.add(lockedLinaAmount).sub(minCollateralLina));
+        }
     }
 
     // -------------------------------------------------------
@@ -362,47 +409,13 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return myratio <= buildRatio;
     }
 
-    // 满足最低抵押率的情况下可最大赎回的资产 TODO: return multi value
-    function MaxRedeemableInUsd(address _user) public view returns (uint256) {
-        uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
-
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
-        if (debtBalance == 0) {
-            return totalCollateralInUsd;
-        }
-
-        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
-        uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
-        if (totalCollateralInUsd < minCollateral) {
-            return 0;
-        }
-
-        return totalCollateralInUsd.sub(minCollateral);
-    }
-
-    function MaxRedeemable(address user, bytes32 _currency) public view returns (uint256) {
-        uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(_currency));
-        if (maxRedeem > userCollateralData[user][_currency].collateral) {
-            maxRedeem = userCollateralData[user][_currency].collateral;
-        }
-        if (Currency_LINA != _currency) {
-            return maxRedeem;
-        }
-        uint256 lockedLina = mRewardLocker.balanceOf(user);
-        if (maxRedeem <= lockedLina) {
-            return 0;
-        }
-        return maxRedeem.sub(lockedLina);
-    }
-
     function RedeemMax(bytes32 _currency) external whenNotPaused {
         _redeemMax(msg.sender, _currency);
     }
 
     function _redeemMax(address user, bytes32 _currency) private {
-        uint256 maxRedeem = MaxRedeemable(user, _currency);
-        _Redeem(user, _currency, maxRedeem);
+        require(_currency == Currency_LINA, "LnCollateralSystem: only LINA is supported");
+        _Redeem(user, Currency_LINA, maxRedeemableLina(user));
     }
 
     function _Redeem(
@@ -410,21 +423,20 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         bytes32 _currency,
         uint256 _amount
     ) internal {
-        require(_amount <= userCollateralData[user][_currency].collateral, "Can not redeem more than collateral");
-        require(_amount > 0, "Redeem amount need larger than zero");
+        require(_currency == Currency_LINA, "LnCollateralSystem: only LINA is supported");
+        require(_amount > 0, "LnCollateralSystem: zero amount");
 
-        uint256 maxRedeemableInUsd = MaxRedeemableInUsd(user);
-        uint256 maxRedeem = maxRedeemableInUsd.divideDecimal(priceGetter.getPrice(_currency));
-        require(_amount <= maxRedeem, "Because lower collateral ratio, can not redeem too much");
+        uint256 maxRedeemableLinaAmount = maxRedeemableLina(user);
+        require(_amount <= maxRedeemableLinaAmount, "LnCollateralSystem: insufficient collateral");
 
-        userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.sub(_amount);
+        userCollateralData[user][Currency_LINA].collateral = userCollateralData[user][Currency_LINA].collateral.sub(_amount);
 
-        TokenInfo storage tokeninfo = tokenInfos[_currency];
+        TokenInfo storage tokeninfo = tokenInfos[Currency_LINA];
         tokeninfo.totalCollateral = tokeninfo.totalCollateral.sub(_amount);
 
-        IERC20(tokenInfos[_currency].tokenAddr).transfer(user, _amount);
+        IERC20(tokeninfo.tokenAddr).transfer(user, _amount);
 
-        emit RedeemCollateral(user, _currency, _amount, userCollateralData[user][_currency].collateral);
+        emit RedeemCollateral(user, Currency_LINA, _amount, userCollateralData[user][Currency_LINA].collateral);
     }
 
     // 1. After redeem, collateral ratio need bigger than target ratio.
