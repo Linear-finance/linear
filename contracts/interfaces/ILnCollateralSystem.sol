@@ -10,6 +10,8 @@ interface ILnCollateralSystem {
 
     function MaxRedeemableInUsd(address _user) external view returns (uint256);
 
+    function getFreeCollateralInUsd(address user) external view returns (uint256);
+
     function moveCollateral(
         address fromUser,
         address toUser,
