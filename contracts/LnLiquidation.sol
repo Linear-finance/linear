@@ -123,6 +123,11 @@ contract LnLiquidation is LnAdminUpgradeable {
         lnRewardLocker = _lnRewardLocker;
     }
 
+    function setLnPrices(ILnPrices newLnPrices) external onlyAdmin {
+        require(address(newLnPrices) != address(0), "LnLiquidation: zero address");
+        lnPrices = newLnPrices;
+    }
+
     function markPositionAsUndercollateralized(address user) external {
         require(!isPositionMarkedAsUndercollateralized(user), "LnLiquidation: already marked");
 
