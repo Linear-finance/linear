@@ -1,43 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.24;
 
-// a facade for prices fetch from oracles
 interface ILnPrices {
-    // get price for a currency
-    function getPrice(bytes32 currencyName) external view returns (uint);
+    function getPrice(bytes32 currencyKey) external view returns (uint);
 
-    // get price and updated time for a currency
-    function getPriceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time);
-
-    // is the price is stale
-    function isStale(bytes32 currencyName) external view returns (bool);
-
-    // the defined stale time
-    function stalePeriod() external view returns (uint);
-
-    // exchange amount of source currenty for some dest currency, also get source and dest curreny price
     function exchange(
-        bytes32 sourceName,
+        bytes32 sourceKey,
         uint sourceAmount,
-        bytes32 destName
+        bytes32 destKey
     ) external view returns (uint);
 
-    // exchange amount of source currenty for some dest currency
-    function exchangeAndPrices(
-        bytes32 sourceName,
-        uint sourceAmount,
-        bytes32 destName
-    )
-        external
-        view
-        returns (
-            uint value,
-            uint sourcePrice,
-            uint destPrice
-        );
-
-    // price names
     function LUSD() external view returns (bytes32);
-
-    function LINA() external view returns (bytes32);
 }
