@@ -11,7 +11,7 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
 
     address public oracle;
 
-    uint public override stalePeriod;
+    uint public stalePeriod;
 
     mapping(bytes32 => uint) public mPricesLastRound;
 
@@ -49,7 +49,7 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
         return _getPrice(currencyName);
     }
 
-    function getPriceAndUpdatedTime(bytes32 currencyName) external view override returns (uint price, uint time) {
+    function getPriceAndUpdatedTime(bytes32 currencyName) external view returns (uint price, uint time) {
         PriceData memory priceAndTime = _getPriceData(currencyName);
         return (priceAndTime.mPrice, priceAndTime.mTime);
     }
@@ -69,7 +69,6 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
     )
         external
         view
-        override
         returns (
             uint value,
             uint sourcePrice,
@@ -79,7 +78,7 @@ contract LnDefaultPrices is LnAdminUpgradeable, LnBasePrices {
         return _exchangeAndPrices(sourceName, sourceAmount, destName);
     }
 
-    function isStale(bytes32 currencyName) external view override returns (bool) {
+    function isStale(bytes32 currencyName) external view returns (bool) {
         if (currencyName == LUSD) return false;
         return _getUpdatedTime(currencyName).add(stalePeriod) < now;
     }
