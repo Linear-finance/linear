@@ -9,7 +9,7 @@ export function expandTo18Decimals(num: number): BigNumber {
   return expandToNDecimals(num, 18);
 }
 
-function expandToNDecimals(num: number, n: number): BigNumber {
+export function expandToNDecimals(num: number, n: number): BigNumber {
   let bigNum = new Big(num);
 
   while (!bigNum.round(0, RoundingMode.RoundDown).eq(bigNum)) {
