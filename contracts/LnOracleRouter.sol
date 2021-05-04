@@ -214,10 +214,10 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
                 price = rawAnswer.toUint256();
             } else if (oraclePriceDecimals > OUTPUT_PRICE_DECIMALS) {
                 // Too many decimals
-                price = rawAnswer.toUint256().div(10**(oraclePriceDecimals - OUTPUT_PRICE_DECIMALS));
+                price = rawAnswer.toUint256().div(10**uint256(oraclePriceDecimals - OUTPUT_PRICE_DECIMALS));
             } else {
                 // Too few decimals
-                price = rawAnswer.toUint256().mul(10**(OUTPUT_PRICE_DECIMALS - oraclePriceDecimals));
+                price = rawAnswer.toUint256().mul(10**uint256(OUTPUT_PRICE_DECIMALS - oraclePriceDecimals));
             }
 
             updateTime = rawUpdateTime;
