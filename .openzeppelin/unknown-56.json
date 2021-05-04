@@ -3773,6 +3773,113 @@
           }
         }
       }
+    },
+    "45b3b2d8c3ae89a47899f6421d9690ae2c74a9e59ad409d44a6d947a2047d556": {
+      "address": "0xA9CaeD24f25B54251b8f347D41039eEDfAcd57A7",
+      "txHash": "0x229778826809cc093495b4a28c9a2196b2aa5faaf7b1246846a03114c86d4fb5",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnOracleRouter",
+            "label": "globalStalePeriod",
+            "type": "t_uint256",
+            "src": "contracts/LnOracleRouter.sol:35"
+          },
+          {
+            "contract": "LnOracleRouter",
+            "label": "stalePeriodOverrides",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "src": "contracts/LnOracleRouter.sol:36"
+          },
+          {
+            "contract": "LnOracleRouter",
+            "label": "oracleSettings",
+            "type": "t_mapping(t_bytes32,t_struct(OracleSettings)10296_storage)",
+            "src": "contracts/LnOracleRouter.sol:37"
+          },
+          {
+            "contract": "LnOracleRouter",
+            "label": "linearCurrencyKeysToBandCurrencyKeys",
+            "type": "t_mapping(t_bytes32,t_string_storage)",
+            "src": "contracts/LnOracleRouter.sol:38"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_mapping(t_bytes32,t_struct(OracleSettings)10296_storage)": {
+            "label": "mapping(bytes32 => struct LnOracleRouter.OracleSettings)"
+          },
+          "t_struct(OracleSettings)10296_storage": {
+            "label": "struct LnOracleRouter.OracleSettings",
+            "members": [
+              {
+                "label": "oracleType",
+                "type": "t_uint8"
+              },
+              {
+                "label": "oracleAddress",
+                "type": "t_address"
+              }
+            ]
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_string_storage)": {
+            "label": "mapping(bytes32 => string)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
