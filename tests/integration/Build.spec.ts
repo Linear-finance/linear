@@ -21,10 +21,9 @@ describe("Integration | Build", function () {
     stack = await deployLinearStack(deployer, admin);
 
     // Set LINA price to $0.01
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("LINA")], // currencyNames
-      [expandTo18Decimals(0.01)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+    await stack.lnPrices.connect(admin).setPrice(
+      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      expandTo18Decimals(0.01) // price
     );
 
     // Mint 1,000,000 LINA to Alice

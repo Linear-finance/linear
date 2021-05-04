@@ -19,7 +19,7 @@ export interface DeployedStack {
   lnAccessControl: Contract;
   lnAssetSystem: Contract;
   lnBuildBurnSystem: Contract;
-  lnDefaultPrices: Contract;
+  lnPrices: Contract;
   lnCollateralSystem: Contract;
   lnConfig: Contract;
   lnDebtSystem: Contract;
@@ -72,14 +72,14 @@ export const deployLinearStack = async (
   // Load contract factories with external libraries
   const [
     LnBuildBurnSystem,
-    LnDefaultPrices,
+    MockLnPrices,
     LnDebtSystem,
     LnExchangeSystem,
     LnLiquidation,
   ] = await Promise.all(
     [
       "LnBuildBurnSystem",
-      "LnDefaultPrices",
+      "MockLnPrices",
       "LnDebtSystem",
       "LnExchangeSystem",
       "LnLiquidation",
@@ -166,18 +166,8 @@ export const deployLinearStack = async (
   /**
    * Oracle contract for price data access
    */
-  const lnDefaultPrices = await upgrades.deployProxy(
-    LnDefaultPrices,
-    [
-      admin.address, // _admin
-      admin.address, // _oracle
-      [], // _currencies
-      [], // _prices
-    ],
-    {
-      initializer: "__LnDefaultPrices_init",
-      unsafeAllowLinkedLibraries: true,
-    }
+  const lnPrices = await MockLnPrices.deploy(
+    Duration.fromObject({ hours: 12 }).as("seconds") // _stalePeriod
   );
 
   const lnDebtSystem = await upgrades.deployProxy(
@@ -230,7 +220,7 @@ export const deployLinearStack = async (
       lnCollateralSystem.address, // _lnCollateralSystem
       lnConfig.address, // _lnConfig
       lnDebtSystem.address, // _lnDebtSystem
-      lnDefaultPrices.address, // _lnPrices
+      lnPrices.address, // _lnPrices
       lnRewardLocker.address, // _lnRewardLocker
       admin.address, // _admin
     ],
@@ -342,7 +332,7 @@ export const deployLinearStack = async (
         lnAssetSystem.address,
         lnAccessControl.address,
         lnConfig.address,
-        lnDefaultPrices.address,
+        lnPrices.address,
         lnDebtSystem.address,
         lnCollateralSystem.address,
         lnBuildBurnSystem.address,
@@ -460,7 +450,7 @@ export const deployLinearStack = async (
     lnAccessControl,
     lnAssetSystem,
     lnBuildBurnSystem,
-    lnDefaultPrices,
+    lnPrices,
     lnCollateralSystem,
     lnConfig,
     lnDebtSystem,

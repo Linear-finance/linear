@@ -38,10 +38,9 @@ describe("Integration | Liquidation", function () {
   };
 
   const setLinaPrice = async (price: number): Promise<void> => {
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("LINA")], // currencyNames
-      [expandTo18Decimals(price)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+    await stack.lnPrices.connect(admin).setPrice(
+      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      expandTo18Decimals(price) // price
     );
   };
 

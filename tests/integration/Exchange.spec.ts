@@ -25,10 +25,9 @@ describe("Integration | Exchange", function () {
   let priceUpdateTime: DateTime;
 
   const setLbtcPrice = async (price: number): Promise<void> => {
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("lBTC")], // currencyNames
-      [expandTo18Decimals(price)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+    await stack.lnPrices.connect(admin).setPrice(
+      ethers.utils.formatBytes32String("lBTC"), // currencyKey
+      expandTo18Decimals(price) // price
     );
   };
 
@@ -59,13 +58,15 @@ describe("Integration | Exchange", function () {
     priceUpdateTime = await getBlockDateTime(ethers.provider);
 
     // Set LINA price to $0.01 and lBTC to $20,000
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [
-        ethers.utils.formatBytes32String("LINA"),
-        ethers.utils.formatBytes32String("lBTC"),
-      ], // currencyNames
-      [expandTo18Decimals(0.01), expandTo18Decimals(20_000)], // newPrices
-      priceUpdateTime.toSeconds() // timeSent
+    await stack.lnPrices.connect(admin).setPriceAndTime(
+      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      expandTo18Decimals(0.01), // price
+      priceUpdateTime.toSeconds() // updateTime
+    );
+    await stack.lnPrices.connect(admin).setPriceAndTime(
+      ethers.utils.formatBytes32String("lBTC"), // currencyKey
+      expandTo18Decimals(20_000), // price
+      priceUpdateTime.toSeconds() // updateTime
     );
 
     // Set BTC exchange fee rate to 1%
@@ -250,7 +251,7 @@ describe("Integration | Exchange", function () {
       priceUpdateTime.plus(stalePeriod).plus({ seconds: 1 })
     );
     await expect(settleTrade(2)).to.be.revertedWith(
-      "LnDefaultPrices: staled price data"
+      "MockLnPrices: staled price data"
     );
   });
 
