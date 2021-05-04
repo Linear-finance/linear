@@ -33,10 +33,9 @@ describe("Fuzz | BscMigration", function () {
     stack = await deployLinearStack(deployer, admin);
 
     // Set LINA price to $1
-    await stack.lnDefaultPrices.connect(admin).updateAll(
-      [ethers.utils.formatBytes32String("LINA")], // currencyNames
-      [expandTo18Decimals(1)], // newPrices
-      (await getBlockDateTime(ethers.provider)).toSeconds() // timeSent
+    await stack.lnPrices.connect(admin).setPrice(
+      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      expandTo18Decimals(1) // price
     );
 
     // All users stake 1M LINA
