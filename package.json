@@ -1,18 +1,17 @@
 {
-  "name": "linear-finance-token",
+  "name": "linear-finance-contracts",
   "version": "0.0.1",
-  "description": "linear finance token",
-  "main": "truffle-config.js",
+  "description": "Smart contracts for the Linear platform",
   "scripts": {
     "format": "prettier --write .",
     "compile": "hardhat compile",
     "test": "hardhat test"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Linear Finance <info@linear.finance>",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Linear-finance/linear"
   },
   "dependencies": {
     "@openzeppelin/test-helpers": "^0.5.6",

@@ -17,7 +17,7 @@ jobs:
       - name: Clone Source Code
         uses: actions/checkout@v2
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: yarn install
 
       - name: Compile with Hardhat
