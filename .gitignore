@@ -3,7 +3,6 @@ deploy.sh
 node_modules
 build
 contracts/artifacts
-log/development-deployed.json
 .openzeppelin/.session
 .DS_Store
 
