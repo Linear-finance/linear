@@ -1,3 +1,4 @@
+import { Duration } from "luxon";
 import { ethers } from "hardhat";
 
 import EACAggregatorProxyAbi from "./abis/EACAggregatorProxy.json";
@@ -48,10 +49,17 @@ async function main() {
   if (oracleSettings.oracleType === ORACLE_TYPE_CHAINLINK)
     throw new Error("Already using Chainlink");
 
+  console.log("Changing oracle to Chainlink...");
   await lnOracleRouter.connect(admin).addChainlinkOracle(
     formatBytes32String(liquidName), // currencyKey
     aggregatorAddress, // oracleAddress
     true // removeExisting
+  );
+
+  console.log("Setting stale period to 10 minutes...");
+  await lnOracleRouter.connect(admin).setStalePeriodOverride(
+    formatBytes32String(liquidName), // currencyKey
+    Duration.fromObject({ minutes: 10 }).as("seconds") // newStalePeriod
   );
 }
 
