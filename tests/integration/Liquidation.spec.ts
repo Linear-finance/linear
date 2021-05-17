@@ -362,6 +362,26 @@ describe("Integration | Liquidation", function () {
     ).to.equal(false);
   });
 
+  it("can burn max amount directly without specifying concrete amount", async () => {
+    // Same as last case
+    await setLinaPrice(0.035);
+    await stack.lnLiquidation
+      .connect(bob)
+      .markPositionAsUndercollateralized(alice.address);
+    await passLiquidationDelay();
+
+    await stack.lnLiquidation
+      .connect(bob)
+      .liquidatePositionMax(alice.address, []);
+
+    // Mark is removed after buring the max amount
+    expect(
+      await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
+        alice.address
+      )
+    ).to.equal(false);
+  });
+
   it("liquidation of position backed by staked collateral only", async () => {
     // Alice gets marked for liquidation by Charlie
     await setLinaPrice(0.035);
