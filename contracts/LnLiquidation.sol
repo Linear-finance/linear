@@ -53,6 +53,11 @@ contract LnLiquidation is LnAdminUpgradeable {
         uint256 liquidatorReward;
         uint256 totalReward;
     }
+    struct LiquidatePositionParams {
+        address user;
+        address liquidator;
+        uint256 lusdToBurn;
+    }
     struct WithdrawCollateralParams {
         address user;
         address liquidator;
@@ -163,8 +168,19 @@ contract LnLiquidation is LnAdminUpgradeable {
     ) external {
         require(lusdToBurn > 0, "LnLiquidation: zero amount");
 
+        _liquidatePosition(
+            LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: lusdToBurn}),
+            rewardEntryIds
+        );
+    }
+
+    function liquidatePositionMax(address user, uint256[] calldata rewardEntryIds) external {
+        _liquidatePosition(LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: 0}), rewardEntryIds);
+    }
+
+    function _liquidatePosition(LiquidatePositionParams memory params, uint256[] calldata rewardEntryIds) private {
         // Check mark and delay
-        UndercollateralizationMark memory mark = undercollateralizationMarks[user];
+        UndercollateralizationMark memory mark = undercollateralizationMarks[params.user];
         {
             uint256 liquidationDelay = lnConfig.getUint(LIQUIDATION_DELAY_KEY);
             require(mark.timestamp > 0, "LnLiquidation: not marked for undercollateralized");
@@ -173,7 +189,7 @@ contract LnLiquidation is LnAdminUpgradeable {
 
         // Confirm that the position is still undercollateralized
         FetchRatiosResult memory ratios = fetchRatios();
-        EvalUserPositionResult memory evalResult = evalUserPostion(user);
+        EvalUserPositionResult memory evalResult = evalUserPostion(params.user);
         require(evalResult.collateralizationRatio > ratios.issuanceRatio, "LnLiquidation: not undercollateralized");
 
         uint256 maxLusdToBurn =
@@ -184,13 +200,24 @@ contract LnLiquidation is LnAdminUpgradeable {
                     )
                 )
             );
-        require(lusdToBurn <= maxLusdToBurn, "LnLiquidation: burn amount too large");
+        if (params.lusdToBurn == 0) {
+            // Liquidate max
+            params.lusdToBurn = maxLusdToBurn;
+        } else {
+            // User specified amount to liquidate
+            require(params.lusdToBurn <= maxLusdToBurn, "LnLiquidation: burn amount too large");
+        }
 
         // Burn lUSD and update debt
-        lnBuildBurnSystem.burnForLiquidation(user, msg.sender, lusdToBurn);
+        lnBuildBurnSystem.burnForLiquidation(params.user, params.liquidator, params.lusdToBurn);
 
         LiquidationRewardCalculationResult memory rewards =
-            calculateRewards(lusdToBurn, evalResult.collateralPrice, ratios.markerRewardRatio, ratios.liquidatorRewardRatio);
+            calculateRewards(
+                params.lusdToBurn,
+                evalResult.collateralPrice,
+                ratios.markerRewardRatio,
+                ratios.liquidatorRewardRatio
+            );
 
         {
             uint256 totalCollateralToMove = rewards.collateralWithdrawalAmount.add(rewards.totalReward);
@@ -206,8 +233,8 @@ contract LnLiquidation is LnAdminUpgradeable {
         {
             (totalFromStaked, totalFromLocked) = withdrawCollateral(
                 WithdrawCollateralParams({
-                    user: user,
-                    liquidator: msg.sender,
+                    user: params.user,
+                    liquidator: params.liquidator,
                     collateralWithdrawalAmount: rewards.collateralWithdrawalAmount,
                     stakedCollateral: evalResult.stakedCollateral,
                     lockedCollateral: evalResult.lockedCollateral
@@ -225,9 +252,9 @@ contract LnLiquidation is LnAdminUpgradeable {
             (uint256 fromStaked, uint256 fromLocked) =
                 distributeRewards(
                     DistributeRewardsParams({
-                        user: user,
+                        user: params.user,
                         marker: mark.marker,
-                        liquidator: msg.sender,
+                        liquidator: params.liquidator,
                         markerReward: rewards.markerReward,
                         liquidatorReward: rewards.liquidatorReward,
                         stakedCollateral: evalResult.stakedCollateral,
@@ -241,10 +268,10 @@ contract LnLiquidation is LnAdminUpgradeable {
         }
 
         emit PositionLiquidated(
-            user,
+            params.user,
             mark.marker,
-            msg.sender,
-            lusdToBurn,
+            params.liquidator,
+            params.lusdToBurn,
             "LINA",
             totalFromStaked,
             totalFromLocked,
@@ -253,9 +280,9 @@ contract LnLiquidation is LnAdminUpgradeable {
         );
 
         // If the position is completely liquidated, remove the marker
-        if (lusdToBurn == maxLusdToBurn) {
-            delete undercollateralizationMarks[user];
-            emit PositionUnmarked(user);
+        if (params.lusdToBurn == maxLusdToBurn) {
+            delete undercollateralizationMarks[params.user];
+            emit PositionUnmarked(params.user);
         }
     }
 
