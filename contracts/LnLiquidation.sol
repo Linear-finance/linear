@@ -293,7 +293,7 @@ contract LnLiquidation is LnAdminUpgradeable {
         uint256 collateralPrice = lnPrices.getPrice("LINA");
         uint256 collateralValue = stakedCollateral.add(lockedCollateral).multiplyDecimal(collateralPrice);
 
-        uint256 collateralizationRatio = debtBalance.divideDecimal(collateralValue);
+        uint256 collateralizationRatio = collateralValue == 0 ? 0 : debtBalance.divideDecimal(collateralValue);
         return
             EvalUserPositionResult({
                 debtBalance: debtBalance,
