@@ -4011,6 +4011,137 @@
           }
         }
       }
+    },
+    "d0cc76dfde391607345e939e937a1e9771be0a658cd137081e060b14874b5149": {
+      "address": "0xD1ec7a9731E8ef9E628EC26485C79F16F9269E61",
+      "txHash": "0xefc47d5a520607d02478da0f03b7cdc6185a1f0ca56603e5f151567ff3591831",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnBuildBurnSystem",
+            "type": "t_contract(ILnBuildBurnSystem)9041",
+            "src": "contracts/LnLiquidation.sol:78"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnCollateralSystem",
+            "type": "t_contract(ILnCollateralSystem)9092",
+            "src": "contracts/LnLiquidation.sol:79"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnConfig",
+            "type": "t_contract(ILnConfig)9107",
+            "src": "contracts/LnLiquidation.sol:80"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnDebtSystem",
+            "type": "t_contract(ILnDebtSystem)9128",
+            "src": "contracts/LnLiquidation.sol:81"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnPrices",
+            "type": "t_contract(ILnPrices)9154",
+            "src": "contracts/LnLiquidation.sol:82"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "lnRewardLocker",
+            "type": "t_contract(ILnRewardLocker)9206",
+            "src": "contracts/LnLiquidation.sol:83"
+          },
+          {
+            "contract": "LnLiquidation",
+            "label": "undercollateralizationMarks",
+            "type": "t_mapping(t_address,t_struct(UndercollateralizationMark)4670_storage)",
+            "src": "contracts/LnLiquidation.sol:85"
+          }
+        ],
+        "types": {
+          "t_contract(ILnBuildBurnSystem)9041": {
+            "label": "contract ILnBuildBurnSystem"
+          },
+          "t_contract(ILnCollateralSystem)9092": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnConfig)9107": {
+            "label": "contract ILnConfig"
+          },
+          "t_contract(ILnDebtSystem)9128": {
+            "label": "contract ILnDebtSystem"
+          },
+          "t_contract(ILnPrices)9154": {
+            "label": "contract ILnPrices"
+          },
+          "t_contract(ILnRewardLocker)9206": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_mapping(t_address,t_struct(UndercollateralizationMark)4670_storage)": {
+            "label": "mapping(address => struct LnLiquidation.UndercollateralizationMark)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_struct(UndercollateralizationMark)4670_storage": {
+            "label": "struct LnLiquidation.UndercollateralizationMark",
+            "members": [
+              {
+                "label": "marker",
+                "type": "t_address"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint64"
+              }
+            ]
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "proxies": [],
