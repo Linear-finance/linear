@@ -4142,9 +4142,295 @@
           }
         }
       }
+    },
+    "faada3692d1a3a267786b79beda8fa640522e1929e556cf1043ea79f3060951c": {
+      "address": "0xD83DC0B3319eac773018Fd132E4cDed9E41b97A3",
+      "txHash": "0x8dff3131b151aded526181c9895ad0bd4bf36a8bfe351d60c496251bd893b191",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "firstPeriodStartTime",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:52"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "periodDuration",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:53"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "totalSubscriptionLimit",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:54"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "userSubscriptionLimit",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:55"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "stakeToken",
+            "type": "t_address",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:56"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "interestToken",
+            "type": "t_address",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:57"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "totalSubscribedAmount",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:59"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "userData",
+            "type": "t_mapping(t_address,t_struct(UserData)7101_storage)",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:61"
+          },
+          {
+            "contract": "LnVaultDynamicInterestPool",
+            "label": "interestRates",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/LnVaultDynamicInterestPool.sol:62"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_struct(UserData)7101_storage)": {
+            "label": "mapping(address => struct LnVaultDynamicInterestPool.UserData)"
+          },
+          "t_struct(UserData)7101_storage": {
+            "label": "struct LnVaultDynamicInterestPool.UserData",
+            "members": [
+              {
+                "label": "subscribedAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "pendingAmount",
+                "type": "t_int256"
+              },
+              {
+                "label": "pendingAmountPeriodId",
+                "type": "t_uint256"
+              },
+              {
+                "label": "lastInterestWithdrawalPeriodId",
+                "type": "t_uint256"
+              },
+              {
+                "label": "refundingAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "refundPeriodId",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_int256": {
+            "label": "int256"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "ddd5aa883b30461ffa1b96be2c586ea6b28afbd59f18055ebf0a89b11cfd88d3": {
+      "address": "0xbd7281b64E5D7C22fd75710F577aD3Ef98164246",
+      "txHash": "0x4f12d2bf02e18e7b171f93bbe6b210bca33b1c42b4b6eacbbf379da63ceca1b9",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "startTime",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultFixedRewardPool.sol:33"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "rewardPerSecond",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultFixedRewardPool.sol:34"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "stakeToken",
+            "type": "t_address",
+            "src": "contracts/LnVaultFixedRewardPool.sol:35"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "rewardToken",
+            "type": "t_address",
+            "src": "contracts/LnVaultFixedRewardPool.sol:36"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "totalStakeAmount",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultFixedRewardPool.sol:39"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "accuRewardPerShare",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultFixedRewardPool.sol:40"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "accuRewardLastUpdateTime",
+            "type": "t_uint256",
+            "src": "contracts/LnVaultFixedRewardPool.sol:41"
+          },
+          {
+            "contract": "LnVaultFixedRewardPool",
+            "label": "userData",
+            "type": "t_mapping(t_address,t_struct(UserData)8114_storage)",
+            "src": "contracts/LnVaultFixedRewardPool.sol:42"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_struct(UserData)8114_storage)": {
+            "label": "mapping(address => struct LnVaultFixedRewardPool.UserData)"
+          },
+          "t_struct(UserData)8114_storage": {
+            "label": "struct LnVaultFixedRewardPool.UserData",
+            "members": [
+              {
+                "label": "stakeAmount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "pendingReward",
+                "type": "t_uint256"
+              },
+              {
+                "label": "entryAccuRewardPerShare",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
-  "proxies": [],
+  "proxies": [
+    {
+      "address": "0x072F11c46146Ce636691d387BFbF8fD28e818EE8",
+      "kind": "transparent",
+      "txHash": "0x2983b95be74825fa06ffd260ea575eee55f466dc4adc97aadce976ebb3bdbdc0"
+    },
+    {
+      "address": "0xD36b669491ADFB5cDE87C281dF417148674f88B4",
+      "kind": "transparent",
+      "txHash": "0x0070b34f035b84ae340405d1dd46d44439f521cb7a0d378210df28281c1bd423"
+    },
+    {
+      "address": "0x12efdFF85f717ac1738CF50Be5f4Cdc916b0B8B1",
+      "kind": "transparent",
+      "txHash": "0x5d1871b547ee4013888f2d01cb52291b778954fbb6debe1dc02f1986459a408c"
+    }
+  ],
   "admin": {
     "address": "0x528986416f9C49f04D461B0dB3B8584a2D2964D2",
     "txHash": "0xcc32f3d6f5c2db4f4d598a31d373cec53ac6551b32d792bde1ea1115ed1408ca"
