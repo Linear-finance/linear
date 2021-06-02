@@ -2,18 +2,19 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "./SafeDecimalMath.sol";
-import "./interfaces/ILnPrices.sol";
-import "./LnAddressCache.sol";
 import "./interfaces/ILnBuildBurnSystem.sol";
-import "./interfaces/ILnDebtSystem.sol";
 import "./interfaces/ILnConfig.sol";
+import "./interfaces/ILnDebtSystem.sol";
+import "./interfaces/ILnPrices.sol";
 import "./interfaces/ILnRewardLocker.sol";
+import "./upgradeable/LnAdminUpgradeable.sol";
+import "./utilities/TransferHelper.sol";
+import "./LnAddressCache.sol";
+import "./SafeDecimalMath.sol";
 
 // 单纯抵押进来
 // 赎回时需要 债务率良好才能赎回， 赎回部分能保持债务率高于目标债务率
@@ -60,6 +61,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     modifier onlyLiquidation() {
         require(msg.sender == liquidation, "LnCollateralSystem: not liquidation");
+        _;
+    }
+
+    modifier onlyRewardLocker() {
+        require(msg.sender == address(mRewardLocker), "LnCollateralSystem: not reward locker");
         _;
     }
 
@@ -458,10 +464,30 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         emit CollateralMoved(fromUser, toUser, currency, amount);
     }
 
+    function collateralFromUnlockReward(
+        address user,
+        address rewarder,
+        bytes32 currency,
+        uint256 amount
+    ) external whenNotPaused onlyRewardLocker {
+        require(user != address(0), "User address cannot be zero");
+        require(tokenInfos[currency].tokenAddr.isContract(), "Invalid token symbol");
+        require(amount > 0, "Collateral amount must be > 0");
+        TokenInfo storage tokeninfo = tokenInfos[currency];
+
+        TransferHelper.safeTransferFrom(tokeninfo.tokenAddr, rewarder, address(this), amount);
+
+        userCollateralData[user][currency].collateral = userCollateralData[user][currency].collateral.add(amount);
+        tokeninfo.totalCollateral = tokeninfo.totalCollateral.add(amount);
+
+        emit CollateralUnlockReward(user, currency, amount, userCollateralData[user][currency].collateral);
+    }
+
     event UpdateTokenSetting(bytes32 symbol, address tokenAddr, uint256 minCollateral, bool close);
     event CollateralLog(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event RedeemCollateral(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
     event CollateralMoved(address fromUser, address toUser, bytes32 currency, uint256 amount);
+    event CollateralUnlockReward(address user, bytes32 _currency, uint256 _amount, uint256 _userTotal);
 
     // Reserved storage space to allow for layout changes in the future.
     uint256[41] private __gap;

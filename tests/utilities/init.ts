@@ -413,6 +413,13 @@ export const deployLinearStack = async (
   );
 
   /**
+   * Set CollateralSystem addrress to `LnRewardLocker`
+   */
+  await lnRewardLocker
+    .connect(admin)
+    .updateCollateralSystemAddress(lnCollateralSystem.address);
+
+  /**
    * A contract for distributing rewards calculated and signed off-chain.
    */
   const lnRewardSystem = await upgrades.deployProxy(
@@ -428,6 +435,16 @@ export const deployLinearStack = async (
     {
       initializer: "__LnRewardSystem_init",
     }
+  );
+
+  /**
+   * Assign the following role to contract `LnRewardSystem`:
+   * - LOCK_REWARD
+   */
+  await lnAccessControl.connect(admin).SetRoles(
+    formatBytes32String("LOCK_REWARD"), // roleType
+    [lnRewardSystem.address], // addresses
+    [true] // setTo
   );
 
   /**

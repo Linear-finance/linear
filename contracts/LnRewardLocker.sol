@@ -4,6 +4,7 @@ pragma solidity ^0.7.6;
 import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "./interfaces/ILnAccessControl.sol";
+import "./interfaces/ILnCollateralSystem.sol";
 import "./interfaces/ILnRewardLocker.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 
@@ -19,6 +20,7 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
     event RewardEntryAdded(uint256 entryId, address user, uint256 amount, uint256 unlockTime);
     event RewardEntryRemoved(uint256 entryId);
     event RewardAmountChanged(uint256 entryId, uint256 oldAmount, uint256 newAmount);
+    event RewardEntryUnlocked(uint256 entryId, address user, uint256 amount);
 
     /**
      * @dev The struct used to store reward data. Address is deliberately left out and put in the
@@ -50,6 +52,9 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
 
     bytes32 private constant ROLE_LOCK_REWARD = "LOCK_REWARD";
     bytes32 private constant ROLE_MOVE_REWARD = "MOVE_REWARD";
+    bytes32 private constant ROLE_UNLOCK_REWARD = "UNLOCK_REWARD";
+    address public collateralSystemAddr;
+    address public rewarderAddress;
 
     modifier onlyLockRewardRole() {
         require(accessCtrl.hasRole(ROLE_LOCK_REWARD, msg.sender), "LnRewardLocker: not LOCK_REWARD role");
@@ -58,6 +63,11 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
 
     modifier onlyMoveRewardRole() {
         require(accessCtrl.hasRole(ROLE_MOVE_REWARD, msg.sender), "LnRewardLocker: not MOVE_REWARD role");
+        _;
+    }
+
+    modifier onlyUnlockRewardRole() {
+        require(accessCtrl.hasRole(ROLE_UNLOCK_REWARD, msg.sender), "LnRewardLocker: not UNLOCK_REWARD role");
         _;
     }
 
@@ -122,6 +132,33 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
         uint256[] calldata rewardEntryIds
     ) external override onlyMoveRewardRole {
         _moveRewardProRata(from, recipient1, amount1, recipient2, amount2, rewardEntryIds);
+    }
+
+    function updateCollateralSystemAddress(address _collateralSystemAddr) external onlyAdmin {
+        require(_collateralSystemAddr != address(0), "Collateral system address must not be 0");
+        collateralSystemAddr = _collateralSystemAddr;
+    }
+
+    function updateRewarderAddress(address _rewarderAddress) external onlyAdmin {
+        require(_rewarderAddress != address(0), "Rewarder address must not be 0");
+        rewarderAddress = _rewarderAddress;
+    }
+
+    function unlockReward(address user, uint256 rewardEntryId) external onlyUnlockRewardRole {
+        require(rewarderAddress != address(0), "Rewarder address not set");
+        require(collateralSystemAddr != address(0), "Collateral system address not set");
+        require(user != address(0), "User address must not be 0");
+        RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
+        require(rewardEntry.amount > 0, "Reward entry amount is 0, no reward to unlock");
+        require(block.timestamp >= rewardEntry.unlockTime, "Unlock time not reached");
+
+        ILnCollateralSystem collateralSystemAddr = ILnCollateralSystem(collateralSystemAddr);
+        collateralSystemAddr.collateralFromUnlockReward(user, rewarderAddress, "LINA", rewardEntry.amount);
+
+        lockedAmountByAddresses[user] = lockedAmountByAddresses[user].sub(rewardEntry.amount);
+        totalLockedAmount = totalLockedAmount.sub(rewardEntry.amount);
+        delete rewardEntries[rewardEntryId][user];
+        emit RewardEntryUnlocked(rewardEntryId, user, rewardEntry.amount);
     }
 
     function _addReward(

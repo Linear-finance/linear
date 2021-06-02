@@ -18,4 +18,11 @@ interface ILnCollateralSystem {
         bytes32 currency,
         uint256 amount
     ) external;
+
+    function collateralFromUnlockReward(
+        address user,
+        address rewarder,
+        bytes32 currency,
+        uint256 amount
+    ) external;
 }
