@@ -141,18 +141,24 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
     function unlockReward(address user, uint256 rewardEntryId) external {
         require(rewarderAddress != address(0), "LnRewardLocker: Rewarder address not set");
         require(collateralSystemAddr != address(0), "LnRewardLocker: Collateral system address not set");
-        require(user != address(0), "LnRewardLocker: User address must not be 0");
+
         RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
         require(rewardEntry.amount > 0, "LnRewardLocker: Reward entry amount is 0, no reward to unlock");
         require(block.timestamp >= rewardEntry.unlockTime, "LnRewardLocker: Unlock time not reached");
 
-        ILnCollateralSystem collateralSystemAddr = ILnCollateralSystem(collateralSystemAddr);
-        collateralSystemAddr.collateralFromUnlockReward(user, rewarderAddress, "LINA", rewardEntry.amount);
+        ILnCollateralSystem(collateralSystemAddr).collateralFromUnlockReward(
+            user,
+            rewarderAddress,
+            "LINA",
+            rewardEntry.amount
+        );
 
         lockedAmountByAddresses[user] = lockedAmountByAddresses[user].sub(rewardEntry.amount);
         totalLockedAmount = totalLockedAmount.sub(rewardEntry.amount);
-        delete rewardEntries[rewardEntryId][user];
         emit RewardEntryUnlocked(rewardEntryId, user, rewardEntry.amount);
+
+        delete rewardEntries[rewardEntryId][user];
+        emit RewardEntryRemoved(rewardEntryId);
     }
 
     function _addReward(
