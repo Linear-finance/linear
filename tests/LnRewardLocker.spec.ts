@@ -7,6 +7,7 @@ import {
   getBlockDateTime,
 } from "./utilities/timeTravel";
 import { DateTime } from "luxon";
+import { zeroAddress } from "./utilities";
 
 import ILnCollateralSystem from "../artifacts/contracts/interfaces/ILnCollateralSystem.sol/ILnCollateralSystem.json";
 
@@ -251,6 +252,7 @@ describe("LnRewardLocker", function () {
   });
 
   it("only admin can set collateral system address", async () => {
+    expect(await lnRewardLocker.collateralSystemAddr()).to.be.eq(zeroAddress);
     await expect(
       lnRewardLocker
         .connect(alice)
@@ -258,14 +260,25 @@ describe("LnRewardLocker", function () {
     ).to.be.revertedWith(
       "LnAdminUpgradeable: only the contract admin can perform this action"
     );
+
+    await lnRewardLocker
+      .connect(admin)
+      .updateCollateralSystemAddress(lnCollateralSystem.address);
+    expect(await lnRewardLocker.collateralSystemAddr()).to.be.eq(
+      lnCollateralSystem.address
+    );
   });
 
   it("only admin can set rewarder address", async () => {
+    expect(await lnRewardLocker.rewarderAddress()).to.be.eq(zeroAddress);
     await expect(
       lnRewardLocker.connect(alice).updateRewarderAddress(rewarder.address)
     ).to.be.revertedWith(
       "LnAdminUpgradeable: only the contract admin can perform this action"
     );
+
+    await lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+    expect(await lnRewardLocker.rewarderAddress()).to.be.eq(rewarder.address);
   });
 
   it("cannot unlock reward if collateral system and rewarder address is not set", async () => {
@@ -301,7 +314,7 @@ describe("LnRewardLocker", function () {
     );
   });
 
-  it("cannot unlock reward if unlock time is not reached", async () => {
+  it("reward can only be unlocked if unlock time is reached", async () => {
     let unlockTime: DateTime = (await getBlockDateTime(ethers.provider)).plus({
       hour: 1,
     });

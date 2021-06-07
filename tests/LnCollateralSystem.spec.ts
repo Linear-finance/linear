@@ -2,7 +2,7 @@ import { ethers, waffle } from "hardhat";
 import { expect, use } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { expandTo18Decimals } from "./utilities";
+import { expandTo18Decimals, zeroAddress } from "./utilities";
 
 const { formatBytes32String } = ethers.utils;
 
@@ -111,6 +111,27 @@ describe("LnCollateralSystem", function () {
           1
         )
     ).to.be.revertedWith("LnCollateralSystem: not reward locker");
+
+    await linaToken.mint(rewarder.address, expandTo18Decimals(10));
+    await linaToken
+      .connect(rewarder)
+      .approve(lnCollateralSystem.address, expandTo18Decimals(10));
+
+    await lnCollateralSystem
+      .connect(rewardLocker)
+      .collateralFromUnlockReward(
+        alice.address,
+        rewarder.address,
+        ethers.utils.formatBytes32String("LINA"),
+        expandTo18Decimals(10)
+      );
+
+    expect(
+      await lnCollateralSystem.userCollateralData(
+        alice.address,
+        ethers.utils.formatBytes32String("LINA")
+      )
+    ).to.eq(expandTo18Decimals(10));
   });
 
   it("reward locker can send reward to collateral system upon reward locked", async () => {
@@ -183,6 +204,11 @@ describe("LnCollateralSystem", function () {
   });
 
   it("reward locker must pass a valid currency to collateralFromUnlockReward function", async () => {
+    let ethTokeninfo = await lnCollateralSystem.tokenInfos(
+      ethers.utils.formatBytes32String("ETH")
+    );
+    expect(ethTokeninfo.tokenAddr).to.be.eq(zeroAddress);
+
     await expect(
       lnCollateralSystem
         .connect(rewardLocker)
@@ -193,6 +219,32 @@ describe("LnCollateralSystem", function () {
           expandTo18Decimals(10)
         )
     ).to.be.revertedWith("LnCollateralSystem: Invalid token symbol");
+
+    let linaTokeninfo = await lnCollateralSystem.tokenInfos(
+      ethers.utils.formatBytes32String("LINA")
+    );
+    expect(linaTokeninfo.tokenAddr).to.be.eq(linaToken.address);
+
+    await linaToken.mint(rewarder.address, expandTo18Decimals(1));
+    await linaToken
+      .connect(rewarder)
+      .approve(lnCollateralSystem.address, expandTo18Decimals(1));
+
+    await lnCollateralSystem
+      .connect(rewardLocker)
+      .collateralFromUnlockReward(
+        alice.address,
+        rewarder.address,
+        ethers.utils.formatBytes32String("LINA"),
+        expandTo18Decimals(1)
+      );
+
+    expect(
+      await lnCollateralSystem.userCollateralData(
+        alice.address,
+        ethers.utils.formatBytes32String("LINA")
+      )
+    ).to.eq(expandTo18Decimals(1));
   });
 
   it("reward locker must pass amount > 0 to collateralFromUnlockReward function", async () => {
@@ -206,6 +258,27 @@ describe("LnCollateralSystem", function () {
           BigNumber.from(0)
         )
     ).to.be.revertedWith("LnCollateralSystem: Collateral amount must be > 0");
+
+    await linaToken.mint(rewarder.address, expandTo18Decimals(1));
+    await linaToken
+      .connect(rewarder)
+      .approve(lnCollateralSystem.address, expandTo18Decimals(1));
+
+    await lnCollateralSystem
+      .connect(rewardLocker)
+      .collateralFromUnlockReward(
+        alice.address,
+        rewarder.address,
+        ethers.utils.formatBytes32String("LINA"),
+        expandTo18Decimals(1)
+      );
+
+    expect(
+      await lnCollateralSystem.userCollateralData(
+        alice.address,
+        ethers.utils.formatBytes32String("LINA")
+      )
+    ).to.eq(expandTo18Decimals(1));
   });
 
   it("collateralFromUnlockReward will fail if rewarder doesn't have sufficient balance", async () => {
