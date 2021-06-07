@@ -6,7 +6,6 @@ import { expandTo18Decimals, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import { setNextBlockTimestamp } from "../utilities/timeTravel";
 import { DateTime, Duration } from "luxon";
-import { formatBytes32String } from "ethers/lib/utils";
 
 describe("Integration | Unlock Reward", function () {
   let deployer: SignerWithAddress,
