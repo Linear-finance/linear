@@ -470,9 +470,9 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         bytes32 currency,
         uint256 amount
     ) external whenNotPaused onlyRewardLocker {
-        require(user != address(0), "User address cannot be zero");
-        require(tokenInfos[currency].tokenAddr.isContract(), "Invalid token symbol");
-        require(amount > 0, "Collateral amount must be > 0");
+        require(user != address(0), "LnCollateralSystem: User address cannot be zero");
+        require(tokenInfos[currency].tokenAddr.isContract(), "LnCollateralSystem: Invalid token symbol");
+        require(amount > 0, "LnCollateralSystem: Collateral amount must be > 0");
         TokenInfo storage tokeninfo = tokenInfos[currency];
 
         TransferHelper.safeTransferFrom(tokeninfo.tokenAddr, rewarder, address(this), amount);

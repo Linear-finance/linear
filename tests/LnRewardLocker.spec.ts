@@ -200,7 +200,7 @@ describe("LnRewardLocker", function () {
     );
   });
 
-  it("only UNLOCK_REWARD role can unlock reward", async () => {
+  it("reward can be unlocked from contract", async () => {
     let unlockTime: DateTime = (await getBlockDateTime(ethers.provider)).plus({
       hour: 1,
     });
@@ -226,19 +226,6 @@ describe("LnRewardLocker", function () {
       .connect(admin)
       .updateCollateralSystemAddress(lnCollateralSystem.address);
     await lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
-
-    await expect(
-      lnRewardLocker.connect(alice).unlockReward(
-        bob.address, // user
-        1 // rewardEntryId
-      )
-    ).to.revertedWith("LnRewardLocker: not UNLOCK_REWARD role");
-
-    await lnAccessControl.connect(admin).SetRoles(
-      formatBytes32String("UNLOCK_REWARD"), // roleType
-      [charlie.address], // addresses
-      [true] // setTo
-    );
 
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
@@ -282,18 +269,12 @@ describe("LnRewardLocker", function () {
   });
 
   it("cannot unlock reward if collateral system and rewarder address is not set", async () => {
-    await lnAccessControl.connect(admin).SetRoles(
-      formatBytes32String("UNLOCK_REWARD"), // roleType
-      [charlie.address], // addresses
-      [true] // setTo
-    );
-
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
         1 // rewardEntryId
       )
-    ).to.be.revertedWith("Rewarder address not set");
+    ).to.be.revertedWith("LnRewardLocker: Rewarder address not set");
 
     lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
     await expect(
@@ -301,7 +282,7 @@ describe("LnRewardLocker", function () {
         bob.address, // user
         1 // rewardEntryId
       )
-    ).to.be.revertedWith("Collateral system address not set");
+    ).to.be.revertedWith("LnRewardLocker: Collateral system address not set");
   });
 
   it("cannot unlock reward if user doesn't have reward locked", async () => {
@@ -309,18 +290,15 @@ describe("LnRewardLocker", function () {
       .connect(admin)
       .updateCollateralSystemAddress(lnCollateralSystem.address);
     lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
-    await lnAccessControl.connect(admin).SetRoles(
-      formatBytes32String("UNLOCK_REWARD"), // roleType
-      [charlie.address], // addresses
-      [true] // setTo
-    );
 
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
         1 // rewardEntryId
       )
-    ).to.be.revertedWith("Reward entry amount is 0, no reward to unlock");
+    ).to.be.revertedWith(
+      "LnRewardLocker: Reward entry amount is 0, no reward to unlock"
+    );
   });
 
   it("cannot unlock reward if unlock time is not reached", async () => {
@@ -348,22 +326,17 @@ describe("LnRewardLocker", function () {
       .connect(admin)
       .updateCollateralSystemAddress(lnCollateralSystem.address);
     lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
-    await lnAccessControl.connect(admin).SetRoles(
-      formatBytes32String("UNLOCK_REWARD"), // roleType
-      [charlie.address], // addresses
-      [true] // setTo
-    );
 
     setNextBlockTimestamp(
       ethers.provider,
-      unlockTime.minus({ seconds: 1 }).toSeconds()
+      unlockTime.minus({ seconds: 10 }).toSeconds()
     );
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
         1 // rewardEntryId
       )
-    ).to.be.revertedWith("Unlock time not reached");
+    ).to.be.revertedWith("LnRewardLocker: Unlock time not reached");
 
     setNextBlockTimestamp(
       ethers.provider,

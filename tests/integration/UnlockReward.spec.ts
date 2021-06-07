@@ -77,13 +77,6 @@ describe("Integration | Unlock Reward", function () {
       .connect(alice)
       .transfer(rewarder.address, expandTo18Decimals(10_000));
 
-    // Assign UNLOCK_REWARD role to rewardUnlocker
-    await stack.lnAccessControl.connect(admin).SetRoles(
-      formatBytes32String("UNLOCK_REWARD"), // roleType
-      [rewardUnlocker.address], // addresses
-      [true] // setTo
-    );
-
     // Set rewarder address to `LnRewardLocker`
     await stack.lnRewardLocker
       .connect(admin)

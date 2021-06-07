@@ -179,7 +179,7 @@ describe("LnCollateralSystem", function () {
           ethers.utils.formatBytes32String("LINA"),
           expandTo18Decimals(10)
         )
-    ).to.be.revertedWith("User address cannot be zero");
+    ).to.be.revertedWith("LnCollateralSystem: User address cannot be zero");
   });
 
   it("reward locker must pass a valid currency to collateralFromUnlockReward function", async () => {
@@ -192,7 +192,7 @@ describe("LnCollateralSystem", function () {
           ethers.utils.formatBytes32String("ETH"),
           expandTo18Decimals(10)
         )
-    ).to.be.revertedWith("Invalid token symbol");
+    ).to.be.revertedWith("LnCollateralSystem: Invalid token symbol");
   });
 
   it("reward locker must pass amount > 0 to collateralFromUnlockReward function", async () => {
@@ -205,7 +205,7 @@ describe("LnCollateralSystem", function () {
           ethers.utils.formatBytes32String("LINA"),
           BigNumber.from(0)
         )
-    ).to.be.revertedWith("Collateral amount must be > 0");
+    ).to.be.revertedWith("LnCollateralSystem: Collateral amount must be > 0");
   });
 
   it("collateralFromUnlockReward will fail if rewarder doesn't have sufficient balance", async () => {

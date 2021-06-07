@@ -49,12 +49,11 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
 
     address public linaTokenAddr;
     ILnAccessControl public accessCtrl;
+    address public collateralSystemAddr;
+    address public rewarderAddress;
 
     bytes32 private constant ROLE_LOCK_REWARD = "LOCK_REWARD";
     bytes32 private constant ROLE_MOVE_REWARD = "MOVE_REWARD";
-    bytes32 private constant ROLE_UNLOCK_REWARD = "UNLOCK_REWARD";
-    address public collateralSystemAddr;
-    address public rewarderAddress;
 
     modifier onlyLockRewardRole() {
         require(accessCtrl.hasRole(ROLE_LOCK_REWARD, msg.sender), "LnRewardLocker: not LOCK_REWARD role");
@@ -63,11 +62,6 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
 
     modifier onlyMoveRewardRole() {
         require(accessCtrl.hasRole(ROLE_MOVE_REWARD, msg.sender), "LnRewardLocker: not MOVE_REWARD role");
-        _;
-    }
-
-    modifier onlyUnlockRewardRole() {
-        require(accessCtrl.hasRole(ROLE_UNLOCK_REWARD, msg.sender), "LnRewardLocker: not UNLOCK_REWARD role");
         _;
     }
 
@@ -135,22 +129,22 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
     }
 
     function updateCollateralSystemAddress(address _collateralSystemAddr) external onlyAdmin {
-        require(_collateralSystemAddr != address(0), "Collateral system address must not be 0");
+        require(_collateralSystemAddr != address(0), "LnRewardLocker: Collateral system address must not be 0");
         collateralSystemAddr = _collateralSystemAddr;
     }
 
     function updateRewarderAddress(address _rewarderAddress) external onlyAdmin {
-        require(_rewarderAddress != address(0), "Rewarder address must not be 0");
+        require(_rewarderAddress != address(0), "LnRewardLocker: Rewarder address must not be 0");
         rewarderAddress = _rewarderAddress;
     }
 
-    function unlockReward(address user, uint256 rewardEntryId) external onlyUnlockRewardRole {
-        require(rewarderAddress != address(0), "Rewarder address not set");
-        require(collateralSystemAddr != address(0), "Collateral system address not set");
-        require(user != address(0), "User address must not be 0");
+    function unlockReward(address user, uint256 rewardEntryId) external {
+        require(rewarderAddress != address(0), "LnRewardLocker: Rewarder address not set");
+        require(collateralSystemAddr != address(0), "LnRewardLocker: Collateral system address not set");
+        require(user != address(0), "LnRewardLocker: User address must not be 0");
         RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
-        require(rewardEntry.amount > 0, "Reward entry amount is 0, no reward to unlock");
-        require(block.timestamp >= rewardEntry.unlockTime, "Unlock time not reached");
+        require(rewardEntry.amount > 0, "LnRewardLocker: Reward entry amount is 0, no reward to unlock");
+        require(block.timestamp >= rewardEntry.unlockTime, "LnRewardLocker: Unlock time not reached");
 
         ILnCollateralSystem collateralSystemAddr = ILnCollateralSystem(collateralSystemAddr);
         collateralSystemAddr.collateralFromUnlockReward(user, rewarderAddress, "LINA", rewardEntry.amount);
