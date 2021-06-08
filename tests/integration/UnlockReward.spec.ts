@@ -112,7 +112,7 @@ describe("Integration | Unlock Reward", function () {
 
     // Fast forward to 1st period end
     const rewardSystemFirstPeriod = await stack.lnRewardSystem.firstPeriodStartTime();
-    setNextBlockTimestamp(
+    await setNextBlockTimestamp(
       ethers.provider,
       DateTime.fromSeconds(parseInt(rewardSystemFirstPeriod.toString())).plus(
         periodDuration
@@ -141,7 +141,7 @@ describe("Integration | Unlock Reward", function () {
     ).to.equal(expandTo18Decimals(100));
 
     // Fast forward to unlock time
-    setNextBlockTimestamp(
+    await setNextBlockTimestamp(
       ethers.provider,
       DateTime.fromSeconds(parseInt(rewardSystemFirstPeriod.toString()))
         .plus(periodDuration)

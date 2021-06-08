@@ -222,7 +222,7 @@ describe("LnRewardLocker", function () {
       10
     );
 
-    setNextBlockTimestamp(ethers.provider, unlockTime);
+    await setNextBlockTimestamp(ethers.provider, unlockTime);
     await lnRewardLocker
       .connect(admin)
       .updateCollateralSystemAddress(lnCollateralSystem.address);
@@ -340,7 +340,7 @@ describe("LnRewardLocker", function () {
       .updateCollateralSystemAddress(lnCollateralSystem.address);
     lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
 
-    setNextBlockTimestamp(
+    await setNextBlockTimestamp(
       ethers.provider,
       unlockTime.minus({ seconds: 10 }).toSeconds()
     );
@@ -351,7 +351,7 @@ describe("LnRewardLocker", function () {
       )
     ).to.be.revertedWith("LnRewardLocker: Unlock time not reached");
 
-    setNextBlockTimestamp(
+    await setNextBlockTimestamp(
       ethers.provider,
       unlockTime.plus({ seconds: 1 }).toSeconds()
     );
