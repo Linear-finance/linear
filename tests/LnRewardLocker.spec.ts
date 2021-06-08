@@ -2,6 +2,14 @@ import { ethers, waffle } from "hardhat";
 import { expect, use } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import {
+  setNextBlockTimestamp,
+  getBlockDateTime,
+} from "./utilities/timeTravel";
+import { DateTime } from "luxon";
+import { zeroAddress } from "./utilities";
+
+import ILnCollateralSystem from "../artifacts/contracts/interfaces/ILnCollateralSystem.sol/ILnCollateralSystem.json";
 
 const { formatBytes32String } = ethers.utils;
 
@@ -11,14 +19,25 @@ describe("LnRewardLocker", function () {
   let deployer: SignerWithAddress,
     admin: SignerWithAddress,
     alice: SignerWithAddress,
-    bob: SignerWithAddress;
+    bob: SignerWithAddress,
+    charlie: SignerWithAddress,
+    rewarder: SignerWithAddress;
 
-  let lnAccessControl: Contract, lnRewardLocker: Contract;
+  let lnAccessControl: Contract,
+    lnRewardLocker: Contract,
+    lnCollateralSystem: Contract;
 
   const mockLinaAddress = "0x0000000000000000000000000000000000000001";
 
   beforeEach(async function () {
-    [deployer, admin, alice, bob] = await ethers.getSigners();
+    [
+      deployer,
+      admin,
+      alice,
+      bob,
+      charlie,
+      rewarder,
+    ] = await ethers.getSigners();
 
     const LnAccessControl = await ethers.getContractFactory("LnAccessControl");
     const LnRewardLocker = await ethers.getContractFactory("LnRewardLocker");
@@ -34,6 +53,12 @@ describe("LnRewardLocker", function () {
       lnAccessControl.address, // _accessCtrl
       admin.address // _admin
     );
+
+    lnCollateralSystem = await waffle.deployMockContract(
+      deployer,
+      ILnCollateralSystem.abi
+    );
+    await lnCollateralSystem.mock.collateralFromUnlockReward.returns();
   });
 
   it("only LOCK_REWARD role can add reward", async () => {
@@ -174,5 +199,183 @@ describe("LnRewardLocker", function () {
       10, // amount
       uint40Max // unlockTime
     );
+  });
+
+  it("reward can be unlocked from contract", async () => {
+    let unlockTime: DateTime = (await getBlockDateTime(ethers.provider)).plus({
+      hour: 1,
+    });
+
+    await lnAccessControl.connect(admin).SetRoles(
+      formatBytes32String("LOCK_REWARD"), // roleType
+      [alice.address], // addresses
+      [true] // setTo
+    );
+
+    await lnRewardLocker.connect(alice).addReward(
+      bob.address, // user
+      10, // amount
+      unlockTime.toSeconds() // unlockTime
+    );
+
+    expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
+      10
+    );
+
+    await setNextBlockTimestamp(ethers.provider, unlockTime);
+    await lnRewardLocker
+      .connect(admin)
+      .updateCollateralSystemAddress(lnCollateralSystem.address);
+    await lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    )
+      .to.emit(lnRewardLocker, "RewardEntryUnlocked")
+      .withArgs(
+        1, //entryId
+        bob.address, // user
+        10 // amount
+      );
+
+    const rewardEntry = await lnRewardLocker.rewardEntries(1, bob.address);
+    expect(rewardEntry.amount).to.equal(0);
+    expect(rewardEntry.unlockTime).to.equal(0);
+
+    expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
+      0
+    );
+    expect(await lnRewardLocker.totalLockedAmount()).to.equal(0);
+  });
+
+  it("only admin can set collateral system address", async () => {
+    expect(await lnRewardLocker.collateralSystemAddr()).to.be.eq(zeroAddress);
+    await expect(
+      lnRewardLocker
+        .connect(alice)
+        .updateCollateralSystemAddress(lnCollateralSystem.address)
+    ).to.be.revertedWith(
+      "LnAdminUpgradeable: only the contract admin can perform this action"
+    );
+
+    await lnRewardLocker
+      .connect(admin)
+      .updateCollateralSystemAddress(lnCollateralSystem.address);
+    expect(await lnRewardLocker.collateralSystemAddr()).to.be.eq(
+      lnCollateralSystem.address
+    );
+  });
+
+  it("only admin can set rewarder address", async () => {
+    expect(await lnRewardLocker.rewarderAddress()).to.be.eq(zeroAddress);
+    await expect(
+      lnRewardLocker.connect(alice).updateRewarderAddress(rewarder.address)
+    ).to.be.revertedWith(
+      "LnAdminUpgradeable: only the contract admin can perform this action"
+    );
+
+    await lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+    expect(await lnRewardLocker.rewarderAddress()).to.be.eq(rewarder.address);
+  });
+
+  it("cannot unlock reward if collateral system and rewarder address is not set", async () => {
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    ).to.be.revertedWith("LnRewardLocker: Rewarder address not set");
+
+    lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    ).to.be.revertedWith("LnRewardLocker: Collateral system address not set");
+  });
+
+  it("cannot unlock reward if user doesn't have reward locked", async () => {
+    lnRewardLocker
+      .connect(admin)
+      .updateCollateralSystemAddress(lnCollateralSystem.address);
+    lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    ).to.be.revertedWith(
+      "LnRewardLocker: Reward entry amount is 0, no reward to unlock"
+    );
+  });
+
+  it("reward can only be unlocked if unlock time is reached", async () => {
+    let unlockTime: DateTime = (await getBlockDateTime(ethers.provider)).plus({
+      hour: 1,
+    });
+
+    await lnAccessControl.connect(admin).SetRoles(
+      formatBytes32String("LOCK_REWARD"), // roleType
+      [alice.address], // addresses
+      [true] // setTo
+    );
+
+    await lnRewardLocker.connect(alice).addReward(
+      bob.address, // user
+      10, // amount
+      unlockTime.toSeconds() // unlockTime
+    );
+
+    expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
+      10
+    );
+
+    lnRewardLocker
+      .connect(admin)
+      .updateCollateralSystemAddress(lnCollateralSystem.address);
+    lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      unlockTime.minus({ seconds: 10 }).toSeconds()
+    );
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    ).to.be.revertedWith("LnRewardLocker: Unlock time not reached");
+
+    await setNextBlockTimestamp(
+      ethers.provider,
+      unlockTime.plus({ seconds: 1 }).toSeconds()
+    );
+
+    await expect(
+      lnRewardLocker.connect(charlie).unlockReward(
+        bob.address, // user
+        1 // rewardEntryId
+      )
+    )
+      .to.emit(lnRewardLocker, "RewardEntryUnlocked")
+      .withArgs(
+        1, //entryId
+        bob.address, // user
+        10 // amount
+      );
+
+    const rewardEntry = await lnRewardLocker.rewardEntries(1, bob.address);
+    expect(rewardEntry.amount).to.equal(0);
+    expect(rewardEntry.unlockTime).to.equal(0);
+
+    expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
+      0
+    );
+    expect(await lnRewardLocker.totalLockedAmount()).to.equal(0);
   });
 });
