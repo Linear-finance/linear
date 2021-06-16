@@ -1,5 +1,5 @@
 {
-  "manifestVersion": "3.1",
+  "manifestVersion": "3.2",
   "impls": {
     "52689375fbce0e15632e0c6d594638af666d7f83cb3bab69d00387a0e79fe6a0": {
       "address": "0x91f557ea085525e3eC6Ce4d91528B4760615B12a",
@@ -1677,6 +1677,13 @@
       }
     }
   },
+  "proxies": [
+    {
+      "address": "0xBB309BE7fcc989b6eba4769c056daF64eA986832",
+      "kind": "transparent",
+      "txHash": "0x6f5dc04c187ad434ab2120c94c3add6a71c6ed696b847acc71e8b5e657747dd1"
+    }
+  ],
   "admin": {
     "address": "0x875cD61f6062d160247d7c9159F39D8A7E78e3B5",
     "txHash": "0x48fcafcebc40f5b53b9d85332cdecac13d206ee2a2b5cbdb1c6e30cd1067076e"
