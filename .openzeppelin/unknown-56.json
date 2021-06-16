@@ -4765,6 +4765,11 @@
       "address": "0x12efdFF85f717ac1738CF50Be5f4Cdc916b0B8B1",
       "kind": "transparent",
       "txHash": "0x5d1871b547ee4013888f2d01cb52291b778954fbb6debe1dc02f1986459a408c"
+    },
+    {
+      "address": "0xE2DA1e68B2e45E03ec5a1D5E43847Bb92720DC98",
+      "kind": "transparent",
+      "txHash": "0x489d2407096ef94632e99b0e2299048189dd8800feb0e7bbc39a362673bf66b4"
     }
   ],
   "admin": {
