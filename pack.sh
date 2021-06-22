@@ -44,6 +44,6 @@ do
   cat $DIST_SRC_DIR$CONTRACT_NAME.sol | jq -Rs . > $DIST_SRC_DIR$CONTRACT_NAME.json
   rm $DIST_SRC_DIR$CONTRACT_NAME.sol
 
-  cat ./artifacts/$CONTRACT_FILE/$CONTRACT_NAME.json | jq '.bytecode' > $DIST_BIN_DIR$CONTRACT_NAME.json
+  cat ./artifacts/$CONTRACT_FILE/$CONTRACT_NAME.json | jq '{bytecode: .bytecode, linkReferences: .linkReferences}' > $DIST_BIN_DIR$CONTRACT_NAME.json
   cat ./artifacts/$CONTRACT_FILE/$CONTRACT_NAME.json | jq '.abi' > $DIST_ABI_DIR$CONTRACT_NAME.json
 done
