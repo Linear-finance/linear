@@ -5,6 +5,7 @@ build
 contracts/artifacts
 .openzeppelin/.session
 .DS_Store
+dist
 
 # Hardhat files
 cache/
