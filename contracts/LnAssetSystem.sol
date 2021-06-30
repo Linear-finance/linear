@@ -2,6 +2,7 @@
 pragma solidity ^0.6.12;
 
 import "./interfaces/ILnAsset.sol";
+import "./interfaces/ILnPerpetual.sol";
 import "./interfaces/ILnPrices.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
@@ -13,6 +14,9 @@ contract LnAssetSystem is LnAddressStorage {
 
     ILnAsset[] public mAssetList; // 合约地址数组
     mapping(address => bytes32) public mAddress2Names; // 地址到名称的映射
+
+    mapping(bytes32 => address) public perpAddresses;
+    mapping(address => bytes32) public perpSymbols;
 
     function __LnAssetSystem_init(address _admin) public initializer {
         __LnAddressStorage_init(_admin);
@@ -53,18 +57,46 @@ contract LnAssetSystem is LnAddressStorage {
         emit AssetRemoved(name, assetToRemove);
     }
 
+    function addPerp(ILnPerpetual perp) external onlyAdmin {
+        require(address(perp) != address(0), "LnAssetSystem: zero address");
+
+        bytes32 symbol = perp.underlyingTokenSymbol();
+        require(perpAddresses[symbol] == address(0), "LnAssetSystem: perp already exists");
+
+        perpAddresses[symbol] = address(perp);
+        perpSymbols[address(perp)] = symbol;
+
+        emit PerpAdded(symbol, address(perp));
+    }
+
     function assetNumber() external view returns (uint) {
         return mAssetList.length;
     }
 
-    // check exchange rate invalid condition ? invalid just fail.
     function totalAssetsInUsd() public view returns (uint256 rTotal) {
-        require(mAddrs["LnPrices"] != address(0), "LnPrices address cannot access");
-        ILnPrices priceGetter = ILnPrices(mAddrs["LnPrices"]); //getAddress
-        for (uint256 i = 0; i < mAssetList.length; i++) {
-            uint256 exchangeRate = priceGetter.getPrice(mAssetList[i].keyName());
-            rTotal = rTotal.add(mAssetList[i].totalSupply().multiplyDecimal(exchangeRate));
+        address lnPricesAddress = mAddrs["LnPrices"];
+        require(lnPricesAddress != address(0), "LnAssetSystem: LnPrices not set");
+
+        uint256 totalSupplyValue = 0;
+        uint256 totalPerpDebtValue = 0;
+
+        for (uint256 ind = 0; ind < mAssetList.length; ind++) {
+            ILnAsset asset = mAssetList[ind];
+            bytes32 assetSymbol = asset.keyName();
+
+            uint256 exchangeRate = ILnPrices(lnPricesAddress).getPrice(assetSymbol);
+            address perpAddress = perpAddresses[assetSymbol];
+
+            totalSupplyValue = totalSupplyValue.add(asset.totalSupply().multiplyDecimal(exchangeRate));
+
+            if (perpAddress != address(0)) {
+                totalPerpDebtValue = totalPerpDebtValue.add(ILnPerpetual(perpAddress).totalUsdDebt()).add(
+                    ILnPerpetual(perpAddress).totalUnderlyingDebt().multiplyDecimal(exchangeRate)
+                );
+            }
         }
+
+        rTotal = totalSupplyValue.sub(totalPerpDebtValue);
     }
 
     function getAssetAddresses() external view returns (address[] memory) {
@@ -75,8 +107,13 @@ contract LnAssetSystem is LnAddressStorage {
         return addr;
     }
 
+    function isPerpAddressRegistered(address perpAddress) external view returns (bool) {
+        return perpSymbols[perpAddress] != bytes32(0);
+    }
+
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
+    event PerpAdded(bytes32 underlying, address perp);
 
     // Reserved storage space to allow for layout changes in the future.
     uint256[48] private __gap;
