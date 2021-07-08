@@ -57,6 +57,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 fees,
         uint256 collateralReturned
     );
+    event PositionSync(uint256 indexed positionId, bool isLong, uint256 debt, uint256 locked, uint256 collateral);
 
     /**
      @param isLong Whether it's a long or short position.
@@ -227,6 +228,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 fees = _addPositionSize(positionId, size, collateral);
 
         emit PositionCreated(user, positionId, isLong, size, lnPrices.getPrice(underlyingTokenSymbol), collateral, fees);
+
+        _emitPositionSync(positionId);
     }
 
     function _increasePosition(
@@ -243,6 +246,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 fees = _addPositionSize(positionId, size, collateral);
 
         emit PositionIncreased(user, positionId, size, lnPrices.getPrice(underlyingTokenSymbol), collateral, fees);
+
+        _emitPositionSync(positionId);
     }
 
     function _addPositionSize(
@@ -298,6 +303,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         lusdToken.transferFrom(user, address(this), amount);
 
         emit CollateralAdded(user, positionId, amount);
+
+        _emitPositionSync(positionId);
     }
 
     function _removeCollateral(
@@ -318,6 +325,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         lusdToken.transfer(to, amount);
 
         emit CollateralRemoved(user, positionId, amount);
+
+        _emitPositionSync(positionId);
     }
 
     function _closePositionByAmount(
@@ -467,6 +476,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
                     position.collateral
                 );
             }
+
+            emit PositionSync(positionId, true, 0, 0, 0);
         } else {
             // Position partically closed (PnL goes into collateral)
             positions[positionId].debt = position.debt;
@@ -476,6 +487,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             if (!isLiquidation) {
                 emit PositionPartiallyClosed(user, positionId, amount, lnPrices.getPrice(underlyingTokenSymbol), fees);
             }
+
+            _emitPositionSync(positionId);
         }
     }
 
@@ -539,6 +552,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
                     position.collateral
                 );
             }
+
+            emit PositionSync(positionId, false, 0, 0, 0);
         } else {
             // Position partically closed (PnL goes into collateral)
             positions[positionId].debt = position.debt;
@@ -547,6 +562,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             if (!isLiquidation) {
                 emit PositionPartiallyClosed(user, positionId, amount, lnPrices.getPrice(underlyingTokenSymbol), fees);
             }
+
+            _emitPositionSync(positionId);
         }
     }
 
@@ -574,5 +591,12 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             return
                 position.collateral.mul(UNIT).div(lnPrices.exchange(underlyingTokenSymbol, position.debt, LUSD)).sub(UNIT);
         }
+    }
+
+    function _emitPositionSync(uint256 positionId) private {
+        Position memory position = positions[positionId];
+        require(position.debt > 0, "LnPerpetual: position not found");
+
+        emit PositionSync(positionId, position.isLong, position.debt, position.locked, position.collateral);
     }
 }
