@@ -463,7 +463,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             delete positions[positionId];
 
             if (position.collateral > 0) {
-                lusdToken.transfer(to, amount);
+                lusdToken.transfer(to, position.collateral);
             }
 
             if (!isLiquidation) {
@@ -539,7 +539,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             delete positions[positionId];
 
             if (position.collateral > 0) {
-                lusdToken.transfer(to, amount);
+                lusdToken.transfer(to, position.collateral);
             }
 
             if (!isLiquidation) {
