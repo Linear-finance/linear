@@ -24,6 +24,10 @@ contract LnPerpPositionToken is ILnPerpPositionToken, ERC721Upgradeable, Ownable
         _;
     }
 
+    function positionExists(address perpAddress, uint256 positionId) external view override returns (bool) {
+        return positionPerpAddresses[positionId] == perpAddress;
+    }
+
     function __LnPerpPositionToken_init() public initializer {
         __Ownable_init();
         __ERC721_init("Linear Perpetual Positions NFT", "LINEAR-PERP-POS");
