@@ -155,6 +155,7 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         uint256 collateral
     ) external {
         // TODO: perform basic argument validation
+        _assertPositionExists(underlying, positionId);
 
         // Lock up user's lUSD until settlement
         lusdToken.transferFrom(msg.sender, address(this), collateral);
@@ -178,6 +179,7 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
     ) external {
         // TODO: perform basic argument validation
         require(amount > 0, "LnPerpExchange: zero amount");
+        _assertPositionExists(underlying, positionId);
 
         uint256 actionId = _queueActionMeta(msg.sender, ACTION_TYPE_CLOSE_POSITION);
         closePositionActions[actionId] = ClosePositionActionData({
@@ -196,6 +198,7 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         address to
     ) external {
         // TODO: perform basic argument validation
+        _assertPositionExists(underlying, positionId);
 
         uint256 actionId = _queueActionMeta(msg.sender, ACTION_TYPE_CLOSE_POSITION);
         closePositionActions[actionId] = ClosePositionActionData({
@@ -363,5 +366,12 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
 
     function _assertRegisteredPerp(address perpAddress) private view {
         require(lnAssetSystem.isPerpAddressRegistered(perpAddress), "LnPerpExchange: perp address not registered");
+    }
+
+    function _assertPositionExists(bytes32 symbol, uint256 positionId) private view {
+        require(
+            positionToken.positionExists(address(_getPerpContract(symbol)), positionId),
+            "LnPerpExchange: position not found"
+        );
     }
 }
