@@ -254,6 +254,9 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
             require(false, "LnPerpExchange: unknown action type");
         }
 
+        // Remove action data from storage
+        _removeActionData(pendingActionId, actionMeta.actionType);
+
         emit ActionSettled(pendingActionId, underlyingPrice);
     }
 
@@ -273,17 +276,8 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
             lusdToken.transfer(actionMeta.user, increasePositionActions[pendingActionId].collateral);
         }
 
-        // Remove action data from storage to save gas
-        delete pendingActionMetas[pendingActionId];
-        if (actionMeta.actionType == ACTION_TYPE_OPEN_POSITION) {
-            delete openPositionActions[pendingActionId];
-        } else if (actionMeta.actionType == ACTION_TYPE_INCREASE_POSITION) {
-            delete increasePositionActions[pendingActionId];
-        } else if (actionMeta.actionType == ACTION_TYPE_CLOSE_POSITION) {
-            delete closePositionActions[pendingActionId];
-        } else {
-            require(false, "LnPerpExchange: unknown action type");
-        }
+        // Remove action data from storage
+        _removeActionData(pendingActionId, actionMeta.actionType);
 
         emit ActionReverted(pendingActionId);
     }
@@ -375,5 +369,18 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
             positionToken.positionExists(address(_getPerpContract(symbol)), positionId),
             "LnPerpExchange: position not found"
         );
+    }
+
+    function _removeActionData(uint256 actionId, uint8 actionType) private {
+        delete pendingActionMetas[actionId];
+        if (actionType == ACTION_TYPE_OPEN_POSITION) {
+            delete openPositionActions[actionId];
+        } else if (actionType == ACTION_TYPE_INCREASE_POSITION) {
+            delete increasePositionActions[actionId];
+        } else if (actionType == ACTION_TYPE_CLOSE_POSITION) {
+            delete closePositionActions[actionId];
+        } else {
+            require(false, "LnPerpExchange: unknown action type");
+        }
     }
 }
