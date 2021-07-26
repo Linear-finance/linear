@@ -39,7 +39,7 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         uint256 amount,
         address to
     );
-    event ActionSettled(uint256 actionId);
+    event ActionSettled(uint256 actionId, uint256 underlyingPrice);
     event ActionReverted(uint256 actionId);
     event PoolFeeHolderChanged(address newPoolFeeHolder);
     event FoundationFeeHolderChanged(address newFoundationFeeHolder);
@@ -223,36 +223,38 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         require(block.timestamp >= actionMeta.timestamp + settlementDelay, "LnPerpExchange: settlement delay not passed");
         require(block.timestamp <= actionMeta.timestamp + revertDelay, "LnPerpExchange: action can only be reverted now");
 
+        uint256 underlyingPrice;
+
         if (actionMeta.actionType == ACTION_TYPE_OPEN_POSITION) {
             OpenPositionActionData memory data = openPositionActions[pendingActionId];
 
             ILnPerpetual perpContract = _getPerpContract(data.underlying);
             lusdToken.approve(address(perpContract), data.collateral);
-            perpContract.openPosition(actionMeta.user, data.isLong, data.size, data.collateral);
+            (, underlyingPrice) = perpContract.openPosition(actionMeta.user, data.isLong, data.size, data.collateral);
         } else if (actionMeta.actionType == ACTION_TYPE_INCREASE_POSITION) {
             IncreasePositionActionData memory data = increasePositionActions[pendingActionId];
 
             ILnPerpetual perpContract = _getPerpContract(data.underlying);
             lusdToken.approve(address(perpContract), data.collateral);
-            perpContract.increasePosition(actionMeta.user, data.positionId, data.size, data.collateral);
+            underlyingPrice = perpContract.increasePosition(actionMeta.user, data.positionId, data.size, data.collateral);
         } else if (actionMeta.actionType == ACTION_TYPE_CLOSE_POSITION) {
             ClosePositionActionData memory data = closePositionActions[pendingActionId];
 
             if (data.amount > 0) {
-                _getPerpContract(data.underlying).closePositionByAmount(
+                underlyingPrice = _getPerpContract(data.underlying).closePositionByAmount(
                     actionMeta.user,
                     data.positionId,
                     data.amount,
                     data.to
                 );
             } else {
-                _getPerpContract(data.underlying).closePosition(actionMeta.user, data.positionId, data.to);
+                underlyingPrice = _getPerpContract(data.underlying).closePosition(actionMeta.user, data.positionId, data.to);
             }
         } else {
             require(false, "LnPerpExchange: unknown action type");
         }
 
-        emit ActionSettled(pendingActionId);
+        emit ActionSettled(pendingActionId, underlyingPrice);
     }
 
     function revertAction(uint256 pendingActionId) external {

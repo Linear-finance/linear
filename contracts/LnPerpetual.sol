@@ -153,8 +153,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         bool isLong,
         uint256 size,
         uint256 collateral
-    ) external override onlyExchange returns (uint256 positionId) {
-        positionId = _openPosition(user, isLong, size, collateral);
+    ) external override onlyExchange returns (uint256 positionId, uint256 underlyingPrice) {
+        (positionId, underlyingPrice) = _openPosition(user, isLong, size, collateral);
     }
 
     function increasePosition(
@@ -162,8 +162,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 positionId,
         uint256 size,
         uint256 collateral
-    ) external override onlyExchange {
-        _increasePosition(user, positionId, size, collateral);
+    ) external override onlyExchange returns (uint256 underlyingPrice) {
+        underlyingPrice = _increasePosition(user, positionId, size, collateral);
     }
 
     function addCollateral(uint256 positionId, uint256 amount) external {
@@ -185,18 +185,18 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 positionId,
         uint256 amount,
         address to
-    ) external override onlyExchange {
+    ) external override onlyExchange returns (uint256 underlyingPrice) {
         require(amount > 0, "LnPerpetual: zero amount");
 
-        _closePositionByAmount(user, positionId, amount, to);
+        underlyingPrice = _closePositionByAmount(user, positionId, amount, to);
     }
 
     function closePosition(
         address user,
         uint256 positionId,
         address to
-    ) external override onlyExchange {
-        _closePositionByAmount(user, positionId, 0, to);
+    ) external override onlyExchange returns (uint256 underlyingPrice) {
+        underlyingPrice = _closePositionByAmount(user, positionId, 0, to);
     }
 
     function liquidatePosition(
@@ -214,7 +214,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         bool isLong,
         uint256 size,
         uint256 collateral
-    ) private returns (uint256 positionId) {
+    ) private returns (uint256 positionId, uint256 underlyingPrice) {
         require(size > 0, "LnPerpetual: zero amount");
         require(collateral > 0, "LnPerpetual: zero amount");
 
@@ -226,6 +226,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         }
 
         uint256 fees = _addPositionSize(positionId, size, collateral);
+        underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
         emit PositionCreated(user, positionId, isLong, size, lnPrices.getPrice(underlyingTokenSymbol), collateral, fees);
 
@@ -237,13 +238,14 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 positionId,
         uint256 size,
         uint256 collateral
-    ) private {
+    ) private returns (uint256 underlyingPrice) {
         require(size > 0, "LnPerpetual: zero amount");
 
         require(user == positionToken.ownerOf(positionId), "LnPerpetual: owner mismatch");
         require(positions[positionId].debt > 0, "LnPerpetual: position not found");
 
         uint256 fees = _addPositionSize(positionId, size, collateral);
+        underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
         emit PositionIncreased(user, positionId, size, lnPrices.getPrice(underlyingTokenSymbol), collateral, fees);
 
@@ -334,13 +336,13 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 positionId,
         uint256 amount,
         address to
-    ) private {
+    ) private returns (uint256 underlyingPrice) {
         require(user == positionToken.ownerOf(positionId), "LnPerpetual: owner mismatch");
 
         if (positions[positionId].isLong) {
-            _closeLongPosition(user, positionId, amount, to, false);
+            (, underlyingPrice, ) = _closeLongPosition(user, positionId, amount, to, false);
         } else {
-            _closeShortPosition(user, positionId, amount, to, false);
+            (, underlyingPrice, ) = _closeShortPosition(user, positionId, amount, to, false);
         }
     }
 
@@ -358,7 +360,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
 
         address positionOwner = positionToken.ownerOf(positionId);
 
-        (uint256 fees, uint256 liquidatorReward) =
+        (uint256 fees, uint256 underlyingPrice, uint256 liquidatorReward) =
             positions[positionId].isLong
                 ? _closeLongPosition(positionOwner, positionId, amount, positionOwner, true)
                 : _closeShortPosition(positionOwner, positionId, amount, positionOwner, true);
@@ -389,7 +391,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             positionOwner,
             positionId,
             amount,
-            lnPrices.getPrice(underlyingTokenSymbol),
+            underlyingPrice,
             liquidator,
             fees,
             liquidatorReward,
@@ -403,7 +405,14 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 amount,
         address to,
         bool isLiquidation
-    ) private returns (uint256 fees, uint256 liquidationReward) {
+    )
+        private
+        returns (
+            uint256 fees,
+            uint256 underlyingPrice,
+            uint256 liquidationReward
+        )
+    {
         Position memory position = positions[positionId];
         require(position.debt > 0, "LnPerpetual: position not found");
 
@@ -457,6 +466,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
 
         totalUsdDebt = totalUsdDebt.sub(debtToRepay);
 
+        underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
+
         if (position.debt == 0 && position.locked == 0) {
             // Position completely closed
             exchange.requestPositionBurn(positionId);
@@ -467,14 +478,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             }
 
             if (!isLiquidation) {
-                emit PositionClosed(
-                    user,
-                    positionId,
-                    amount,
-                    lnPrices.getPrice(underlyingTokenSymbol),
-                    fees,
-                    position.collateral
-                );
+                emit PositionClosed(user, positionId, amount, underlyingPrice, fees, position.collateral);
             }
 
             emit PositionSync(positionId, true, 0, 0, 0);
@@ -485,7 +489,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             positions[positionId].collateral = position.collateral;
 
             if (!isLiquidation) {
-                emit PositionPartiallyClosed(user, positionId, amount, lnPrices.getPrice(underlyingTokenSymbol), fees);
+                emit PositionPartiallyClosed(user, positionId, amount, underlyingPrice, fees);
             }
 
             _emitPositionSync(positionId);
@@ -498,7 +502,14 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 amount,
         address to,
         bool isLiquidation
-    ) private returns (uint256 fees, uint256 liquidationReward) {
+    )
+        private
+        returns (
+            uint256 fees,
+            uint256 underlyingPrice,
+            uint256 liquidationReward
+        )
+    {
         Position memory position = positions[positionId];
         require(position.debt > 0, "LnPerpetual: position not found");
 
@@ -533,6 +544,8 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
 
         totalUnderlyingDebt = totalUnderlyingDebt.add(debtToRepay);
 
+        underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
+
         if (position.debt == 0) {
             // Position completely closed
             exchange.requestPositionBurn(positionId);
@@ -543,14 +556,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             }
 
             if (!isLiquidation) {
-                emit PositionClosed(
-                    user,
-                    positionId,
-                    amount,
-                    lnPrices.getPrice(underlyingTokenSymbol),
-                    fees,
-                    position.collateral
-                );
+                emit PositionClosed(user, positionId, amount, underlyingPrice, fees, position.collateral);
             }
 
             emit PositionSync(positionId, false, 0, 0, 0);
@@ -560,7 +566,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             positions[positionId].collateral = position.collateral;
 
             if (!isLiquidation) {
-                emit PositionPartiallyClosed(user, positionId, amount, lnPrices.getPrice(underlyingTokenSymbol), fees);
+                emit PositionPartiallyClosed(user, positionId, amount, underlyingPrice, fees);
             }
 
             _emitPositionSync(positionId);
