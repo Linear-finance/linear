@@ -469,10 +469,6 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
         if (position.debt == 0 && position.locked == 0) {
-            // Position completely closed
-            exchange.requestPositionBurn(positionId);
-            delete positions[positionId];
-
             if (position.collateral > 0) {
                 lusdToken.transfer(to, position.collateral);
             }
@@ -482,6 +478,10 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             }
 
             emit PositionSync(positionId, true, 0, 0, 0);
+
+            // Position completely closed
+            exchange.requestPositionBurn(positionId);
+            delete positions[positionId];
         } else {
             // Position partically closed (PnL goes into collateral)
             positions[positionId].debt = position.debt;
@@ -547,10 +547,6 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
         if (position.debt == 0) {
-            // Position completely closed
-            exchange.requestPositionBurn(positionId);
-            delete positions[positionId];
-
             if (position.collateral > 0) {
                 lusdToken.transfer(to, position.collateral);
             }
@@ -560,6 +556,10 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             }
 
             emit PositionSync(positionId, false, 0, 0, 0);
+
+            // Position completely closed
+            exchange.requestPositionBurn(positionId);
+            delete positions[positionId];
         } else {
             // Position partically closed (PnL goes into collateral)
             positions[positionId].debt = position.debt;
