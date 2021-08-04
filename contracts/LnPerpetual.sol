@@ -317,10 +317,9 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
     ) private {
         require(user == positionToken.ownerOf(positionId), "LnPerpetual: owner mismatch");
 
-        Position memory position = positions[positionId];
-        require(position.debt > 0, "LnPerpetual: position not found");
+        require(positions[positionId].debt > 0, "LnPerpetual: position not found");
 
-        position.collateral = position.collateral.sub(amount);
+        positions[positionId].collateral = positions[positionId].collateral.sub(amount);
 
         _assertCollateralizationRatio(positionId);
 

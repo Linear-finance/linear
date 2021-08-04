@@ -159,4 +159,68 @@ describe("Integration | Perpetual", function () {
       expandTo18Decimals(0.1)
     );
   });
+
+  it("remove collateral on long position", async () => {
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      true, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(2_000) // collateral
+    );
+    await passSettlementDelay();
+    await stack.lnPerpExchange.connect(alice).settleAction(1);
+
+    // Remove collateral
+    await expect(
+      stack.lbtcPerp
+        .connect(bob)
+        .removeCollateral(1, expandTo18Decimals(10), bob.address)
+    )
+      .to.emit(stack.lbtcPerp, "PositionSync")
+      .withArgs(
+        1,
+        true,
+        expandTo18Decimals(2_000),
+        expandTo18Decimals(0.1),
+        expandTo18Decimals(1_970)
+      );
+
+    const position = await stack.lbtcPerp.positions(1);
+    expect(position.isLong).to.equal(true);
+    expect(position.debt).to.equal(expandTo18Decimals(2_000));
+    expect(position.locked).to.equal(expandTo18Decimals(0.1));
+    expect(position.collateral).to.equal(expandTo18Decimals(1_970));
+  });
+
+  it("remove collateral on short position", async () => {
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      false, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(2_000) // collateral
+    );
+    await passSettlementDelay();
+    await stack.lnPerpExchange.connect(alice).settleAction(1);
+
+    // Remove collateral
+    await expect(
+      stack.lbtcPerp
+        .connect(bob)
+        .removeCollateral(1, expandTo18Decimals(10), bob.address)
+    )
+      .to.emit(stack.lbtcPerp, "PositionSync")
+      .withArgs(
+        1,
+        false,
+        expandTo18Decimals(0.1),
+        0,
+        expandTo18Decimals(3_970)
+      );
+
+    const position = await stack.lbtcPerp.positions(1);
+    expect(position.isLong).to.equal(false);
+    expect(position.debt).to.equal(expandTo18Decimals(0.1));
+    expect(position.locked).to.equal(0);
+    expect(position.collateral).to.equal(expandTo18Decimals(3_970));
+  });
 });
