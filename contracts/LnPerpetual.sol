@@ -424,6 +424,9 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         // Repay debt proportionally
         uint256 debtToRepay = amount == position.locked ? position.debt : position.debt.mul(amount).div(position.locked);
 
+        // Adjust total USD debt stat
+        totalUsdDebt = totalUsdDebt.sub(debtToRepay);
+
         // Adjust position data in-memory
         position.debt = position.debt.sub(debtToRepay);
         position.locked = position.locked.sub(amount);
@@ -438,6 +441,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         }
 
         // In liquidation, pretend we have a larger debt to repay (which is actually liquidation reward)
+        // TODO: calculate liquidation reward on original debtToRepay instead
         if (isLiquidation) {
             liquidationReward = debtToRepay.mul(liquidatorRewardRatio).div(UNIT);
             debtToRepay = debtToRepay.add(liquidationReward);
@@ -462,8 +466,6 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
                 require(false, "LnPerpetual: bankrupted position");
             }
         }
-
-        totalUsdDebt = totalUsdDebt.sub(debtToRepay);
 
         underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
@@ -515,6 +517,9 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         uint256 debtToRepay = amount == 0 ? position.debt : amount;
         require(debtToRepay <= position.debt, "LnPerpetual: amount too large");
 
+        // Adjust total underlying debt stat
+        totalUnderlyingDebt = totalUnderlyingDebt.add(debtToRepay);
+
         // Buy underlying with lUSD
         uint256 lusdNeededToRepay = lnPrices.exchange(underlyingTokenSymbol, debtToRepay, LUSD);
 
@@ -528,6 +533,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         }
 
         // In liquidation, pretend more lUSD is needed to repay the debt (which is actually liquidation reward)
+        // TODO: calculate liquidation reward on original debtToRepay instead
         if (isLiquidation) {
             liquidationReward = lusdNeededToRepay.mul(liquidatorRewardRatio).div(UNIT);
             lusdNeededToRepay = lusdNeededToRepay.add(liquidationReward);
@@ -540,8 +546,6 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         // Adjust position data in-memory (no SafeMath needed actually)
         position.debt = position.debt.sub(debtToRepay);
         position.collateral = position.collateral.sub(lusdNeededToRepay);
-
-        totalUnderlyingDebt = totalUnderlyingDebt.add(debtToRepay);
 
         underlyingPrice = lnPrices.getPrice(underlyingTokenSymbol);
 
