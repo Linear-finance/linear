@@ -532,7 +532,7 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         require(debtToRepay <= position.debt, "LnPerpetual: amount too large");
 
         // Adjust total underlying debt stat
-        totalUnderlyingDebt = totalUnderlyingDebt.add(debtToRepay);
+        totalUnderlyingDebt = totalUnderlyingDebt.sub(debtToRepay);
 
         // Buy underlying with lUSD
         uint256 lusdNeededToRepay = lnPrices.exchange(underlyingTokenSymbol, debtToRepay, LUSD);
