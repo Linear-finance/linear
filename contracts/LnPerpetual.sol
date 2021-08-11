@@ -431,25 +431,38 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         position.debt = position.debt.sub(debtToRepay);
         position.locked = position.locked.sub(amount);
 
-        // Pretend we have a larger debt to repay to account for fees
-        fees = debtToRepay.mul(feeRate).div(UNIT);
-        if (fees > 0) {
-            debtToRepay = debtToRepay.add(fees);
+        // Calculate fees & liquidation reward (extra debt to repay)
+        uint256 feesAndLiquidationReward = 0;
+        {
+            fees = debtToRepay.mul(feeRate).div(UNIT);
+            if (fees > 0) {
+                feesAndLiquidationReward = feesAndLiquidationReward.add(fees);
 
-            lusdToken.approve(address(exchange), fees);
-            exchange.submitFees(positionId, fees);
-        }
+                lusdToken.approve(address(exchange), fees);
+                exchange.submitFees(positionId, fees);
+            }
 
-        // In liquidation, pretend we have a larger debt to repay (which is actually liquidation reward)
-        // TODO: calculate liquidation reward on original debtToRepay instead
-        if (isLiquidation) {
-            liquidationReward = debtToRepay.mul(liquidatorRewardRatio).div(UNIT);
-            debtToRepay = debtToRepay.add(liquidationReward);
+            if (isLiquidation) {
+                liquidationReward = debtToRepay.mul(liquidatorRewardRatio).div(UNIT);
+                feesAndLiquidationReward = feesAndLiquidationReward.add(liquidationReward);
+            }
         }
 
         // Sell underlying into lUSD for debt repayment
         uint256 sellProceeds = lnPrices.exchange(underlyingTokenSymbol, amount, LUSD);
         exchange.requestAssetBurn(address(underlyingToken), address(this), amount);
+
+        // Mint/burn the net difference
+        if (sellProceeds > debtToRepay) {
+            // Mint the difference to this contract
+            exchange.requestAssetMint(address(lusdToken), address(this), sellProceeds.sub(debtToRepay));
+        } else if (sellProceeds < debtToRepay) {
+            // Burn the difference
+            exchange.requestAssetBurn(address(lusdToken), address(this), debtToRepay.sub(sellProceeds));
+        }
+
+        // Trick: pretend more debt is to be repaid to account for fees and liquidation reward
+        debtToRepay = debtToRepay.add(feesAndLiquidationReward);
 
         if (sellProceeds >= debtToRepay) {
             // Sell proceeds alone are enough to cover debt repayment. The leftover goes into collateral
@@ -523,20 +536,24 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         // Buy underlying with lUSD
         uint256 lusdNeededToRepay = lnPrices.exchange(underlyingTokenSymbol, debtToRepay, LUSD);
 
-        // Pretend more lUSD is needed to repay the debt to account for fees
-        fees = lusdNeededToRepay.mul(feeRate).div(UNIT);
-        if (fees > 0) {
-            lusdNeededToRepay = lusdNeededToRepay.add(fees);
+        // Calculate fees & liquidation reward (extra debt to repay)
+        uint256 feesAndLiquidationReward = 0;
+        {
+            fees = lusdNeededToRepay.mul(feeRate).div(UNIT);
+            if (fees > 0) {
+                feesAndLiquidationReward = feesAndLiquidationReward.add(fees);
 
-            lusdToken.approve(address(exchange), fees);
-            exchange.submitFees(positionId, fees);
-        }
+                lusdToken.approve(address(exchange), fees);
+                exchange.submitFees(positionId, fees);
+            }
 
-        // In liquidation, pretend more lUSD is needed to repay the debt (which is actually liquidation reward)
-        // TODO: calculate liquidation reward on original debtToRepay instead
-        if (isLiquidation) {
-            liquidationReward = lusdNeededToRepay.mul(liquidatorRewardRatio).div(UNIT);
-            lusdNeededToRepay = lusdNeededToRepay.add(liquidationReward);
+            if (isLiquidation) {
+                liquidationReward = lusdNeededToRepay.mul(liquidatorRewardRatio).div(UNIT);
+                feesAndLiquidationReward = feesAndLiquidationReward.add(liquidationReward);
+            }
+
+            // Trick: pretend more lUSD is needed to repay the debt
+            lusdNeededToRepay = lusdNeededToRepay.add(feesAndLiquidationReward);
         }
 
         require(position.collateral >= lusdNeededToRepay, "LnPerpetual: bankrupted position");
