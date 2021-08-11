@@ -431,10 +431,15 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         position.debt = position.debt.sub(debtToRepay);
         position.locked = position.locked.sub(amount);
 
+        // Sell underlying into lUSD for debt repayment
+        uint256 sellProceeds = lnPrices.exchange(underlyingTokenSymbol, amount, LUSD);
+        exchange.requestAssetBurn(address(underlyingToken), address(this), amount);
+
         // Calculate fees & liquidation reward (extra debt to repay)
         uint256 feesAndLiquidationReward = 0;
         {
-            fees = debtToRepay.mul(feeRate).div(UNIT);
+            // Avg entry price would be effecitvely used if calculated based on `debtToRepay`
+            fees = sellProceeds.mul(feeRate).div(UNIT);
             if (fees > 0) {
                 feesAndLiquidationReward = feesAndLiquidationReward.add(fees);
 
@@ -443,14 +448,10 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
             }
 
             if (isLiquidation) {
-                liquidationReward = debtToRepay.mul(liquidatorRewardRatio).div(UNIT);
+                liquidationReward = sellProceeds.mul(liquidatorRewardRatio).div(UNIT);
                 feesAndLiquidationReward = feesAndLiquidationReward.add(liquidationReward);
             }
         }
-
-        // Sell underlying into lUSD for debt repayment
-        uint256 sellProceeds = lnPrices.exchange(underlyingTokenSymbol, amount, LUSD);
-        exchange.requestAssetBurn(address(underlyingToken), address(this), amount);
 
         // Mint/burn the net difference
         if (sellProceeds > debtToRepay) {
