@@ -552,14 +552,14 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
                 liquidationReward = lusdNeededToRepay.mul(liquidatorRewardRatio).div(UNIT);
                 feesAndLiquidationReward = feesAndLiquidationReward.add(liquidationReward);
             }
-
-            // Trick: pretend more lUSD is needed to repay the debt
-            lusdNeededToRepay = lusdNeededToRepay.add(feesAndLiquidationReward);
         }
 
-        require(position.collateral >= lusdNeededToRepay, "LnPerpetual: bankrupted position");
-
         exchange.requestAssetBurn(address(lusdToken), address(this), lusdNeededToRepay);
+
+        // Trick: pretend more lUSD is needed to repay the debt
+        lusdNeededToRepay = lusdNeededToRepay.add(feesAndLiquidationReward);
+
+        require(position.collateral >= lusdNeededToRepay, "LnPerpetual: bankrupted position");
 
         // Adjust position data in-memory (no SafeMath needed actually)
         position.debt = position.debt.sub(debtToRepay);
