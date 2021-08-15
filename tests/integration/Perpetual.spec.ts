@@ -1,9 +1,10 @@
 import { DateTime, Duration } from "luxon";
 import { ethers } from "hardhat";
+import { BigNumber, Signer } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
-import { expandTo18Decimals, uint256Max } from "../utilities";
+import { expandTo18Decimals, uint256Max, zeroAddress } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import {
   getBlockDateTime,
@@ -29,6 +30,35 @@ describe("Integration | Perpetual", function () {
       ethers.provider,
       (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
     );
+  };
+
+  const passRevertDelay = async (): Promise<void> => {
+    await setNextBlockTimestamp(
+      ethers.provider,
+      (await getBlockDateTime(ethers.provider))
+        .plus(revertDelay)
+        .plus({ seconds: 1 })
+    );
+  };
+
+  const assertAliceDebt = async (amount: BigNumber) => {
+    expect(
+      (await stack.lnDebtSystem.GetUserDebtBalanceInUsd(alice.address))[0]
+    ).to.equal(amount);
+  };
+
+  const closePosition = async (
+    actionId: number,
+    user: SignerWithAddress,
+    positionId: number
+  ): Promise<void> => {
+    await stack.lnPerpExchange.connect(user).closePosition(
+      formatBytes32String("lBTC"), // underlying
+      positionId, // positionId
+      user.address // to
+    );
+    await passSettlementDelay();
+    await stack.lnPerpExchange.connect(alice).settleAction(actionId);
   };
 
   const setLbtcPrice = async (price: number): Promise<void> => {
@@ -83,7 +113,7 @@ describe("Integration | Perpetual", function () {
       expandTo18Decimals(10_000) // buildAmount
     );
 
-    // Alice sends 1,000 lUSD to Bob
+    // Alice sends 10,000 lUSD to Bob
     await stack.lusdToken.connect(alice).transfer(
       bob.address, // recipient
       expandTo18Decimals(10_000) // amount
@@ -94,133 +124,568 @@ describe("Integration | Perpetual", function () {
     );
   });
 
-  it("long position", async () => {
+  it("can only open long position with sufficient collateral", async () => {
+    /**
+     * 10% init margin = 0.1 * 20000 * 10% = 200 lUSD
+     * 1% fee = 0.1 * 20000 * 1% = 20 lUSD
+     *
+     * Need to send minimum 220 lUSD as collateral
+     */
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(2_000) // collateral
+      expandTo18Decimals(220).sub(1) // collateral
     );
     await passSettlementDelay();
-    await stack.lnPerpExchange.connect(alice).settleAction(1);
+    await expect(
+      stack.lnPerpExchange.connect(alice).settleAction(1)
+    ).to.be.revertedWith("LnPerpetual: min init margin not reached");
 
-    // Fees: 20 lUSD
-    expect(await stack.lusdToken.balanceOf(stack.lbtcPerp.address)).to.equal(
-      expandTo18Decimals(1_980)
-    );
-    expect(await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)).to.equal(
-      expandTo18Decimals(0.1)
-    );
-
-    expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
-    expect(await stack.lnPerpPositionToken.positionPerpAddresses(1)).to.equal(
-      stack.lbtcPerp.address
-    );
-
-    const position = await stack.lbtcPerp.positions(1);
-    expect(position.isLong).to.equal(true);
-    expect(position.debt).to.equal(expandTo18Decimals(2_000));
-    expect(position.locked).to.equal(expandTo18Decimals(0.1));
-    expect(position.collateral).to.equal(expandTo18Decimals(1_980));
-
-    expect(await stack.lbtcPerp.totalUsdDebt()).to.equal(
-      expandTo18Decimals(2_000)
-    );
-  });
-
-  it("short position", async () => {
-    await stack.lnPerpExchange.connect(bob).openPosition(
-      formatBytes32String("lBTC"), // underlying
-      false, // isLong
-      expandTo18Decimals(0.1), // size
-      expandTo18Decimals(2_000) // collateral
-    );
-    await passSettlementDelay();
-    await stack.lnPerpExchange.connect(alice).settleAction(1);
-
-    // Fees: 20 lUSD
-    expect(await stack.lusdToken.balanceOf(stack.lbtcPerp.address)).to.equal(
-      expandTo18Decimals(3_980)
-    );
-    expect(await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)).to.equal(0);
-
-    expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
-    expect(await stack.lnPerpPositionToken.positionPerpAddresses(1)).to.equal(
-      stack.lbtcPerp.address
-    );
-
-    const position = await stack.lbtcPerp.positions(1);
-    expect(position.isLong).to.equal(false);
-    expect(position.debt).to.equal(expandTo18Decimals(0.1));
-    expect(position.locked).to.equal(0);
-    expect(position.collateral).to.equal(expandTo18Decimals(3_980));
-
-    expect(await stack.lbtcPerp.totalUnderlyingDebt()).to.equal(
-      expandTo18Decimals(0.1)
-    );
-  });
-
-  it("remove collateral on long position", async () => {
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(2_000) // collateral
+      expandTo18Decimals(220) // collateral
     );
     await passSettlementDelay();
-    await stack.lnPerpExchange.connect(alice).settleAction(1);
-
-    // Remove collateral
-    await expect(
-      stack.lbtcPerp
-        .connect(bob)
-        .removeCollateral(1, expandTo18Decimals(10), bob.address)
-    )
-      .to.emit(stack.lbtcPerp, "PositionSync")
-      .withArgs(
-        1,
-        true,
-        expandTo18Decimals(2_000),
-        expandTo18Decimals(0.1),
-        expandTo18Decimals(1_970)
-      );
-
-    const position = await stack.lbtcPerp.positions(1);
-    expect(position.isLong).to.equal(true);
-    expect(position.debt).to.equal(expandTo18Decimals(2_000));
-    expect(position.locked).to.equal(expandTo18Decimals(0.1));
-    expect(position.collateral).to.equal(expandTo18Decimals(1_970));
+    await stack.lnPerpExchange.connect(alice).settleAction(2);
   });
 
-  it("remove collateral on short position", async () => {
+  it("can only open short position with sufficient collateral", async () => {
+    // Same as last case
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       false, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(2_000) // collateral
+      expandTo18Decimals(220).sub(1) // collateral
+    );
+    await passSettlementDelay();
+    await expect(
+      stack.lnPerpExchange.connect(alice).settleAction(1)
+    ).to.be.revertedWith("LnPerpetual: min init margin not reached");
+
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      false, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(220) // collateral
+    );
+    await passSettlementDelay();
+    await stack.lnPerpExchange.connect(alice).settleAction(2);
+  });
+
+  it("collateral is locked up for queuing openPosition actions", async () => {
+    expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+      expandTo18Decimals(10_000)
+    );
+
+    await expect(
+      stack.lnPerpExchange.connect(bob).openPosition(
+        formatBytes32String("lBTC"), // underlying
+        true, // isLong
+        expandTo18Decimals(0.1), // size
+        expandTo18Decimals(1000) // collateral
+      )
+    )
+      .to.emit(stack.lusdToken, "Transfer")
+      .withArgs(
+        bob.address, // from
+        stack.lnPerpExchange.address, // to
+        expandTo18Decimals(1000)
+      );
+
+    expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+      expandTo18Decimals(9_000)
+    );
+  });
+
+  it("collateral is refunded for reverted openPosition actions", async () => {
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      true, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(1000) // collateral
+    );
+    expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+      expandTo18Decimals(9_000)
+    );
+
+    await passRevertDelay();
+    await expect(stack.lnPerpExchange.connect(alice).revertAction(1))
+      .to.emit(stack.lusdToken, "Transfer")
+      .withArgs(
+        stack.lnPerpExchange.address, // from
+        bob.address, // to
+        expandTo18Decimals(1000)
+      );
+    expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+      expandTo18Decimals(10_000)
+    );
+  });
+
+  it("collateral is sent to perp contract for settled openPosition actions", async () => {
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      true, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(1000) // collateral
+    );
+    await passSettlementDelay();
+
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address)
+    ).to.equal(expandTo18Decimals(1000));
+
+    await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
+      .to.emit(stack.lusdToken, "Transfer")
+      .withArgs(
+        stack.lnPerpExchange.address, // from
+        stack.lbtcPerp.address, // to
+        expandTo18Decimals(1000) // amount
+      );
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address)
+    ).to.equal(0);
+  });
+
+  it("fees are sent to pool fee holder", async () => {
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+    ).to.equal(0);
+
+    // 20 lUSD in fees
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      true, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(1000) // collateral
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(1);
 
-    // Remove collateral
-    await expect(
-      stack.lbtcPerp
-        .connect(bob)
-        .removeCollateral(1, expandTo18Decimals(10), bob.address)
-    )
-      .to.emit(stack.lbtcPerp, "PositionSync")
-      .withArgs(
-        1,
-        false,
-        expandTo18Decimals(0.1),
-        0,
-        expandTo18Decimals(3_970)
-      );
+    expect(
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+    ).to.equal(expandTo18Decimals(20));
+  });
 
-    const position = await stack.lbtcPerp.positions(1);
-    expect(position.isLong).to.equal(false);
-    expect(position.debt).to.equal(expandTo18Decimals(0.1));
-    expect(position.locked).to.equal(0);
-    expect(position.collateral).to.equal(expandTo18Decimals(3_970));
+  describe("Long positions", function () {
+    beforeEach(async function () {
+      // Bob longs 0.1 BTC with 1,000 lUSD
+      await stack.lnPerpExchange.connect(bob).openPosition(
+        formatBytes32String("lBTC"), // underlying
+        true, // isLong
+        expandTo18Decimals(0.1), // size
+        expandTo18Decimals(1_000) // collateral
+      );
+      await passSettlementDelay();
+      await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
+        .to.emit(stack.lnPerpPositionToken, "Transfer")
+        .withArgs(
+          zeroAddress, // from
+          bob.address, // to
+          1 // tokenId
+        );
+    });
+
+    it("position token should be minted", async () => {
+      expect(await stack.lnPerpPositionToken.balanceOf(bob.address)).to.equal(
+        1
+      );
+      expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
+    });
+
+    it("correct position data", async () => {
+      const position = await stack.lbtcPerp.positions(1);
+      expect(position.isLong).to.equal(true);
+      expect(position.debt).to.equal(expandTo18Decimals(2_000));
+      expect(position.locked).to.equal(expandTo18Decimals(0.1));
+      expect(position.collateral).to.equal(expandTo18Decimals(980));
+    });
+
+    it("lUSD minter debt should not be affected", async () => {
+      await assertAliceDebt(expandTo18Decimals(10_000));
+    });
+
+    it("entry fees should be sent to fee holder", async () => {
+      expect(
+        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      ).to.equal(expandTo18Decimals(20));
+    });
+
+    describe("Remove collateral", function () {
+      it("can only remove collateral up to min init margin", async () => {
+        /**
+         * 10% init margin = 0.1 * 20000 * 10% = 200 lUSD
+         * 1% fee = 0.1 * 20000 * 1% = 20 lUSD
+         *
+         * Sending in 1000 lUSD. Can remove up to 780 lUSD
+         */
+
+        // Trying to remove too much
+        await expect(
+          stack.lbtcPerp.connect(bob).removeCollateral(
+            1, // positionId
+            expandTo18Decimals(780).add(1), // amount
+            bob.address // to
+          )
+        ).to.be.revertedWith("LnPerpetual: min init margin not reached");
+
+        // Removing the exact maximum
+        await stack.lbtcPerp.connect(bob).removeCollateral(
+          1, // positionId
+          expandTo18Decimals(780), // amount
+          bob.address // to
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(200));
+      });
+
+      it("correct position data after collateral removeal", async () => {
+        await stack.lbtcPerp.connect(bob).removeCollateral(
+          1, // positionId
+          expandTo18Decimals(480), // amount
+          bob.address // to
+        );
+
+        const position = await stack.lbtcPerp.positions(1);
+        expect(position.isLong).to.equal(true);
+        expect(position.debt).to.equal(expandTo18Decimals(2_000));
+        expect(position.locked).to.equal(expandTo18Decimals(0.1));
+        expect(position.collateral).to.equal(expandTo18Decimals(500));
+      });
+
+      it("collateral removed should be sent to `to`", async () => {
+        await expect(
+          stack.lbtcPerp.connect(bob).removeCollateral(
+            1, // positionId
+            expandTo18Decimals(480), // amount
+            alice.address // to
+          )
+        )
+          .to.emit(stack.lusdToken, "Transfer")
+          .withArgs(
+            stack.lbtcPerp.address, // from
+            alice.address, // to
+            expandTo18Decimals(480) // amount
+          );
+
+        expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+          expandTo18Decimals(480)
+        );
+      });
+    });
+
+    describe("Price goes up", function () {
+      beforeEach(async function () {
+        // BTC price goes up from $20,000 to $30,000
+        await setLbtcPrice(30000);
+      });
+
+      it("perp trader makes profit", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        /**
+         * Entry fees = 0.1 * 20,000 * 0.01 = 20 lUSD
+         * Exit fees = 0.1 * 30,000 * 0.01 = 30 lUSD
+         * PnL = 0.1 * (30,000 - 20,000) - 20 - 30 = 950 lUSD
+         */
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(10_950)
+        );
+
+        // Perp contract should have nothing left
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+        expect(
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+      });
+
+      it("lUSD minter debt should increase", async () => {
+        await assertAliceDebt(expandTo18Decimals(11_000));
+      });
+
+      it("exit fees should be sent to fee holder", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        ).to.equal(expandTo18Decimals(50));
+      });
+    });
+
+    describe("Price goes down", function () {
+      beforeEach(async function () {
+        // BTC price goes down from $20,000 to $15,000
+        await setLbtcPrice(15000);
+      });
+
+      it("perp trader makes losses", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        /**
+         * Entry fees = 0.1 * 20,000 * 0.01 = 20 lUSD
+         * Exit fees = 0.1 * 15,000 * 0.01 = 15 lUSD
+         * PnL = 0.1 * (15,000 - 20,000) - 20 - 15 = -535 lUSD
+         */
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(9_465)
+        );
+
+        // Perp contract should have nothing left
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+        expect(
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+      });
+
+      it("lUSD minter debt should decrease", async () => {
+        await assertAliceDebt(expandTo18Decimals(9_500));
+      });
+
+      it("exit fees should be sent to fee holder", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        ).to.equal(expandTo18Decimals(35));
+      });
+    });
+  });
+
+  describe("Short positions", function () {
+    beforeEach(async function () {
+      // Bob shorts 0.1 BTC with 1,000 lUSD
+      await stack.lnPerpExchange.connect(bob).openPosition(
+        formatBytes32String("lBTC"), // underlying
+        false, // isLong
+        expandTo18Decimals(0.1), // size
+        expandTo18Decimals(1_000) // collateral
+      );
+      await passSettlementDelay();
+      await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
+        .to.emit(stack.lnPerpPositionToken, "Transfer")
+        .withArgs(
+          zeroAddress, // from
+          bob.address, // to
+          1 // tokenId
+        );
+    });
+
+    it("position token should be minted", async () => {
+      expect(await stack.lnPerpPositionToken.balanceOf(bob.address)).to.equal(
+        1
+      );
+      expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
+    });
+
+    it("correct position data", async () => {
+      const position = await stack.lbtcPerp.positions(1);
+      expect(position.isLong).to.equal(false);
+      expect(position.debt).to.equal(expandTo18Decimals(0.1));
+      expect(position.locked).to.equal(0);
+      expect(position.collateral).to.equal(expandTo18Decimals(2_980));
+    });
+
+    it("lUSD minter debt should not be affected", async () => {
+      await assertAliceDebt(expandTo18Decimals(10_000));
+    });
+
+    it("entry fees should be sent to fee holder", async () => {
+      expect(
+        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      ).to.equal(expandTo18Decimals(20));
+    });
+
+    describe("Remove collateral", function () {
+      it("can only remove collateral up to min init margin", async () => {
+        /**
+         * 10% init margin = 0.1 * 20000 * 10% = 200 lUSD
+         * 1% fee = 0.1 * 20000 * 1% = 20 lUSD
+         *
+         * Sending in 1000 lUSD. Can remove up to 780 lUSD
+         */
+
+        // Trying to remove too much
+        await expect(
+          stack.lbtcPerp.connect(bob).removeCollateral(
+            1, // positionId
+            expandTo18Decimals(780).add(1), // amount
+            bob.address // to
+          )
+        ).to.be.revertedWith("LnPerpetual: min init margin not reached");
+
+        // Removing the exact maximum
+        await stack.lbtcPerp.connect(bob).removeCollateral(
+          1, // positionId
+          expandTo18Decimals(780), // amount
+          bob.address // to
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(2_200));
+      });
+
+      it("correct position data after collateral removeal", async () => {
+        await stack.lbtcPerp.connect(bob).removeCollateral(
+          1, // positionId
+          expandTo18Decimals(480), // amount
+          bob.address // to
+        );
+
+        const position = await stack.lbtcPerp.positions(1);
+        expect(position.isLong).to.equal(false);
+        expect(position.debt).to.equal(expandTo18Decimals(0.1));
+        expect(position.locked).to.equal(0);
+        expect(position.collateral).to.equal(expandTo18Decimals(2_500));
+      });
+
+      it("collateral removed should be sent to `to`", async () => {
+        await expect(
+          stack.lbtcPerp.connect(bob).removeCollateral(
+            1, // positionId
+            expandTo18Decimals(480), // amount
+            alice.address // to
+          )
+        )
+          .to.emit(stack.lusdToken, "Transfer")
+          .withArgs(
+            stack.lbtcPerp.address, // from
+            alice.address, // to
+            expandTo18Decimals(480) // amount
+          );
+
+        expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+          expandTo18Decimals(480)
+        );
+      });
+    });
+
+    describe("Price goes up", function () {
+      beforeEach(async function () {
+        // BTC price goes up from $20,000 to $25,000
+        await setLbtcPrice(25000);
+      });
+
+      it("perp trader makes losses", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        /**
+         * Entry fees = 0.1 * 20,000 * 0.01 = 20 lUSD
+         * Exit fees = 0.1 * 25,000 * 0.01 = 25 lUSD
+         * PnL = 0.1 * (20,000 - 25,000) - 20 - 25 = -545 lUSD
+         */
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(9_455)
+        );
+
+        // Perp contract should have nothing left
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+        expect(
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+      });
+
+      it("lUSD minter debt should increase", async () => {
+        await assertAliceDebt(expandTo18Decimals(9_500));
+      });
+
+      it("exit fees should be sent to fee holder", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        ).to.equal(expandTo18Decimals(45));
+      });
+    });
+
+    describe("Price goes down", function () {
+      beforeEach(async function () {
+        // BTC price goes down from $20,000 to $15,000
+        await setLbtcPrice(15000);
+      });
+
+      it("perp trader makes profit", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        /**
+         * Entry fees = 0.1 * 20,000 * 0.01 = 20 lUSD
+         * Exit fees = 0.1 * 15,000 * 0.01 = 15 lUSD
+         * PnL = 0.1 * (20,000 - 15,000) - 20 - 15 = 465 lUSD
+         */
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(10_465)
+        );
+
+        // Perp contract should have nothing left
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+        expect(
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(0);
+      });
+
+      it("lUSD minter debt should decrease", async () => {
+        await assertAliceDebt(expandTo18Decimals(10_500));
+      });
+
+      it("exit fees should be sent to fee holder", async () => {
+        // Bob closes position
+        await closePosition(
+          2, // actionId
+          bob, // user
+          1 // positionId
+        );
+
+        expect(
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        ).to.equal(expandTo18Decimals(35));
+      });
+    });
   });
 });
