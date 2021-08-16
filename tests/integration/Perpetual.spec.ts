@@ -269,6 +269,38 @@ describe("Integration | Perpetual", function () {
     ).to.equal(expandTo18Decimals(20));
   });
 
+  it("lUSD minters should not be affected when skew is zero", async () => {
+    await assertAliceDebt(expandTo18Decimals(10_000));
+
+    // Bob longs and shorts 0.1 BTC
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      true, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(1_000) // collateral
+    );
+    await stack.lnPerpExchange.connect(bob).openPosition(
+      formatBytes32String("lBTC"), // underlying
+      false, // isLong
+      expandTo18Decimals(0.1), // size
+      expandTo18Decimals(1_000) // collateral
+    );
+    await passSettlementDelay();
+    await stack.lnPerpExchange.connect(alice).settleAction(1);
+    await stack.lnPerpExchange.connect(alice).settleAction(2);
+
+    // Debt not changed
+    await assertAliceDebt(expandTo18Decimals(10_000));
+
+    // Debt not changed when price goes up
+    await setLbtcPrice(25000);
+    await assertAliceDebt(expandTo18Decimals(10_000));
+
+    // Debt not changed when price goes down
+    await setLbtcPrice(15000);
+    await assertAliceDebt(expandTo18Decimals(10_000));
+  });
+
   describe("Long positions", function () {
     beforeEach(async function () {
       // Bob longs 0.1 BTC with 1,000 lUSD
@@ -311,6 +343,41 @@ describe("Integration | Perpetual", function () {
       expect(
         await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
       ).to.equal(expandTo18Decimals(20));
+    });
+
+    describe("Add collateral", function () {
+      it("lUSD should be transferred to perp contract", async () => {
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(9_000)
+        );
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(980));
+
+        await stack.lusdToken.connect(bob).approve(
+          stack.lbtcPerp.address, // spender
+          expandTo18Decimals(1_000) // amount
+        );
+        await expect(
+          stack.lbtcPerp.connect(bob).addCollateral(
+            1, // positionId
+            expandTo18Decimals(1_000) // amount
+          )
+        )
+          .to.emit(stack.lusdToken, "Transfer")
+          .withArgs(
+            bob.address, // from
+            stack.lbtcPerp.address, // to
+            expandTo18Decimals(1_000) // amount
+          );
+
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(8_000)
+        );
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(1_980));
+      });
     });
 
     describe("Remove collateral", function () {
@@ -521,6 +588,41 @@ describe("Integration | Perpetual", function () {
       expect(
         await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
       ).to.equal(expandTo18Decimals(20));
+    });
+
+    describe("Add collateral", function () {
+      it("lUSD should be transferred to perp contract", async () => {
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(9_000)
+        );
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(2_980));
+
+        await stack.lusdToken.connect(bob).approve(
+          stack.lbtcPerp.address, // spender
+          expandTo18Decimals(1_000) // amount
+        );
+        await expect(
+          stack.lbtcPerp.connect(bob).addCollateral(
+            1, // positionId
+            expandTo18Decimals(1_000) // amount
+          )
+        )
+          .to.emit(stack.lusdToken, "Transfer")
+          .withArgs(
+            bob.address, // from
+            stack.lbtcPerp.address, // to
+            expandTo18Decimals(1_000) // amount
+          );
+
+        expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
+          expandTo18Decimals(8_000)
+        );
+        expect(
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+        ).to.equal(expandTo18Decimals(3_980));
+      });
     });
 
     describe("Remove collateral", function () {
