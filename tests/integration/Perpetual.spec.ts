@@ -61,10 +61,14 @@ describe("Integration | Perpetual", function () {
     await stack.lnPerpExchange.connect(alice).settleAction(actionId);
   };
 
-  const setLbtcPrice = async (price: number): Promise<void> => {
+  const setLbtcPrice = async (price: number | BigNumber): Promise<void> => {
+    const actualPrice = (price as any)._isBigNumber
+      ? (price as BigNumber)
+      : expandTo18Decimals(price as number);
+
     await stack.lnPrices.connect(admin).setPrice(
       formatBytes32String("lBTC"), // currencyKey
-      expandTo18Decimals(price) // price
+      actualPrice // price
     );
   };
 
@@ -544,6 +548,36 @@ describe("Integration | Perpetual", function () {
         ).to.equal(expandTo18Decimals(35));
       });
     });
+
+    describe("Liquidation", function () {
+      it("can only liquidate when below maintenance margin ratio", async () => {
+        /**
+         * liqPrice = ((maintenanceMargin + 1) * debt - collateral) / locked
+         *          = ((0.05 + 1) * 2,000 - 980) / 0.1
+         *          = 11,200
+         */
+        await setLbtcPrice(11200);
+
+        // Cannot liquidate yet since ratio is not *below* maintenance margin
+        expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(
+          expandTo18Decimals(0.05)
+        );
+        await expect(
+          stack.lbtcPerp.connect(alice).liquidatePosition(
+            1, // positionId
+            expandTo18Decimals(0.005), // amount
+            alice.address // rewardTo
+          )
+        ).to.be.revertedWith("LnPerpetual: not lower than maintenance margin");
+
+        await setLbtcPrice(11199);
+        await stack.lbtcPerp.connect(alice).liquidatePosition(
+          1, // positionId
+          expandTo18Decimals(0.005), // amount
+          alice.address // rewardTo
+        );
+      });
+    });
   });
 
   describe("Short positions", function () {
@@ -787,6 +821,37 @@ describe("Integration | Perpetual", function () {
         expect(
           await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
         ).to.equal(expandTo18Decimals(35));
+      });
+    });
+
+    describe("Liquidation", function () {
+      it("can only liquidate when below maintenance margin ratio", async () => {
+        /**
+         * liqPrice = collateral / ((maintenanceMargin + 1) * debt)
+         *          = 2,980 / ((0.05 + 1) * 0.1)
+         *          = 28,380.952380952380952380
+         */
+        const liquidationPrice = BigNumber.from("28380952380952380952380");
+        await setLbtcPrice(liquidationPrice);
+
+        // // Cannot liquidate yet since ratio is not *below* maintenance margin
+        expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(
+          expandTo18Decimals(0.05)
+        );
+        await expect(
+          stack.lbtcPerp.connect(alice).liquidatePosition(
+            1, // positionId
+            expandTo18Decimals(0.005), // amount
+            alice.address // rewardTo
+          )
+        ).to.be.revertedWith("LnPerpetual: not lower than maintenance margin");
+
+        await setLbtcPrice(liquidationPrice.add(expandTo18Decimals(1)));
+        await stack.lbtcPerp.connect(alice).liquidatePosition(
+          1, // positionId
+          expandTo18Decimals(0.005), // amount
+          alice.address // rewardTo
+        );
       });
     });
   });
