@@ -96,6 +96,10 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         _;
     }
 
+    function getCollateralizationRatio(uint256 positionId) external view returns (uint256) {
+        return _calculateCollateralizationRatio(positionId);
+    }
+
     function __LnPerpetual_init(
         ILnPerpExchange _exchange,
         ILnPerpPositionToken _positionToken,
