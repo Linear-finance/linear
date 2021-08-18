@@ -4748,6 +4748,777 @@
           }
         }
       }
+    },
+    "53b49338add5573a55f0ee6d4f8c278af3a20c4f6ff698c659b1a8e2144f3dd1": {
+      "address": "0x1b476722e5157A8C42BB00e205802659D65597A4",
+      "txHash": "0x163e4ffc3e5a8da40e85061a2c3d87324cd69965b4167b3df93fc4cb3f03151b",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnAddressStorage",
+            "label": "mAddrs",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "src": "contracts/LnAddressStorage.sol:8"
+          },
+          {
+            "contract": "LnAddressStorage",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "contracts/LnAddressStorage.sol:43"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "mAssetList",
+            "type": "t_array(t_contract(ILnAsset)9670)dyn_storage",
+            "src": "contracts/LnAssetSystem.sol:15"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "mAddress2Names",
+            "type": "t_mapping(t_address,t_bytes32)",
+            "src": "contracts/LnAssetSystem.sol:16"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "perpAddresses",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "src": "contracts/LnAssetSystem.sol:18"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "perpSymbols",
+            "type": "t_mapping(t_address,t_bytes32)",
+            "src": "contracts/LnAssetSystem.sol:19"
+          },
+          {
+            "contract": "LnAssetSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/LnAssetSystem.sol:120"
+          }
+        ],
+        "types": {
+          "t_array(t_contract(ILnAsset)9670)dyn_storage": {
+            "label": "contract ILnAsset[]"
+          },
+          "t_contract(ILnAsset)9670": {
+            "label": "contract ILnAsset"
+          },
+          "t_mapping(t_address,t_bytes32)": {
+            "label": "mapping(address => bytes32)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "627ad0f3d5450b8e840528bf7dce11e9097ff020e4af90c3c7268d51f5dca663": {
+      "address": "0x2F9892e6655518D30541311a81A0510DB6cb4aEf",
+      "txHash": "0x612ddf884061e65118ae1ee364da12ef2b4e570be92452d166b72e144f4caaf7",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "_supportedInterfaces",
+            "type": "t_mapping(t_bytes4,t_bool)",
+            "src": "@openzeppelin/contracts-upgradeable/introspection/ERC165Upgradeable.sol:23"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/introspection/ERC165Upgradeable.sol:59"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_holderTokens",
+            "type": "t_mapping(t_address,t_struct(UintSet)4027_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:34"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_tokenOwners",
+            "type": "t_struct(UintToAddressMap)3467_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_tokenApprovals",
+            "type": "t_mapping(t_uint256,t_address)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:40"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_operatorApprovals",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:46"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:49"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_tokenURIs",
+            "type": "t_mapping(t_uint256,t_string_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:52"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_baseURI",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:55"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)41_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:480"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "LnPerpPositionToken",
+            "label": "lastPositionId",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpPositionToken.sol:11"
+          },
+          {
+            "contract": "LnPerpPositionToken",
+            "label": "positionPerpAddresses",
+            "type": "t_mapping(t_uint256,t_address)",
+            "src": "contracts/LnPerpPositionToken.sol:12"
+          },
+          {
+            "contract": "LnPerpPositionToken",
+            "label": "minter",
+            "type": "t_address",
+            "src": "contracts/LnPerpPositionToken.sol:14"
+          },
+          {
+            "contract": "LnPerpPositionToken",
+            "label": "burner",
+            "type": "t_address",
+            "src": "contracts/LnPerpPositionToken.sol:15"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_address,t_struct(UintSet)4027_storage)": {
+            "label": "mapping(address => struct EnumerableSetUpgradeable.UintSet)"
+          },
+          "t_struct(UintSet)4027_storage": {
+            "label": "struct EnumerableSetUpgradeable.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)3653_storage"
+              }
+            ]
+          },
+          "t_struct(Set)3653_storage": {
+            "label": "struct EnumerableSetUpgradeable.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)"
+              }
+            ]
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_struct(UintToAddressMap)3467_storage": {
+            "label": "struct EnumerableMapUpgradeable.UintToAddressMap",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Map)3203_storage"
+              }
+            ]
+          },
+          "t_struct(Map)3203_storage": {
+            "label": "struct EnumerableMapUpgradeable.Map",
+            "members": [
+              {
+                "label": "_entries",
+                "type": "t_array(t_struct(MapEntry)3195_storage)dyn_storage"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)"
+              }
+            ]
+          },
+          "t_array(t_struct(MapEntry)3195_storage)dyn_storage": {
+            "label": "struct EnumerableMapUpgradeable.MapEntry[]"
+          },
+          "t_struct(MapEntry)3195_storage": {
+            "label": "struct EnumerableMapUpgradeable.MapEntry",
+            "members": [
+              {
+                "label": "_key",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "_value",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_mapping(t_uint256,t_string_storage)": {
+            "label": "mapping(uint256 => string)"
+          },
+          "t_array(t_uint256)41_storage": {
+            "label": "uint256[41]"
+          },
+          "t_mapping(t_bytes4,t_bool)": {
+            "label": "mapping(bytes4 => bool)"
+          },
+          "t_bytes4": {
+            "label": "bytes4"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "cf03c5f54d90d5e202982ca0b2c90bd5b59796861e1dacae9b468769b834db66": {
+      "address": "0x636Da10106F561ac0E989938F7A9A010B55ECdA0",
+      "txHash": "0x38c6ff8083d3b09096e987cb7253c1b2660b0cfc1eb7351f4b6c46fee0b0c8ab",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "lnAssetSystem",
+            "type": "t_contract(ILnAssetSystem)14391",
+            "src": "contracts/LnPerpExchange.sol:73"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "lnConfig",
+            "type": "t_contract(ILnConfig)14499",
+            "src": "contracts/LnPerpExchange.sol:74"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "positionToken",
+            "type": "t_contract(ILnPerpPositionToken)14601",
+            "src": "contracts/LnPerpExchange.sol:75"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "lusdToken",
+            "type": "t_contract(ILnAsset)14362",
+            "src": "contracts/LnPerpExchange.sol:76"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "insuranceFundHolder",
+            "type": "t_address",
+            "src": "contracts/LnPerpExchange.sol:77"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "poolFeeHolder",
+            "type": "t_address",
+            "src": "contracts/LnPerpExchange.sol:78"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "foundationFeeHolder",
+            "type": "t_address",
+            "src": "contracts/LnPerpExchange.sol:79"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "lastPendingActionId",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpExchange.sol:81"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "pendingActionMetas",
+            "type": "t_mapping(t_uint256,t_struct(PendingActionMeta)7635_storage)",
+            "src": "contracts/LnPerpExchange.sol:82"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "openPositionActions",
+            "type": "t_mapping(t_uint256,t_struct(OpenPositionActionData)7644_storage)",
+            "src": "contracts/LnPerpExchange.sol:83"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "increasePositionActions",
+            "type": "t_mapping(t_uint256,t_struct(IncreasePositionActionData)7653_storage)",
+            "src": "contracts/LnPerpExchange.sol:84"
+          },
+          {
+            "contract": "LnPerpExchange",
+            "label": "closePositionActions",
+            "type": "t_mapping(t_uint256,t_struct(ClosePositionActionData)7662_storage)",
+            "src": "contracts/LnPerpExchange.sol:85"
+          }
+        ],
+        "types": {
+          "t_contract(ILnAssetSystem)14391": {
+            "label": "contract ILnAssetSystem"
+          },
+          "t_contract(ILnConfig)14499": {
+            "label": "contract ILnConfig"
+          },
+          "t_contract(ILnPerpPositionToken)14601": {
+            "label": "contract ILnPerpPositionToken"
+          },
+          "t_contract(ILnAsset)14362": {
+            "label": "contract ILnAsset"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_struct(PendingActionMeta)7635_storage)": {
+            "label": "mapping(uint256 => struct LnPerpExchange.PendingActionMeta)"
+          },
+          "t_struct(PendingActionMeta)7635_storage": {
+            "label": "struct LnPerpExchange.PendingActionMeta",
+            "members": [
+              {
+                "label": "timestamp",
+                "type": "t_uint64"
+              },
+              {
+                "label": "user",
+                "type": "t_address"
+              },
+              {
+                "label": "actionType",
+                "type": "t_uint8"
+              }
+            ]
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_mapping(t_uint256,t_struct(OpenPositionActionData)7644_storage)": {
+            "label": "mapping(uint256 => struct LnPerpExchange.OpenPositionActionData)"
+          },
+          "t_struct(OpenPositionActionData)7644_storage": {
+            "label": "struct LnPerpExchange.OpenPositionActionData",
+            "members": [
+              {
+                "label": "underlying",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "isLong",
+                "type": "t_bool"
+              },
+              {
+                "label": "size",
+                "type": "t_uint256"
+              },
+              {
+                "label": "collateral",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_uint256,t_struct(IncreasePositionActionData)7653_storage)": {
+            "label": "mapping(uint256 => struct LnPerpExchange.IncreasePositionActionData)"
+          },
+          "t_struct(IncreasePositionActionData)7653_storage": {
+            "label": "struct LnPerpExchange.IncreasePositionActionData",
+            "members": [
+              {
+                "label": "underlying",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "positionId",
+                "type": "t_uint256"
+              },
+              {
+                "label": "size",
+                "type": "t_uint256"
+              },
+              {
+                "label": "collateral",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_mapping(t_uint256,t_struct(ClosePositionActionData)7662_storage)": {
+            "label": "mapping(uint256 => struct LnPerpExchange.ClosePositionActionData)"
+          },
+          "t_struct(ClosePositionActionData)7662_storage": {
+            "label": "struct LnPerpExchange.ClosePositionActionData",
+            "members": [
+              {
+                "label": "underlying",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "positionId",
+                "type": "t_uint256"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "to",
+                "type": "t_address"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "9493415b0a31aae79c08533cbf10d8483578746513d8cfc00ae7fd5dbdde71ed": {
+      "address": "0x2a7fd66CE8dA230a0E9a048d5F47F75C8Fe57eea",
+      "txHash": "0x375cb572f28220f0647be30d51130fd0a43a3e1082ea2c1243d4a92f15761860",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "exchange",
+            "type": "t_contract(ILnPerpExchange)14572",
+            "src": "contracts/LnPerpetual.sol:75"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "positionToken",
+            "type": "t_contract(ILnPerpPositionToken)14601",
+            "src": "contracts/LnPerpetual.sol:76"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "lusdToken",
+            "type": "t_contract(ILnAsset)14362",
+            "src": "contracts/LnPerpetual.sol:77"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "underlyingToken",
+            "type": "t_contract(ILnAsset)14362",
+            "src": "contracts/LnPerpetual.sol:78"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "lnPrices",
+            "type": "t_contract(ILnPrices)14697",
+            "src": "contracts/LnPerpetual.sol:79"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "minInitMargin",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:80"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "maintenanceMargin",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:81"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "feeRate",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:82"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "liquidatorRewardRatio",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:83"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "insuranceFundContributionRatio",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:84"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "underlyingTokenSymbol",
+            "type": "t_bytes32",
+            "src": "contracts/LnPerpetual.sol:85"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "totalUsdDebt",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:87"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "totalUnderlyingDebt",
+            "type": "t_uint256",
+            "src": "contracts/LnPerpetual.sol:88"
+          },
+          {
+            "contract": "LnPerpetual",
+            "label": "positions",
+            "type": "t_mapping(t_uint256,t_struct(Position)9024_storage)",
+            "src": "contracts/LnPerpetual.sol:89"
+          }
+        ],
+        "types": {
+          "t_contract(ILnPerpExchange)14572": {
+            "label": "contract ILnPerpExchange"
+          },
+          "t_contract(ILnPerpPositionToken)14601": {
+            "label": "contract ILnPerpPositionToken"
+          },
+          "t_contract(ILnAsset)14362": {
+            "label": "contract ILnAsset"
+          },
+          "t_contract(ILnPrices)14697": {
+            "label": "contract ILnPrices"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_mapping(t_uint256,t_struct(Position)9024_storage)": {
+            "label": "mapping(uint256 => struct LnPerpetual.Position)"
+          },
+          "t_struct(Position)9024_storage": {
+            "label": "struct LnPerpetual.Position",
+            "members": [
+              {
+                "label": "isLong",
+                "type": "t_bool"
+              },
+              {
+                "label": "debt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "locked",
+                "type": "t_uint256"
+              },
+              {
+                "label": "collateral",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   },
   "proxies": [
@@ -4775,6 +5546,26 @@
       "address": "0xD28fB012A9182b70Df69f780b78Dc553015C9919",
       "kind": "transparent",
       "txHash": "0xf1e752fde6a1faca333bde9142dd5f8fbdb8a72e7ae85c793b889cf1049cea23"
+    },
+    {
+      "address": "0x621F263b90F13B86EE0579BA5CF82C66fCb9878d",
+      "kind": "transparent",
+      "txHash": "0x4880ad229a9443b6d12dd133fe2bca0bb9d3b024b17105cf79dca3c4cd7a8d21"
+    },
+    {
+      "address": "0x22B822b0d0F1f282d28018aC3e319E3CB0c3F0ff",
+      "kind": "transparent",
+      "txHash": "0xf9e3931d86db3dba3fe8615a1cc1306b651172dfeaa857ee86be356cba841215"
+    },
+    {
+      "address": "0xD3BB7cBF671054B3C02c89E7BddE2a8C65330C07",
+      "kind": "transparent",
+      "txHash": "0xc755e0bf8d24d6f1813e73a219c2278e59b55995b1e69fc46e02b2544c0ac755"
+    },
+    {
+      "address": "0x7821ECC503CF1c8d3838B14d7aA56bB6117A42CC",
+      "kind": "transparent",
+      "txHash": "0x54a89818069e20d7f101e1f2874d89ff6b2e486d346270194fc739198bd8f9d2"
     }
   ],
   "admin": {
