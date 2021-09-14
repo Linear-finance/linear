@@ -13,3 +13,5 @@ artifacts/
 
 # OpenZeppelin dev files
 .openzeppelin/unknown-*.json
+
+typechain/

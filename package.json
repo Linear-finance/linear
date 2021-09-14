@@ -13,13 +13,16 @@
     "type": "git",
     "url": "https://github.com/Linear-finance/linear"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@typechain/hardhat": "^2.3.0"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^3.1.0",
     "@openzeppelin/contracts-upgradeable": "^3.3.0",
     "@openzeppelin/hardhat-upgrades": "^1.7.0",
+    "@typechain/ethers-v5": "^7.1.0",
     "@types/big.js": "^6.0.2",
     "@types/chai": "^4.2.14",
     "@types/luxon": "^1.25.0",
@@ -34,6 +37,7 @@
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
     "ts-node": "^9.1.0",
+    "typechain": "^5.1.2",
     "typescript": "^4.1.2"
   }
 }

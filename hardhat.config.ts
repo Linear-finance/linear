@@ -1,5 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-upgrades";
+import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
 
 const config: HardhatUserConfig = {
