@@ -139,26 +139,15 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
     }
 
     function unlockReward(address user, uint256 rewardEntryId) external {
-        require(rewarderAddress != address(0), "LnRewardLocker: Rewarder address not set");
-        require(collateralSystemAddr != address(0), "LnRewardLocker: Collateral system address not set");
+        _unlockReward(user, rewardEntryId);
+    }
 
-        RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
-        require(rewardEntry.amount > 0, "LnRewardLocker: Reward entry amount is 0, no reward to unlock");
-        require(block.timestamp >= rewardEntry.unlockTime, "LnRewardLocker: Unlock time not reached");
+    function unlockRewards(address[] calldata users, uint256[] calldata rewardEntryIds) external {
+        require(users.length == rewardEntryIds.length, "LnRewardLocker: array length mismatch");
 
-        ILnCollateralSystem(collateralSystemAddr).collateralFromUnlockReward(
-            user,
-            rewarderAddress,
-            "LINA",
-            rewardEntry.amount
-        );
-
-        lockedAmountByAddresses[user] = lockedAmountByAddresses[user].sub(rewardEntry.amount);
-        totalLockedAmount = totalLockedAmount.sub(rewardEntry.amount);
-        emit RewardEntryUnlocked(rewardEntryId, user, rewardEntry.amount);
-
-        delete rewardEntries[rewardEntryId][user];
-        emit RewardEntryRemoved(rewardEntryId);
+        for (uint256 ind = 0; ind < users.length; ind++) {
+            _unlockReward(users[ind], rewardEntryIds[ind]);
+        }
     }
 
     function _addReward(
@@ -180,6 +169,29 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
         totalLockedAmount = totalLockedAmount.add(amount);
 
         emit RewardEntryAdded(lastRewardEntryId, user, amount, unlockTime);
+    }
+
+    function _unlockReward(address user, uint256 rewardEntryId) private {
+        require(rewarderAddress != address(0), "LnRewardLocker: Rewarder address not set");
+        require(collateralSystemAddr != address(0), "LnRewardLocker: Collateral system address not set");
+
+        RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
+        require(rewardEntry.amount > 0, "LnRewardLocker: Reward entry amount is 0, no reward to unlock");
+        require(block.timestamp >= rewardEntry.unlockTime, "LnRewardLocker: Unlock time not reached");
+
+        ILnCollateralSystem(collateralSystemAddr).collateralFromUnlockReward(
+            user,
+            rewarderAddress,
+            "LINA",
+            rewardEntry.amount
+        );
+
+        lockedAmountByAddresses[user] = lockedAmountByAddresses[user].sub(rewardEntry.amount);
+        totalLockedAmount = totalLockedAmount.sub(rewardEntry.amount);
+        emit RewardEntryUnlocked(rewardEntryId, user, rewardEntry.amount);
+
+        delete rewardEntries[rewardEntryId][user];
+        emit RewardEntryRemoved(rewardEntryId);
     }
 
     function _moveRewardProRata(
