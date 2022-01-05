@@ -4662,7 +4662,7 @@
           {
             "contract": "LnRewardLocker",
             "label": "rewardEntries",
-            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)5802_storage))",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)10961_storage))",
             "src": "contracts/LnRewardLocker.sol:46"
           },
           {
@@ -4686,7 +4686,7 @@
           {
             "contract": "LnRewardLocker",
             "label": "accessCtrl",
-            "type": "t_contract(ILnAccessControl)9169",
+            "type": "t_contract(ILnAccessControl)15074",
             "src": "contracts/LnRewardLocker.sol:51"
           },
           {
@@ -4706,16 +4706,16 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)5802_storage))": {
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)10961_storage))": {
             "label": "mapping(uint256 => mapping(address => struct LnRewardLocker.RewardEntry))"
           },
-          "t_mapping(t_address,t_struct(RewardEntry)5802_storage)": {
+          "t_mapping(t_address,t_struct(RewardEntry)10961_storage)": {
             "label": "mapping(address => struct LnRewardLocker.RewardEntry)"
           },
           "t_address": {
             "label": "address"
           },
-          "t_struct(RewardEntry)5802_storage": {
+          "t_struct(RewardEntry)10961_storage": {
             "label": "struct LnRewardLocker.RewardEntry",
             "members": [
               {
@@ -4737,7 +4737,7 @@
           "t_mapping(t_address,t_uint256)": {
             "label": "mapping(address => uint256)"
           },
-          "t_contract(ILnAccessControl)9169": {
+          "t_contract(ILnAccessControl)15074": {
             "label": "contract ILnAccessControl"
           },
           "t_array(t_uint256)48_storage": {
@@ -5516,6 +5516,137 @@
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "fca8efa6272b4d3e3b87cfd80a1243119db1c25f48d782710e0911448239ecb2": {
+      "address": "0x381DdB5Ac8e0d326442582306e053692Bcef5d23",
+      "txHash": "0x1c53eed2be285842377d949882a39fa147cdf8e1c2473b2e127fa7e7f941d3d6",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "lastRewardEntryId",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardLocker.sol:45"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "rewardEntries",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)10961_storage))",
+            "src": "contracts/LnRewardLocker.sol:46"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "lockedAmountByAddresses",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardLocker.sol:47"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "totalLockedAmount",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardLocker.sol:48"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "linaTokenAddr",
+            "type": "t_address",
+            "src": "contracts/LnRewardLocker.sol:50"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "accessCtrl",
+            "type": "t_contract(ILnAccessControl)15128",
+            "src": "contracts/LnRewardLocker.sol:51"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "collateralSystemAddr",
+            "type": "t_address",
+            "src": "contracts/LnRewardLocker.sol:52"
+          },
+          {
+            "contract": "LnRewardLocker",
+            "label": "rewarderAddress",
+            "type": "t_address",
+            "src": "contracts/LnRewardLocker.sol:53"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(RewardEntry)10961_storage))": {
+            "label": "mapping(uint256 => mapping(address => struct LnRewardLocker.RewardEntry))"
+          },
+          "t_mapping(t_address,t_struct(RewardEntry)10961_storage)": {
+            "label": "mapping(address => struct LnRewardLocker.RewardEntry)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_struct(RewardEntry)10961_storage": {
+            "label": "struct LnRewardLocker.RewardEntry",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint216"
+              },
+              {
+                "label": "unlockTime",
+                "type": "t_uint40"
+              }
+            ]
+          },
+          "t_uint216": {
+            "label": "uint216"
+          },
+          "t_uint40": {
+            "label": "uint40"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(ILnAccessControl)15128": {
+            "label": "contract ILnAccessControl"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }
