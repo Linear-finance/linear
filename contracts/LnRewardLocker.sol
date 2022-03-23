@@ -3,6 +3,7 @@ pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./interfaces/ILnAccessControl.sol";
 import "./interfaces/ILnCollateralSystem.sol";
 import "./interfaces/ILnRewardLocker.sol";
@@ -178,6 +179,10 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
         RewardEntry memory rewardEntry = rewardEntries[rewardEntryId][user];
         require(rewardEntry.amount > 0, "LnRewardLocker: Reward entry amount is 0, no reward to unlock");
         require(block.timestamp >= rewardEntry.unlockTime, "LnRewardLocker: Unlock time not reached");
+
+        if (rewarderAddress == address(this)) {
+            IERC20Upgradeable(linaTokenAddr).approve(collateralSystemAddr, rewardEntry.amount);
+        }
 
         ILnCollateralSystem(collateralSystemAddr).collateralFromUnlockReward(
             user,
