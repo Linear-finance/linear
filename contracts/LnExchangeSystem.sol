@@ -42,6 +42,7 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         uint256 feeForFoundation
     );
     event PendingExchangeReverted(uint256 id);
+    event AssetExitPositionOnlyChanged(bytes32 asset, bool newValue);
 
     struct PendingExchangeEntry {
         uint64 id;
@@ -63,6 +64,8 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
 
     uint256 public lastPendingExchangeEntryId;
     mapping(uint256 => PendingExchangeEntry) public pendingExchangeEntries;
+
+    mapping(bytes32 => bool) assetExitPositionOnly;
 
     bytes32 private constant ASSETS_KEY = "LnAssetSystem";
     bytes32 private constant PRICES_KEY = "LnPrices";
@@ -109,6 +112,14 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         emit ExitPositionOnlyChanged(oldValue, newValue);
     }
 
+    function setAssetExitPositionOnly(bytes32 asset, bool newValue) public onlyAdmin {
+        require(assetExitPositionOnly[asset] != newValue, "LnExchangeSystem: value not changed");
+
+        assetExitPositionOnly[asset] = newValue;
+
+        emit AssetExitPositionOnlyChanged(asset, newValue);
+    }
+
     function exchange(
         bytes32 sourceKey,
         uint sourceAmount,
@@ -133,9 +144,13 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         address destAddr,
         bytes32 destKey
     ) private {
+        // The global flag forces everyone to trade into lUSD
         if (exitPositionOnly) {
             require(destKey == LUSD_KEY, "LnExchangeSystem: can only exit position");
         }
+
+        // The asset-specific flag only forbids entering (can sell into other assets)
+        require(!assetExitPositionOnly[destKey], "LnExchangeSystem: can only exit position for this asset");
 
         // We don't need the return value here. It's just for preventing entering invalid trades
         mAssets.getAddressWithRequire(destKey, "LnExchangeSystem: dest asset not found");
