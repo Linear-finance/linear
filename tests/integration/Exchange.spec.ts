@@ -296,6 +296,48 @@ describe("Integration | Exchange", function () {
     ).to.be.revertedWith("LnExchangeSystem: can only exit position");
   });
 
+  it("cannot buy when asset position entrance is disabled", async () => {
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+
+    await stack.lnExchangeSystem
+      .connect(admin)
+      .setAssetExitPositionOnly(ethers.utils.formatBytes32String("lBTC"), true);
+
+    // Can no longer buy
+    await expect(
+      stack.lnExchangeSystem.connect(alice).exchange(
+        ethers.utils.formatBytes32String("lUSD"), // sourceKey
+        expandTo18Decimals(500), // sourceAmount
+        alice.address, // destAddr
+        ethers.utils.formatBytes32String("lBTC") // destKey
+      )
+    ).to.be.revertedWith(
+      "LnExchangeSystem: can only exit position for this asset"
+    );
+
+    // Not affected by settings for other assets (unlike global flag)
+    await stack.lnExchangeSystem
+      .connect(admin)
+      .setAssetExitPositionOnly(
+        ethers.utils.formatBytes32String("lBTC"),
+        false
+      );
+    await stack.lnExchangeSystem
+      .connect(admin)
+      .setAssetExitPositionOnly(ethers.utils.formatBytes32String("lETH"), true);
+    await stack.lnExchangeSystem.connect(alice).exchange(
+      ethers.utils.formatBytes32String("lUSD"), // sourceKey
+      expandTo18Decimals(500), // sourceAmount
+      alice.address, // destAddr
+      ethers.utils.formatBytes32String("lBTC") // destKey
+    );
+  });
+
   it("events should be emitted for exchange and settlement", async () => {
     await expect(
       stack.lnExchangeSystem.connect(alice).exchange(
