@@ -25,6 +25,7 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
     event StalePeriodOverrideUpdated(bytes32 currencyKey, uint256 oldStalePeriod, uint256 newStalePeriod);
     event ChainlinkOracleAdded(bytes32 currencyKey, address oracle);
     event BandOracleAdded(bytes32 currencyKey, string bandCurrencyKey, address oracle);
+    event TerminalPriceOracleAdded(bytes32 currencyKey, uint160 terminalPrice);
     event OracleRemoved(bytes32 currencyKey, address oracle);
 
     struct OracleSettings {
@@ -41,6 +42,8 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
 
     uint8 public constant ORACLE_TYPE_CHAINLINK = 1;
     uint8 public constant ORACLE_TYPE_BAND = 2;
+    uint8 public constant ORACLE_TYPE_UNISWAP_TWAP = 3; // Unused type reserved for Uniswap TWAP oracle
+    uint8 public constant ORACLE_TYPE_TERMINAL_PRICE = 4;
 
     uint8 private constant OUTPUT_PRICE_DECIMALS = 18;
 
@@ -144,6 +147,26 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
         }
     }
 
+    function addTerminalPriceOracle(
+        bytes32 currencyKey,
+        uint160 terminalPrice,
+        bool removeExisting
+    ) external onlyAdmin {
+        _addTerminalPriceOracle(currencyKey, terminalPrice, removeExisting);
+    }
+
+    function addTerminalPriceOracles(
+        bytes32[] calldata currencyKeys,
+        uint160[] calldata terminalPrices,
+        bool removeExisting
+    ) external onlyAdmin {
+        require(currencyKeys.length == terminalPrices.length, "LnOracleRouter: array length mismatch");
+
+        for (uint256 ind = 0; ind < currencyKeys.length; ind++) {
+            _addTerminalPriceOracle(currencyKeys[ind], terminalPrices[ind], removeExisting);
+        }
+    }
+
     function removeOracle(bytes32 currencyKey) external onlyAdmin {
         _removeOracle(currencyKey);
     }
@@ -185,6 +208,28 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
         linearCurrencyKeysToBandCurrencyKeys[currencyKey] = bandCurrencyKey;
 
         emit BandOracleAdded(currencyKey, bandCurrencyKey, oracleAddress);
+    }
+
+    function _addTerminalPriceOracle(
+        bytes32 currencyKey,
+        uint160 terminalPrice,
+        bool removeExisting
+    ) private {
+        require(currencyKey != bytes32(0), "LnOracleRouter: empty currency key");
+        require(terminalPrice != 0, "LnOracleRouter: empty oracle address");
+
+        if (oracleSettings[currencyKey].oracleAddress != address(0)) {
+            require(removeExisting, "LnOracleRouter: oracle already exists");
+            _removeOracle(currencyKey);
+        }
+
+        // Exploits the `oracleAddress` field to store a 160-bit integer
+        oracleSettings[currencyKey] = OracleSettings({
+            oracleType: ORACLE_TYPE_TERMINAL_PRICE,
+            oracleAddress: address(terminalPrice)
+        });
+
+        emit TerminalPriceOracleAdded(currencyKey, terminalPrice);
     }
 
     function _removeOracle(bytes32 currencyKey) private {
@@ -230,6 +275,11 @@ contract LnOracleRouter is LnAdminUpgradeable, ILnPrices {
 
             price = priceRes.rate;
             updateTime = priceRes.lastUpdatedBase;
+        } else if (settings.oracleType == ORACLE_TYPE_UNISWAP_TWAP) {
+            require(false, "LnOracleRouter: NOT_IMPLEMENTED");
+        } else if (settings.oracleType == ORACLE_TYPE_TERMINAL_PRICE) {
+            price = uint256(uint160(settings.oracleAddress));
+            updateTime = block.timestamp;
         } else {
             require(false, "LnOracleRouter: unknown oracle type");
         }

@@ -1,16 +1,28 @@
 import { ethers, upgrades, waffle } from "hardhat";
 import { expect, use } from "chai";
-import { BigNumber, Contract } from "ethers";
-import { formatBytes32String } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+
 import { expandTo18Decimals, expandToNDecimals } from "./utilities";
+import { getBlockDateTime } from "./utilities/timeTravel";
+
+import { LnOracleRouter, MockChainlinkAggregator } from "../typechain";
+
+const {
+  arrayify,
+  formatBytes32String,
+  getAddress,
+  hexlify,
+  zeroPad,
+} = ethers.utils;
 
 use(waffle.solidity);
 
 describe("LnOracleRouter", function () {
   let deployer: SignerWithAddress, admin: SignerWithAddress;
 
-  let oracleRouter: Contract, chainlinkAggregator: Contract;
+  let oracleRouter: LnOracleRouter,
+    chainlinkAggregator: MockChainlinkAggregator;
 
   const assertPriceAndUpdateTime = async (
     currency: string,
@@ -41,7 +53,7 @@ describe("LnOracleRouter", function () {
       "MockChainlinkAggregator"
     );
 
-    oracleRouter = await upgrades.deployProxy(
+    oracleRouter = (await upgrades.deployProxy(
       LnOracleRouter,
       [
         admin.address, // _admin
@@ -50,18 +62,18 @@ describe("LnOracleRouter", function () {
         initializer: "__LnOracleRouter_init",
         unsafeAllowLinkedLibraries: true,
       }
-    );
+    )) as LnOracleRouter;
     chainlinkAggregator = await MockChainlinkAggregator.deploy();
+  });
 
+  it("should get result in 18 decimals regardless of Chainlink aggregator precision", async () => {
     // Set token "LINK" to use Chainlink
     await oracleRouter.connect(admin).addChainlinkOracle(
       formatBytes32String("LINK"), // currencyKey
       chainlinkAggregator.address, // oracleAddress
       false // removeExisting
     );
-  });
 
-  it("should get result in 18 decimals regardless of Chainlink aggregator precision", async () => {
     // 8 decimals
     await chainlinkAggregator.setDecimals(8);
     await chainlinkAggregator.setLatestRoundData(
@@ -94,5 +106,21 @@ describe("LnOracleRouter", function () {
       1 // newAnsweredInRound
     );
     await assertPriceAndUpdateTime("LINK", expandTo18Decimals(10), 200);
+  });
+
+  it("should get constant price from terminal price oracle", async () => {
+    await oracleRouter.connect(admin).addTerminalPriceOracle(
+      formatBytes32String("LINK"), // currencyKey
+      getAddress(
+        hexlify(zeroPad(arrayify(expandTo18Decimals(999).toHexString()), 20))
+      ), // oracleAddress
+      false // removeExisting
+    );
+
+    await assertPriceAndUpdateTime(
+      "LINK",
+      expandTo18Decimals(999),
+      (await getBlockDateTime(ethers.provider)).toSeconds()
+    );
   });
 });
