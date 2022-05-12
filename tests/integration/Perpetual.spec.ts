@@ -578,6 +578,43 @@ describe("Integration | Perpetual", function () {
         );
       });
     });
+
+    describe("Bankruptcy", function () {
+      it("can only move when ratio is below zero", async () => {
+        await stack.lnPerpExchange
+          .connect(deployer)
+          .setBankruptLiquidator(alice.address);
+
+        /**
+         * bankPrice = (debt - collateral) / locked
+         *           = (2,000 - 980) / 0.1
+         *           = 10,200
+         */
+        await setLbtcPrice(10200);
+
+        // Cannot move yet since ratio is not *below* zero
+        expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(0);
+        await expect(
+          stack.lnPerpExchange.connect(alice).moveBankruptedPosition(
+            formatBytes32String("lBTC"), // underlying
+            1, // positionId
+            alice.address // to
+          )
+        ).to.be.revertedWith("LnPerpExchange: position not bankrupted");
+
+        await setLbtcPrice(10199);
+
+        await stack.lnPerpExchange.connect(alice).moveBankruptedPosition(
+          formatBytes32String("lBTC"), // underlying
+          1, // positionId
+          alice.address // to
+        );
+
+        expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(
+          alice.address
+        );
+      });
+    });
   });
 
   describe("Short positions", function () {
@@ -851,6 +888,43 @@ describe("Integration | Perpetual", function () {
           1, // positionId
           expandTo18Decimals(0.005), // amount
           alice.address // rewardTo
+        );
+      });
+    });
+
+    describe("Bankruptcy", function () {
+      it("can only move when ratio is below zero", async () => {
+        await stack.lnPerpExchange
+          .connect(deployer)
+          .setBankruptLiquidator(alice.address);
+
+        /**
+         * bankPrice = collateral / debt
+         *          = 2,980 / 0.1
+         *          = 29,800
+         */
+        await setLbtcPrice(29800);
+
+        // Cannot move yet since ratio is not *below* zero
+        expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(0);
+        await expect(
+          stack.lnPerpExchange.connect(alice).moveBankruptedPosition(
+            formatBytes32String("lBTC"), // underlying
+            1, // positionId
+            alice.address // to
+          )
+        ).to.be.revertedWith("LnPerpExchange: position not bankrupted");
+
+        await setLbtcPrice(29801);
+
+        await stack.lnPerpExchange.connect(alice).moveBankruptedPosition(
+          formatBytes32String("lBTC"), // underlying
+          1, // positionId
+          alice.address // to
+        );
+
+        expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(
+          alice.address
         );
       });
     });

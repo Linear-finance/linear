@@ -100,6 +100,10 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
         return _calculateCollateralizationRatio(positionId);
     }
 
+    function isPositionBankrupted(uint256 positionId) external view override returns (bool) {
+        return _isPositionBankrupted(positionId);
+    }
+
     function __LnPerpetual_init(
         ILnPerpExchange _exchange,
         ILnPerpPositionToken _positionToken,
@@ -605,22 +609,32 @@ contract LnPerpetual is ILnPerpetual, OwnableUpgradeable {
 
     // This function should only be called after position is updated since it reads from storage
     function _calculateCollateralizationRatio(uint256 positionId) private view returns (uint256) {
+        return _calculateCollateralizationRatioPlusOne(positionId).sub(UNIT);
+    }
+
+    // This function should only be called after position is updated since it reads from storage
+    function _isPositionBankrupted(uint256 positionId) private view returns (bool) {
+        // NOTE: this is a quick and dirty (inaccurate) way to check bankruptcy, which ignores fees
+        //       and liquidation reward. This was only added as a quick fix for existing bankrupted
+        //       positions.
+        // TODO: take fees & liquidation reward into account for better accuracy
+        return _calculateCollateralizationRatioPlusOne(positionId) < UNIT;
+    }
+
+    // This function should only be called after position is updated since it reads from storage
+    function _calculateCollateralizationRatioPlusOne(uint256 positionId) private view returns (uint256) {
         Position memory position = positions[positionId];
         require(position.debt > 0, "LnPerpetual: position not found");
 
         if (position.isLong) {
-            // Long: collateralRatio = (collateral + locked * price) / debt - 1
+            // Long: collateralRatio + 1 = (collateral + locked * price) / debt
             return
-                position
-                    .collateral
-                    .add(lnPrices.exchange(underlyingTokenSymbol, position.locked, LUSD))
-                    .mul(UNIT)
-                    .div(position.debt)
-                    .sub(UNIT);
+                position.collateral.add(lnPrices.exchange(underlyingTokenSymbol, position.locked, LUSD)).mul(UNIT).div(
+                    position.debt
+                );
         } else {
-            // Short: collateralRatio = collateral / (debt * price) - 1
-            return
-                position.collateral.mul(UNIT).div(lnPrices.exchange(underlyingTokenSymbol, position.debt, LUSD)).sub(UNIT);
+            // Short: collateralRatio + 1 = collateral / (debt * price)
+            return position.collateral.mul(UNIT).div(lnPrices.exchange(underlyingTokenSymbol, position.debt, LUSD));
         }
     }
 

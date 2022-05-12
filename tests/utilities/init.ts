@@ -439,6 +439,7 @@ export const deployLinearStack = async (
     .SetBurnAssetRole([lnPerpExchange.address], [true]);
   await lnPerpPositionToken.connect(admin).setMinter(lnPerpExchange.address);
   await lnPerpPositionToken.connect(admin).setBurner(lnPerpExchange.address);
+  await lnPerpPositionToken.connect(admin).setMover(lnPerpExchange.address);
 
   /**
    * Create perpetual lBTC

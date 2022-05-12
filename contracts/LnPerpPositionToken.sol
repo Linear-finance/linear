@@ -13,6 +13,7 @@ contract LnPerpPositionToken is ILnPerpPositionToken, ERC721Upgradeable, Ownable
 
     address public minter;
     address public burner;
+    address public mover;
 
     modifier onlyMinter() {
         require(msg.sender == minter, "LnPerpPositionToken: not minter");
@@ -21,6 +22,11 @@ contract LnPerpPositionToken is ILnPerpPositionToken, ERC721Upgradeable, Ownable
 
     modifier onlyBurner() {
         require(msg.sender == burner, "LnPerpPositionToken: not burner");
+        _;
+    }
+
+    modifier onlyMover() {
+        require(msg.sender == mover, "LnPerpPositionToken: not mover");
         _;
     }
 
@@ -41,6 +47,10 @@ contract LnPerpPositionToken is ILnPerpPositionToken, ERC721Upgradeable, Ownable
         burner = newBurner;
     }
 
+    function setMover(address newMover) external onlyOwner {
+        mover = newMover;
+    }
+
     function mint(address perpAddress, address to) external override onlyMinter returns (uint256 tokenId) {
         tokenId = ++lastPositionId;
 
@@ -53,5 +63,12 @@ contract LnPerpPositionToken is ILnPerpPositionToken, ERC721Upgradeable, Ownable
     function burn(uint256 tokenId) external override onlyBurner {
         _burn(tokenId);
         delete positionPerpAddresses[tokenId];
+    }
+
+    function move(uint256 tokenId, address to) external override onlyMover {
+        address existingOnwer = ownerOf(tokenId);
+        require(existingOnwer != address(0), "LnPerpPositionToken: token not found");
+
+        _transfer(existingOnwer, to, tokenId);
     }
 }

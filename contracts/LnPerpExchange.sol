@@ -43,6 +43,7 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
     event ActionReverted(uint256 actionId);
     event PoolFeeHolderChanged(address newPoolFeeHolder);
     event FoundationFeeHolderChanged(address newFoundationFeeHolder);
+    event BankruptLiquidatorChanged(address newBankruptLiquidator);
     event FeesCharged(uint256 positionId, uint256 feeForPool, uint256 feeForFoundation);
     event InsuranceFundContribution(uint256 positionId, uint256 amount);
 
@@ -84,6 +85,8 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
     mapping(uint256 => IncreasePositionActionData) public increasePositionActions;
     mapping(uint256 => ClosePositionActionData) public closePositionActions;
 
+    address public bankruptLiquidator;
+
     uint8 public constant ACTION_TYPE_OPEN_POSITION = 1;
     uint8 public constant ACTION_TYPE_INCREASE_POSITION = 2;
     uint8 public constant ACTION_TYPE_CLOSE_POSITION = 3;
@@ -124,6 +127,12 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         foundationFeeHolder = newFoundationFeeHolder;
 
         emit FoundationFeeHolderChanged(newFoundationFeeHolder);
+    }
+
+    function setBankruptLiquidator(address newBankruptLiquidator) external onlyOwner {
+        bankruptLiquidator = newBankruptLiquidator;
+
+        emit BankruptLiquidatorChanged(newBankruptLiquidator);
     }
 
     function openPosition(
@@ -209,6 +218,21 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         });
 
         emit ClosePositionActionQueued(actionId, msg.sender, underlying, positionId, 0, to);
+    }
+
+    function moveBankruptedPosition(
+        bytes32 underlying,
+        uint256 positionId,
+        address to
+    ) external {
+        require(msg.sender == bankruptLiquidator, "LnPerpExchange: not bankrupt liquidator");
+
+        _assertPositionExists(underlying, positionId);
+
+        ILnPerpetual perpContract = _getPerpContract(underlying);
+        require(perpContract.isPositionBankrupted(positionId), "LnPerpExchange: position not bankrupted");
+
+        positionToken.move(positionId, to);
     }
 
     function settleAction(uint256 pendingActionId) external {

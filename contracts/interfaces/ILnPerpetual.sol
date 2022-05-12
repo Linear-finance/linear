@@ -8,6 +8,8 @@ interface ILnPerpetual {
 
     function totalUnderlyingDebt() external view returns (uint256);
 
+    function isPositionBankrupted(uint256 positionId) external view returns (bool);
+
     function openPosition(
         address user,
         bool isLong,
