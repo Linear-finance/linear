@@ -39,10 +39,7 @@ contract LnConfig is LnAdminUpgradeable {
     }
 
     function getBuildRatioKey(bytes32 currencySymbol) external pure returns (bytes32) {
-        require(
-            currencySymbol == "LINA" ||
-            currencySymbol == "BUSD"
-        , "LnConfig: currency not accepted");
+        require(currencySymbol == "LINA" || currencySymbol == "BUSD", "LnConfig: currency not accepted");
         if (currencySymbol == "LINA") {
             return BUILD_RATIO_LINA;
         }

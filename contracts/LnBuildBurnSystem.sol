@@ -79,7 +79,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
 
     // /**
     //  * @notice This function is deprecated as it doesn't distinguish the underlying collateral. Use
-    //  * `getMaxBuildableLusdAmount()` instead. 
+    //  * `getMaxBuildableLusdAmount()` instead.
     //  */
     function MaxCanBuildAsset(address user) public view returns (uint256) {
         return getMaxBuildableLusdAmount(user, Currency_LINA);
@@ -88,7 +88,8 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     function getMaxBuildableLusdAmount(address user, bytes32 currencySymbol) public view returns (uint256) {
         bytes32 buildRatioConfigKey = mConfig.getBuildRatioKey(currencySymbol);
         uint256 buildRatio = mConfig.getUint(buildRatioConfigKey);
-        uint256 maxBuildableAmount = collaterSys.getFreeCollateralInUsd(user, currencySymbol).mul(buildRatio).div(SafeDecimalMath.unit());
+        uint256 maxBuildableAmount =
+            collaterSys.getFreeCollateralInUsd(user, currencySymbol).mul(buildRatio).div(SafeDecimalMath.unit());
         return maxBuildableAmount;
     }
 
@@ -98,14 +99,19 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return _buildAsset(user, amount, currencySymbol);
     }
 
-    function _buildAsset(address user, uint256 amount, bytes32 currencySymbol) internal returns (bool) {
+    function _buildAsset(
+        address user,
+        uint256 amount,
+        bytes32 currencySymbol
+    ) internal returns (bool) {
         bytes32 buildRatioConfigKey = mConfig.getBuildRatioKey(currencySymbol);
         uint256 buildRatio = mConfig.getUint(buildRatioConfigKey);
         uint256 maxCanBuild = collaterSys.getFreeCollateralInUsd(user, currencySymbol).multiplyDecimal(buildRatio);
         require(amount <= maxCanBuild, "Build amount too big, you need more collateral");
 
         // calc debt
-        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) =
+            debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
 
         uint256 newTotalAssetSupply = totalAssetSupplyInUsd.add(amount);
         // update debt data
@@ -144,7 +150,8 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         //uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
         require(amount > 0, "amount need > 0");
         // calc debt
-        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) = debtSystem.GetUserDebtBalanceInUsd(debtUser, currencySymbol);
+        (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) =
+            debtSystem.GetUserDebtBalanceInUsd(debtUser, currencySymbol);
         require(oldUserDebtBalance > 0, "no debt, no burn");
         uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
         // burn asset
@@ -201,7 +208,11 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return true;
     }
 
-    function buildFromCollateralSys(address user, uint256 amount, bytes32 currencySymbol) external whenNotPaused onlyCollaterSys {
+    function buildFromCollateralSys(
+        address user,
+        uint256 amount,
+        bytes32 currencySymbol
+    ) external whenNotPaused onlyCollaterSys {
         _buildAsset(user, amount, currencySymbol);
     }
 
@@ -209,7 +220,11 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         _buildMaxAsset(user, currencySymbol);
     }
 
-    function burnFromCollateralSys(address user, uint256 amount, bytes32 currencySymbol) external whenNotPaused onlyCollaterSys {
+    function burnFromCollateralSys(
+        address user,
+        uint256 amount,
+        bytes32 currencySymbol
+    ) external whenNotPaused onlyCollaterSys {
         _burnAsset(user, user, amount, currencySymbol);
     }
 

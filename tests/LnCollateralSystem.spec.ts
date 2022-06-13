@@ -93,12 +93,7 @@ describe("LnCollateralSystem", function () {
 
     await lnCollateralSystem
       .connect(admin)
-      .UpdateTokenInfos(
-        [linaCurrencyKey],
-        [linaToken.address],
-        [1],
-        [false]
-      );
+      .UpdateTokenInfos([linaCurrencyKey], [linaToken.address], [1], [false]);
   });
 
   it("only reward locker can call collateralFromUnlockReward function", async () => {
@@ -181,9 +176,7 @@ describe("LnCollateralSystem", function () {
         linaCurrencyKey
       )
     ).to.eq(expandTo18Decimals(10));
-    let tokeninfo = await lnCollateralSystem.tokenInfos(
-      linaCurrencyKey
-    );
+    let tokeninfo = await lnCollateralSystem.tokenInfos(linaCurrencyKey);
     expect(tokeninfo.totalCollateral).to.equal(expandTo18Decimals(10));
 
     expect(await linaToken.balanceOf(lnCollateralSystem.address)).to.eq(
@@ -221,9 +214,7 @@ describe("LnCollateralSystem", function () {
         )
     ).to.be.revertedWith("LnCollateralSystem: Invalid token symbol");
 
-    let linaTokeninfo = await lnCollateralSystem.tokenInfos(
-      linaCurrencyKey
-    );
+    let linaTokeninfo = await lnCollateralSystem.tokenInfos(linaCurrencyKey);
     expect(linaTokeninfo.tokenAddr).to.be.eq(linaToken.address);
 
     await linaToken.mint(rewarder.address, expandTo18Decimals(1));

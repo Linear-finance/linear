@@ -189,9 +189,7 @@ describe("Integration | Unlock Reward", function () {
     ).to.equal(expandTo18Decimals(9_100));
 
     await expect(
-      stack.lnCollateralSystem
-        .connect(alice)
-        .RedeemMax(linaCurrencyKey)
+      stack.lnCollateralSystem.connect(alice).RedeemMax(linaCurrencyKey)
     )
       .to.emit(stack.lnCollateralSystem, "RedeemCollateral")
       .withArgs(

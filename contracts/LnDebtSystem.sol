@@ -130,7 +130,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _pushDebtFactor(_factor);
     }
 
-    function _updateUserDebt(address _user, uint256 _debtProportion, bytes32 _currencySymbol) private {
+    function _updateUserDebt(
+        address _user,
+        uint256 _debtProportion,
+        bytes32 _currencySymbol
+    ) private {
         if (_currencySymbol == "LINA") {
             userDebtState[_user].debtProportion = _debtProportion;
             userDebtState[_user].debtFactor = _lastSystemDebtFactor();
@@ -142,7 +146,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     }
 
     // need update lastDebtFactors first
-    function UpdateUserDebt(address _user, uint256 _debtProportion, bytes32 _currencySymbol) external OnlyDebtSystemRole(msg.sender) {
+    function UpdateUserDebt(
+        address _user,
+        uint256 _debtProportion,
+        bytes32 _currencySymbol
+    ) external OnlyDebtSystemRole(msg.sender) {
         // TODO: check if currencySymbol is accepted
         _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
@@ -158,7 +166,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
-    function GetUserDebtData(address _user, bytes32 _currencySymbol) external view returns (uint256 debtProportion, uint256 debtFactor) {
+    function GetUserDebtData(address _user, bytes32 _currencySymbol)
+        external
+        view
+        returns (uint256 debtProportion, uint256 debtFactor)
+    {
         if (_currencySymbol == "LINA") {
             debtProportion = userDebtState[_user].debtProportion;
             debtFactor = userDebtState[_user].debtFactor;

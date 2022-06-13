@@ -40,7 +40,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
     /* EIP-712 type hashes */
     bytes32 public constant REWARD_TYPEHASH =
         keccak256("Reward(uint256 periodId,address recipient,uint256 stakingReward,uint256 feeReward)");
-    
+
     bytes32 public constant CURRENCY_LINA = "LINA";
 
     uint256 public constant PERIOD_LENGTH = 1 weeks;

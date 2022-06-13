@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { expandTo18Decimals, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import { getBlockDateTime } from "../utilities/timeTravel";
-import { formatBytes32String } from 'ethers/lib/utils';
+import { formatBytes32String } from "ethers/lib/utils";
 
 describe("Integration | Build", function () {
   let deployer: SignerWithAddress,
@@ -50,7 +50,7 @@ describe("Integration | Build", function () {
     // Alice can build 1 lUSD without staking
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(1), // amount
-      linaCurrencyKey,
+      linaCurrencyKey
     );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
@@ -125,7 +125,7 @@ describe("Integration | Build", function () {
     // Alice builds 10 lUSD
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(10), // amount
-      linaCurrencyKey,
+      linaCurrencyKey
     );
 
     // 5,000 LINA is set aside

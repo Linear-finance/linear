@@ -4,7 +4,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 import { expandTo18Decimals } from "../utilities";
 import { DeployedStack, deployLinearStack } from "../utilities/init";
-import { formatBytes32String } from 'ethers/lib/utils';
+import { formatBytes32String } from "ethers/lib/utils";
 
 describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
   let deployer: SignerWithAddress,
@@ -68,7 +68,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       (
         await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
           alice.address, // _user
-          linaCurrencyKey,
+          linaCurrencyKey
         )
       )[0]
     ).to.equal(0);
