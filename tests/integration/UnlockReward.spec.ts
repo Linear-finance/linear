@@ -21,6 +21,8 @@ describe("Integration | Unlock Reward", function () {
   const periodDuration: Duration = Duration.fromObject({ weeks: 1 });
   const stakingRewardLockTime: Duration = Duration.fromObject({ weeks: 52 });
 
+  const linaCurrencyKey = ethers.utils.formatBytes32String("LINA");
+
   const createSignature = async (
     signer: Wallet,
     periodId: BigNumber,
@@ -99,14 +101,15 @@ describe("Integration | Unlock Reward", function () {
   it("end to end test from claim reward to unlock reward", async () => {
     // Alice stakes 9,000 LINA
     await stack.lnCollateralSystem.connect(alice).Collateral(
-      ethers.utils.formatBytes32String("LINA"), // _currency
+      linaCurrencyKey, // _currency
       expandTo18Decimals(9_000) // _amount
     );
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -168,7 +171,7 @@ describe("Integration | Unlock Reward", function () {
       .to.emit(stack.lnCollateralSystem, "CollateralUnlockReward")
       .withArgs(
         alice.address,
-        ethers.utils.formatBytes32String("LINA"),
+        linaCurrencyKey,
         expandTo18Decimals(100),
         expandTo18Decimals(9_100)
       )
@@ -181,20 +184,19 @@ describe("Integration | Unlock Reward", function () {
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_100));
 
     await expect(
-      stack.lnCollateralSystem
-        .connect(alice)
-        .RedeemMax(ethers.utils.formatBytes32String("LINA"))
+      stack.lnCollateralSystem.connect(alice).RedeemMax(linaCurrencyKey)
     )
       .to.emit(stack.lnCollateralSystem, "RedeemCollateral")
       .withArgs(
         alice.address,
-        ethers.utils.formatBytes32String("LINA"),
+        linaCurrencyKey,
         expandTo18Decimals(9_100),
         BigNumber.from("0")
       )
