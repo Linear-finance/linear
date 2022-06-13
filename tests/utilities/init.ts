@@ -258,6 +258,14 @@ export const deployLinearStack = async (
       value: BigNumber.from("222222222222222222"),
     },
     {
+      key: "BuildRatioLina",
+      value: expandTo18Decimals(0.2),
+    },
+    {
+      key: "BuildRatioBusd",
+      value: expandTo18Decimals(0.9),
+    },
+    {
       key: "LiquidationRatio",
       value: expandTo18Decimals(0.5),
     },

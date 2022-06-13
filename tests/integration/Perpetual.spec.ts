@@ -21,6 +21,8 @@ describe("Integration | Perpetual", function () {
 
   let stack: DeployedStack;
 
+  const linaCurrencyKey = formatBytes32String("LINA");
+
   const settlementDelay: Duration = Duration.fromObject({ minutes: 1 });
   const revertDelay: Duration = Duration.fromObject({ minutes: 10 });
   let priceUpdateTime: DateTime;
@@ -43,7 +45,7 @@ describe("Integration | Perpetual", function () {
 
   const assertAliceDebt = async (amount: BigNumber) => {
     expect(
-      (await stack.lnDebtSystem.GetUserDebtBalanceInUsd(alice.address))[0]
+      (await stack.lnDebtSystem.GetUserDebtBalanceInUsd(alice.address, linaCurrencyKey))[0]
     ).to.equal(amount);
   };
 
@@ -92,7 +94,7 @@ describe("Integration | Perpetual", function () {
 
     // Set LINA price to $0.1 and lBTC to $20,000
     await stack.lnPrices.connect(admin).setPriceAndTime(
-      formatBytes32String("LINA"), // currencyKey
+      linaCurrencyKey, // currencyKey
       expandTo18Decimals(0.1), // price
       priceUpdateTime.toSeconds() // updateTime
     );
@@ -112,7 +114,7 @@ describe("Integration | Perpetual", function () {
       .connect(alice)
       .approve(stack.lnCollateralSystem.address, uint256Max);
     await stack.lnCollateralSystem.connect(alice).stakeAndBuild(
-      formatBytes32String("LINA"), // stakeCurrnecy
+      linaCurrencyKey, // stakeCurrnecy
       expandTo18Decimals(1_000_000), // stakeAmount
       expandTo18Decimals(10_000) // buildAmount
     );

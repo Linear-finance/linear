@@ -5,6 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { expandTo18Decimals, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import { getBlockDateTime } from "../utilities/timeTravel";
+import { formatBytes32String } from 'ethers/lib/utils';
 
 describe("Integration | Build", function () {
   let deployer: SignerWithAddress,
@@ -14,6 +15,8 @@ describe("Integration | Build", function () {
 
   let stack: DeployedStack;
 
+  const linaCurrencyKey = formatBytes32String("LINA");
+
   beforeEach(async function () {
     [deployer, alice, bob] = await ethers.getSigners();
     admin = deployer;
@@ -22,7 +25,7 @@ describe("Integration | Build", function () {
 
     // Set LINA price to $0.01
     await stack.lnPrices.connect(admin).setPrice(
-      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      linaCurrencyKey, // currencyKey
       expandTo18Decimals(0.01) // price
     );
 
@@ -46,7 +49,8 @@ describe("Integration | Build", function () {
 
     // Alice can build 1 lUSD without staking
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
-      expandTo18Decimals(1) // amount
+      expandTo18Decimals(1), // amount
+      linaCurrencyKey,
     );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
@@ -57,7 +61,7 @@ describe("Integration | Build", function () {
   it("maxRedeemableLina() should return staked amount when debt is zero regardless of locked collateral", async function () {
     // Alice stakes 9,000 LINA
     await stack.lnCollateralSystem.connect(alice).Collateral(
-      ethers.utils.formatBytes32String("LINA"), // _currency
+      linaCurrencyKey, // _currency
       expandTo18Decimals(9_000) // _amount
     );
 
@@ -114,13 +118,14 @@ describe("Integration | Build", function () {
   it("maxRedeemableLina() should reflect debt amount", async function () {
     // Alice stakes 9,000 LINA
     await stack.lnCollateralSystem.connect(alice).Collateral(
-      ethers.utils.formatBytes32String("LINA"), // _currency
+      linaCurrencyKey, // _currency
       expandTo18Decimals(9_000) // _amount
     );
 
     // Alice builds 10 lUSD
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
-      expandTo18Decimals(10) // amount
+      expandTo18Decimals(10), // amount
+      linaCurrencyKey,
     );
 
     // 5,000 LINA is set aside

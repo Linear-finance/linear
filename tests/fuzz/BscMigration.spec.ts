@@ -25,6 +25,7 @@ describe("Fuzz | BscMigration", function () {
   let stack: DeployedStack;
 
   const lnDebtSystemInterface = new Interface(LnDebtSystem.abi);
+  const linaCurrencyKey = formatBytes32String("LINA");
 
   beforeEach(async function () {
     [deployer, alice, bob, charlie, david] = await ethers.getSigners();
@@ -34,7 +35,7 @@ describe("Fuzz | BscMigration", function () {
 
     // Set LINA price to $1
     await stack.lnPrices.connect(admin).setPrice(
-      ethers.utils.formatBytes32String("LINA"), // currencyKey
+      linaCurrencyKey, // currencyKey
       expandTo18Decimals(1) // price
     );
 
@@ -48,7 +49,7 @@ describe("Fuzz | BscMigration", function () {
         .approve(stack.lnCollateralSystem.address, uint256Max);
       await stack.lnCollateralSystem
         .connect(user)
-        .Collateral(formatBytes32String("LINA"), expandTo18Decimals(1_000_000));
+        .Collateral(linaCurrencyKey, expandTo18Decimals(1_000_000));
     }
   });
 
@@ -81,7 +82,7 @@ describe("Fuzz | BscMigration", function () {
 
         actionTx = await stack.lnBuildBurnSystem
           .connect(user)
-          .BuildAsset(amountToBuild);
+          .BuildAsset(amountToBuild, linaCurrencyKey);
       } else {
         let amountToBurn: BigNumber = currentCollateralAmount.div(
           BigNumber.from(Math.floor(Math.random() * 10 + 1))
@@ -90,7 +91,7 @@ describe("Fuzz | BscMigration", function () {
 
         actionTx = await stack.lnBuildBurnSystem
           .connect(user)
-          .BurnAsset(amountToBurn);
+          .BurnAsset(amountToBurn, linaCurrencyKey);
       }
 
       const logsFromTx: LogDescription[] = (await actionTx.wait()).events

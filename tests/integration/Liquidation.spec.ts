@@ -54,7 +54,8 @@ describe("Integration | Liquidation", function () {
       stakeAmount // _amount
     );
     await stack.lnBuildBurnSystem.connect(user).BuildAsset(
-      buildAmount // amount
+      buildAmount, // amount
+      ethers.utils.formatBytes32String("LINA")
     );
   };
 
