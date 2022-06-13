@@ -21,7 +21,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         uint256 debtProportion;
         uint256 debtFactor; // PRECISE_UNIT
     }
+    // Debt state for LINA is stored in userDebtState
     mapping(address => DebtData) public userDebtState;
+
+    // Debt state for other currencies is stored in userDebtStateBySymbol
+    mapping(bytes32 => mapping(address => DebtData)) public userDebtStateBySymbol;
 
     //use mapping to store array data
     mapping(uint256 => uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
@@ -126,29 +130,42 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _pushDebtFactor(_factor);
     }
 
-    function _updateUserDebt(address _user, uint256 _debtProportion) private {
-        userDebtState[_user].debtProportion = _debtProportion;
-        userDebtState[_user].debtFactor = _lastSystemDebtFactor();
+    function _updateUserDebt(address _user, uint256 _debtProportion, bytes32 _currencySymbol) private {
+        if (_currencySymbol == "LINA") {
+            userDebtState[_user].debtProportion = _debtProportion;
+            userDebtState[_user].debtFactor = _lastSystemDebtFactor();
+        } else {
+            userDebtStateBySymbol[_currencySymbol][_user].debtProportion = _debtProportion;
+            userDebtStateBySymbol[_currencySymbol][_user].debtFactor = _lastSystemDebtFactor();
+        }
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
     }
 
     // need update lastDebtFactors first
-    function UpdateUserDebt(address _user, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
-        _updateUserDebt(_user, _debtProportion);
+    function UpdateUserDebt(address _user, uint256 _debtProportion, bytes32 _currencySymbol) external OnlyDebtSystemRole(msg.sender) {
+        // TODO: check if currencySymbol is accepted
+        _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
     function UpdateDebt(
         address _user,
         uint256 _debtProportion,
-        uint256 _factor
+        uint256 _factor,
+        bytes32 _currencySymbol
     ) external OnlyDebtSystemRole(msg.sender) {
+        // TODO: check if currencySymbol is accepted
         _pushDebtFactor(_factor);
-        _updateUserDebt(_user, _debtProportion);
+        _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
-    function GetUserDebtData(address _user) external view returns (uint256 debtProportion, uint256 debtFactor) {
-        debtProportion = userDebtState[_user].debtProportion;
-        debtFactor = userDebtState[_user].debtFactor;
+    function GetUserDebtData(address _user, bytes32 _currencySymbol) external view returns (uint256 debtProportion, uint256 debtFactor) {
+        if (_currencySymbol == "LINA") {
+            debtProportion = userDebtState[_user].debtProportion;
+            debtFactor = userDebtState[_user].debtFactor;
+        } else {
+            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+        }
     }
 
     function _lastSystemDebtFactor() private view returns (uint256) {
@@ -162,9 +179,16 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         return _lastSystemDebtFactor();
     }
 
-    function GetUserCurrentDebtProportion(address _user) public view returns (uint256) {
-        uint256 debtProportion = userDebtState[_user].debtProportion;
-        uint256 debtFactor = userDebtState[_user].debtFactor;
+    function GetUserCurrentDebtProportion(address _user, bytes32 _currencySymbol) public view returns (uint256) {
+        uint256 debtProportion;
+        uint256 debtFactor;
+        if (_currencySymbol == "LINA") {
+            debtProportion = userDebtState[_user].debtProportion;
+            debtFactor = userDebtState[_user].debtFactor;
+        } else {
+            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+        }
 
         if (debtProportion == 0) {
             return 0;
@@ -179,11 +203,18 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
      *
      *@return [0] the debt balance of user. [1] system total asset in usd.
      */
-    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256, uint256) {
+    function GetUserDebtBalanceInUsd(address _user, bytes32 _currencySymbol) external view returns (uint256, uint256) {
         uint256 totalAssetSupplyInUsd = assetSys.totalAssetsInUsd();
 
-        uint256 debtProportion = userDebtState[_user].debtProportion;
-        uint256 debtFactor = userDebtState[_user].debtFactor;
+        uint256 debtProportion;
+        uint256 debtFactor;
+        if (_currencySymbol == "LINA") {
+            debtProportion = userDebtState[_user].debtProportion;
+            debtFactor = userDebtState[_user].debtFactor;
+        } else {
+            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+        }
 
         if (debtProportion == 0) {
             return (0, totalAssetSupplyInUsd);

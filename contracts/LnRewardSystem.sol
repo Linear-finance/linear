@@ -40,6 +40,8 @@ contract LnRewardSystem is LnAdminUpgradeable {
     /* EIP-712 type hashes */
     bytes32 public constant REWARD_TYPEHASH =
         keccak256("Reward(uint256 periodId,address recipient,uint256 stakingReward,uint256 feeReward)");
+    
+    bytes32 public constant CURRENCY_LINA = "LINA";
 
     uint256 public constant PERIOD_LENGTH = 1 weeks;
     uint256 public constant CLAIM_WINDOW_PERIOD_COUNT = 2;
@@ -175,7 +177,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
         userLastClaimPeriodIds[recipient] = periodId;
 
         // Users can only claim rewards if target ratio is satisfied
-        require(collateralSystem.IsSatisfyTargetRatio(recipient), "LnRewardSystem: below target ratio");
+        require(collateralSystem.IsSatisfyTargetRatio(recipient, CURRENCY_LINA), "LnRewardSystem: below target ratio");
 
         // Verify EIP-712 signature
         bytes32 digest =

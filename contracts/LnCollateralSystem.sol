@@ -32,6 +32,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     bytes32 public constant Currency_ETH = "ETH";
     bytes32 public constant Currency_LINA = "LINA";
+    bytes32 public constant Currency_BUSD = "BUSD";
 
     // -------------------------------------------------------
     uint256 public uniqueId; // use log
@@ -58,6 +59,8 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     address public liquidation;
 
     bytes32 private constant BUILD_RATIO_KEY = "BuildRatio";
+    bytes32 private constant BUILD_RATIO_LINA_KEY = "BuildRatioLina"; // percent, base 10e18
+    bytes32 private constant BUILD_RATIO_BUSD_KEY = "BuildRatioBusd"; // percent, base 10e18
 
     modifier onlyLiquidation() {
         require(msg.sender == liquidation, "LnCollateralSystem: not liquidation");
@@ -69,24 +72,25 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         _;
     }
 
-    /**
-     * @notice This function is deprecated as it doesn't do what its name suggests. Use
-     * `getFreeCollateralInUsd()` instead. This function is not removed since it's still
-     * used by `LnBuildBurnSystem`.
-     */
-    function MaxRedeemableInUsd(address _user) public view returns (uint256) {
-        return getFreeCollateralInUsd(_user);
-    }
+    // /**
+    //  * @notice This function is deprecated as it doesn't do what its name suggests. Use
+    //  * `getFreeCollateralInUsd()` instead. This function is not removed since it's still
+    //  * used by `LnBuildBurnSystem`.
+    //  */
+    // function MaxRedeemableInUsd(address _user) public view returns (uint256) {
+    //     return getFreeCollateralInUsd(_user);
+    // }
 
-    function getFreeCollateralInUsd(address user) public view returns (uint256) {
-        uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(user);
+    function getFreeCollateralInUsd(address user, bytes32 currencySymbol) public view returns (uint256) {
+        uint256 totalCollateralInUsd = GetUserCollateralInUsd(user, currencySymbol);
 
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
         if (debtBalance == 0) {
             return totalCollateralInUsd;
         }
 
-        uint256 buildRatio = mConfig.getUint(BUILD_RATIO_KEY);
+        bytes32 buildRatioKey = mConfig.getBuildRatioKey(currencySymbol);
+        uint256 buildRatio = mConfig.getUint(buildRatioKey);
         uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
         if (totalCollateralInUsd < minCollateral) {
             return 0;
@@ -96,7 +100,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     function maxRedeemableLina(address user) public view returns (uint256) {
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user, "LINA");
         uint256 stakedLinaAmount = userCollateralData[user][Currency_LINA].collateral;
 
         if (debtBalance == 0) {
@@ -104,7 +108,8 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             return stakedLinaAmount;
         } else {
             // User has debt. Must keep a certain amount
-            uint256 buildRatio = mConfig.getUint(BUILD_RATIO_KEY);
+            bytes32 buildRatioKey = mConfig.getBuildRatioKey("LINA");
+            uint256 buildRatio = mConfig.getUint(buildRatioKey);
             uint256 minCollateralUsd = debtBalance.divideDecimal(buildRatio);
             uint256 minCollateralLina = minCollateralUsd.divideDecimal(priceGetter.getPrice(Currency_LINA));
             uint256 lockedLinaAmount = mRewardLocker.balanceOf(user);
@@ -220,6 +225,16 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
+    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) public view returns (uint256 rTotal) {
+        uint256 collateralAmount = userCollateralData[_user][_currencySymbol].collateral;
+        if (Currency_LINA == _currencySymbol) {
+            collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));
+        }
+        if (collateralAmount > 0) {
+            rTotal = rTotal.add(collateralAmount.multiplyDecimal(priceGetter.getPrice(_currencySymbol)));
+        }
+    }
+
     function GetUserTotalCollateralInUsd(address _user) public view returns (uint256 rTotal) {
         for (uint256 i = 0; i < tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
@@ -239,11 +254,15 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
-    function GetUserCollateral(address _user, bytes32 _currency) external view returns (uint256) {
-        if (Currency_LINA != _currency) {
-            return userCollateralData[_user][_currency].collateral;
+    function GetUserCollateral(address _user, bytes32 _currencySymbol) external view returns (uint256) {
+        return _getUserCollateral(_user, _currencySymbol);
+    }
+
+    function _getUserCollateral(address _user, bytes32 _currencySymbol) internal view returns (uint256) {
+        if (Currency_LINA != _currencySymbol) {
+            return userCollateralData[_user][_currencySymbol].collateral;
         }
-        return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
+        return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currencySymbol].collateral);
     }
 
     function getUserLinaCollateralBreakdown(address _user) external view returns (uint256 staked, uint256 locked) {
@@ -317,7 +336,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
 
         if (buildAmount > 0) {
-            buildBurnSystem.buildFromCollateralSys(msg.sender, buildAmount);
+            buildBurnSystem.buildFromCollateralSys(msg.sender, buildAmount, stakeCurrency);
         }
     }
 
@@ -331,7 +350,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(stakeAmount > 0, "LnCollateralSystem: zero amount");
 
         _collateral(msg.sender, stakeCurrency, stakeAmount);
-        buildBurnSystem.buildMaxFromCollateralSys(msg.sender);
+        buildBurnSystem.buildMaxFromCollateralSys(msg.sender, stakeCurrency);
     }
 
     /**
@@ -350,7 +369,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(burnAmount > 0 || unstakeAmount > 0, "LnCollateralSystem: zero amount");
 
         if (burnAmount > 0) {
-            buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount);
+            buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount, unstakeCurrency);
         }
 
         if (unstakeAmount > 0) {
@@ -367,7 +386,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     function burnAndUnstakeMax(uint256 burnAmount, bytes32 unstakeCurrency) external whenNotPaused {
         require(burnAmount > 0, "LnCollateralSystem: zero amount");
 
-        buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount);
+        buildBurnSystem.burnFromCollateralSys(msg.sender, burnAmount, unstakeCurrency);
         _redeemMax(msg.sender, unstakeCurrency);
     }
 
@@ -400,18 +419,19 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
-    function IsSatisfyTargetRatio(address _user) public view returns (bool) {
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user);
+    function IsSatisfyTargetRatio(address _user, bytes32 _currencySymbol) public view returns (bool) {
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user, _currencySymbol);
         if (debtBalance == 0) {
             return true;
         }
 
-        uint256 buildRatio = mConfig.getUint(mConfig.BUILD_RATIO());
-        uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(_user);
-        if (totalCollateralInUsd == 0) {
+        bytes32 buildRatioKey = mConfig.getBuildRatioKey(_currencySymbol);
+        uint256 buildRatio = mConfig.getUint(buildRatioKey);
+        uint256 collateralInUsd = _getUserCollateral(_user, _currencySymbol);
+        if (collateralInUsd == 0) {
             return false;
         }
-        uint256 myratio = debtBalance.divideDecimal(totalCollateralInUsd);
+        uint256 myratio = debtBalance.divideDecimal(collateralInUsd);
         return myratio <= buildRatio;
     }
 

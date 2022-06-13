@@ -210,7 +210,7 @@ contract LnLiquidation is LnAdminUpgradeable {
         }
 
         // Burn lUSD and update debt
-        lnBuildBurnSystem.burnForLiquidation(params.user, params.liquidator, params.lusdToBurn);
+        lnBuildBurnSystem.burnForLiquidation(params.user, params.liquidator, params.lusdToBurn, "LINA");
 
         LiquidationRewardCalculationResult memory rewards =
             calculateRewards(
@@ -288,7 +288,7 @@ contract LnLiquidation is LnAdminUpgradeable {
     }
 
     function evalUserPostion(address user) private view returns (EvalUserPositionResult memory) {
-        (uint256 debtBalance, ) = lnDebtSystem.GetUserDebtBalanceInUsd(user);
+        (uint256 debtBalance, ) = lnDebtSystem.GetUserDebtBalanceInUsd(user, "LINA");
         (uint256 stakedCollateral, uint256 lockedCollateral) = lnCollateralSystem.getUserLinaCollateralBreakdown(user);
 
         uint256 collateralPrice = lnPrices.getPrice("LINA");
