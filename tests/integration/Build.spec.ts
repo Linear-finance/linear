@@ -6,6 +6,8 @@ import { expandTo18Decimals, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import { getBlockDateTime } from "../utilities/timeTravel";
 import { formatBytes32String } from "ethers/lib/utils";
+import { Contract } from "ethers";
+import { deployErc20TokenAsCollateral } from '../utilities/deployErc20TokenAsCollateral';
 
 describe("Integration | Build", function () {
   let deployer: SignerWithAddress,
@@ -13,20 +15,29 @@ describe("Integration | Build", function () {
     alice: SignerWithAddress,
     bob: SignerWithAddress;
 
-  let stack: DeployedStack;
+  let stack: DeployedStack,
+    busdToken: Contract;
 
   const linaCurrencyKey = formatBytes32String("LINA");
+  const busdCurrencyKey = formatBytes32String("BUSD");
 
   beforeEach(async function () {
     [deployer, alice, bob] = await ethers.getSigners();
     admin = deployer;
 
     stack = await deployLinearStack(deployer, admin);
+    busdToken = await deployErc20TokenAsCollateral("Binance-Peg BUSD Token", "BUSD", stack.lnCollateralSystem, deployer, admin);
 
     // Set LINA price to $0.01
     await stack.lnPrices.connect(admin).setPrice(
       linaCurrencyKey, // currencyKey
       expandTo18Decimals(0.01) // price
+    );
+
+    // Set LINA price to $0.01
+    await stack.lnPrices.connect(admin).setPrice(
+      busdCurrencyKey, // currencyKey
+      expandTo18Decimals(1) // price
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -35,6 +46,14 @@ describe("Integration | Build", function () {
       .mint(alice.address, expandTo18Decimals(1_000_000));
 
     await stack.linaToken
+      .connect(alice)
+      .approve(stack.lnCollateralSystem.address, uint256Max);
+
+    await busdToken
+      .connect(admin)
+      .mint(alice.address, expandTo18Decimals(1_000_000));
+
+    await busdToken
       .connect(alice)
       .approve(stack.lnCollateralSystem.address, uint256Max);
   });
@@ -51,6 +70,22 @@ describe("Integration | Build", function () {
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(1), // amount
       linaCurrencyKey
+    );
+
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(1)
+    );
+  });
+
+  it("can build lUSD with other ERC20 tokens", async function () {
+    await stack.lnCollateralSystem
+      .connect(alice)
+      .Collateral(busdCurrencyKey, expandTo18Decimals(10));
+
+    // Alice can build 1 lUSD without staking
+    await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
+      expandTo18Decimals(1), // amount
+      busdCurrencyKey
     );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
