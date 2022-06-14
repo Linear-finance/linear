@@ -263,7 +263,11 @@ export const deployLinearStack = async (
     },
     {
       key: "BuildRatioBusd",
-      value: expandTo18Decimals(0.9),
+      value: expandTo18Decimals(0.7),
+    },
+    {
+      key: "BuildRatioBnb",
+      value: expandTo18Decimals(0.3),
     },
     {
       key: "LiquidationRatio",

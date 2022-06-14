@@ -107,8 +107,9 @@ describe("Integration | Unlock Reward", function () {
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -183,8 +184,9 @@ describe("Integration | Unlock Reward", function () {
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_100));
 

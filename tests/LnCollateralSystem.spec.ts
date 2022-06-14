@@ -2,7 +2,7 @@ import { ethers, waffle } from "hardhat";
 import { expect, use } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { expandTo18Decimals, zeroAddress } from "./utilities";
+import { expandTo18Decimals, nullAddress, zeroAddress } from "./utilities";
 
 const { formatBytes32String } = ethers.utils;
 
@@ -18,7 +18,8 @@ describe("LnCollateralSystem", function () {
   let lnAccessControl: Contract,
     lnCollateralSystem: Contract,
     linaToken: Contract,
-    lnAssetSystem: Contract;
+    lnAssetSystem: Contract,
+    busdToken: Contract;
 
   const mockLnPricesAddr = "0x0000000000000000000000000000000000000001";
   const mockLnDebtSystemAddr = "0x0000000000000000000000000000000000000002";
@@ -27,6 +28,8 @@ describe("LnCollateralSystem", function () {
     "0x0000000000000000000000000000000000000004";
   const mockLnLiquidationAddr = "0x0000000000000000000000000000000000000005";
   const linaCurrencyKey = formatBytes32String("LINA");
+  const busdCurrencyKey = formatBytes32String("BUSD");
+  const bnbCurrencyKey = formatBytes32String("BNB");
 
   beforeEach(async function () {
     [
@@ -42,7 +45,7 @@ describe("LnCollateralSystem", function () {
       "LnCollateralSystem"
     );
     const LnAssetSystem = await ethers.getContractFactory("LnAssetSystem");
-    const LINAToken = await ethers.getContractFactory("MockERC20");
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
 
     lnAccessControl = await LnAccessControl.deploy();
     await lnAccessControl.connect(deployer).__LnAccessControl_init(
@@ -54,9 +57,14 @@ describe("LnCollateralSystem", function () {
       admin.address // admin
     );
 
-    linaToken = await LINAToken.deploy(
+    linaToken = await MockERC20.deploy(
       "Linear Finance", // _name
       "LINA" // _symbol
+    );
+
+    busdToken = await MockERC20.deploy(
+      "Binance-Peg BUSD Token", // _name
+      "BUSD" // _symbol
     );
 
     lnAssetSystem = await LnAssetSystem.deploy();
@@ -94,6 +102,14 @@ describe("LnCollateralSystem", function () {
     await lnCollateralSystem
       .connect(admin)
       .UpdateTokenInfos([linaCurrencyKey], [linaToken.address], [1], [false]);
+    
+    await lnCollateralSystem
+      .connect(admin)
+      .UpdateTokenInfos([busdCurrencyKey], [busdToken.address], [1], [false]);
+
+    await lnCollateralSystem
+      .connect(admin)
+      .UpdateTokenInfos([bnbCurrencyKey], [nullAddress], [1], [false]);
   });
 
   it("only reward locker can call collateralFromUnlockReward function", async () => {
@@ -297,5 +313,14 @@ describe("LnCollateralSystem", function () {
           expandTo18Decimals(10)
         )
     ).to.be.revertedWith("TransferHelper: transferFrom failed");
+  });
+
+  it("can NOT deposit collateral with unsupported tokens", async function () {
+    await expect(lnCollateralSystem
+      .connect(alice)
+      .Collateral(
+        formatBytes32String("GG"),
+        expandTo18Decimals(10)
+      )).to.be.revertedWith("Invalid collateral");
   });
 });

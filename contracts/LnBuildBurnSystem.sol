@@ -81,7 +81,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     //  * @notice This function is deprecated as it doesn't distinguish the underlying collateral. Use
     //  * `getMaxBuildableLusdAmount()` instead.
     //  */
-    function MaxCanBuildAsset(address user) public view returns (uint256) {
+    function MaxCanBuildAsset(address user) external view returns (uint256) {
         return getMaxBuildableLusdAmount(user, Currency_LINA);
     }
 
@@ -192,8 +192,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     function BurnAssetToTarget(bytes32 currencySymbol) external whenNotPaused returns (bool) {
         address user = msg.sender;
 
-        bytes32 buildRatioKey = mConfig.getBuildRatioKey(currencySymbol);
-        uint256 buildRatio = mConfig.getUint(buildRatioKey);
+        uint256 buildRatio = mConfig.getUint(mConfig.getBuildRatioKey(currencySymbol));
         uint256 totalCollateral = collaterSys.GetUserCollateral(user, currencySymbol);
         uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
         (uint256 debtAsset, ) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);

@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
-import { expandTo18Decimals, uint256Max } from "../utilities";
+import { expandTo18Decimals, nullAddress, uint256Max } from "../utilities";
 import { deployLinearStack, DeployedStack } from "../utilities/init";
 import { getBlockDateTime } from "../utilities/timeTravel";
 import { formatBytes32String } from "ethers/lib/utils";
@@ -20,6 +20,7 @@ describe("Integration | Build", function () {
 
   const linaCurrencyKey = formatBytes32String("LINA");
   const busdCurrencyKey = formatBytes32String("BUSD");
+  const bnbCurrencyKey = formatBytes32String("BNB");
 
   beforeEach(async function () {
     [deployer, alice, bob] = await ethers.getSigners();
@@ -38,6 +39,12 @@ describe("Integration | Build", function () {
     await stack.lnPrices.connect(admin).setPrice(
       busdCurrencyKey, // currencyKey
       expandTo18Decimals(1) // price
+    );
+
+    // Set BNB price to $250
+    await stack.lnPrices.connect(admin).setPrice(
+      bnbCurrencyKey, // currencyKey
+      expandTo18Decimals(250) // price
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -93,7 +100,81 @@ describe("Integration | Build", function () {
     );
   });
 
-  it("maxRedeemableLina() should return staked amount when debt is zero regardless of locked collateral", async function () {
+  it("can build max amount of lUSD with other ERC20 tokens", async function () {
+    await stack.lnCollateralSystem
+      .connect(alice)
+      .Collateral(busdCurrencyKey, expandTo18Decimals(10));
+
+    // Alice can build 1 lUSD without staking
+    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAsset(
+      busdCurrencyKey
+    );
+
+    // 10 * 1 * 0.7
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(7)
+    );
+  });
+
+  it("can build lUSD with native tokens", async function () {
+    await stack.lnCollateralSystem.connect(admin).UpdateTokenInfo(
+      bnbCurrencyKey, // _currency
+      nullAddress, // _tokenAddr
+      expandTo18Decimals(1), // _minCollateral
+      false // _close
+    );
+
+    await stack.lnCollateralSystem
+      .connect(alice)
+      .Collateral(
+        bnbCurrencyKey,
+        expandTo18Decimals(10),
+        {
+          value: expandTo18Decimals(10)
+        }
+      );
+
+    // Alice can build 1 lUSD without staking
+    await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
+      expandTo18Decimals(1), // amount
+      bnbCurrencyKey
+    );
+
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(1)
+    );
+  });
+
+  it("can build max amount of lUSD with native tokens", async function () {
+    await stack.lnCollateralSystem.connect(admin).UpdateTokenInfo(
+      bnbCurrencyKey, // _currency
+      nullAddress, // _tokenAddr
+      expandTo18Decimals(1), // _minCollateral
+      false // _close
+    );
+
+    await stack.lnCollateralSystem
+      .connect(alice)
+      .Collateral(
+        bnbCurrencyKey,
+        expandTo18Decimals(10),
+        {
+          value: expandTo18Decimals(10)
+        }
+      );
+
+    // Alice can build 1 lUSD without staking
+    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAsset(
+      bnbCurrencyKey
+    );
+
+    // 10 * 250 * 0.3
+    expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
+      expandTo18Decimals(750)
+    );
+  });
+
+  it("maxRedeemable() should return staked amount when debt is zero regardless of locked collateral", async function () {
     // Alice stakes 9,000 LINA
     await stack.lnCollateralSystem.connect(alice).Collateral(
       linaCurrencyKey, // _currency
@@ -102,8 +183,9 @@ describe("Integration | Build", function () {
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -116,8 +198,9 @@ describe("Integration | Build", function () {
 
     // Returns 9,000 when locked amount is less than staked
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -130,8 +213,9 @@ describe("Integration | Build", function () {
 
     // Returns 9,000 when locked amount is the same as staked
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -144,13 +228,14 @@ describe("Integration | Build", function () {
 
     // Returns 9,000 when locked amount is the same as staked
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
   });
 
-  it("maxRedeemableLina() should reflect debt amount", async function () {
+  it("maxRedeemable() should reflect debt amount", async function () {
     // Alice stakes 9,000 LINA
     await stack.lnCollateralSystem.connect(alice).Collateral(
       linaCurrencyKey, // _currency
@@ -165,8 +250,9 @@ describe("Integration | Build", function () {
 
     // 5,000 LINA is set aside
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(4_000));
 
@@ -179,8 +265,9 @@ describe("Integration | Build", function () {
 
     // Now 8,000 LINA is withdrawable
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(8_000));
 
@@ -193,8 +280,9 @@ describe("Integration | Build", function () {
 
     // All staked amount available
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
 
@@ -205,8 +293,9 @@ describe("Integration | Build", function () {
       [(await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds()] // _lockTo
     );
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
-        alice.address // user
+      await stack.lnCollateralSystem.maxRedeemable(
+        alice.address, // user
+        linaCurrencyKey
       )
     ).to.equal(expandTo18Decimals(9_000));
   });
