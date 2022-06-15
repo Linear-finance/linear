@@ -32,8 +32,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     bytes32 public constant Currency_ETH = "ETH";
     bytes32 public constant Currency_LINA = "LINA";
-    bytes32 public constant Currency_BNB = "BNB";
-    bytes32 public constant Currency_BUSD = "BUSD";
 
     // -------------------------------------------------------
     uint256 public uniqueId; // use log
@@ -60,6 +58,9 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     address public liquidation;
 
     bytes32 private constant BUILD_RATIO_KEY = "BuildRatio";
+
+    bytes32 public constant Currency_BNB = "BNB";
+    bytes32 public constant Currency_BUSD = "BUSD";
     bytes32 private constant BUILD_RATIO_LINA_KEY = "BuildRatioLina"; // percent, base 10e18
     bytes32 private constant BUILD_RATIO_BUSD_KEY = "BuildRatioBusd"; // percent, base 10e18
 

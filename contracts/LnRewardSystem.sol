@@ -41,11 +41,11 @@ contract LnRewardSystem is LnAdminUpgradeable {
     bytes32 public constant REWARD_TYPEHASH =
         keccak256("Reward(uint256 periodId,address recipient,uint256 stakingReward,uint256 feeReward)");
 
-    bytes32 public constant CURRENCY_LINA = "LINA";
-
     uint256 public constant PERIOD_LENGTH = 1 weeks;
     uint256 public constant CLAIM_WINDOW_PERIOD_COUNT = 2;
     uint256 public constant STAKING_REWARD_LOCK_PERIOD = 52 weeks;
+    
+    bytes32 public constant CURRENCY_LINA = "LINA";
 
     function getCurrentPeriodId() public view returns (uint256) {
         require(block.timestamp >= firstPeriodStartTime, "LnRewardSystem: first period not started");

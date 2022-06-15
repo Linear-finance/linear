@@ -24,9 +24,6 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     // Debt state for LINA is stored in userDebtState
     mapping(address => DebtData) public userDebtState;
 
-    // Debt state for other currencies is stored in userDebtStateBySymbol
-    mapping(bytes32 => mapping(address => DebtData)) public userDebtStateBySymbol;
-
     //use mapping to store array data
     mapping(uint256 => uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
     uint256 public debtCurrentIndex; // length of array. this index of array no value
@@ -35,7 +32,8 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     uint256 public lastDeletTo; // delete to array index, lastDeletTo < lastCloseAt
     uint256 public constant MAX_DEL_PER_TIME = 50;
 
-    //
+    // Debt state for other currencies is stored in userDebtStateBySymbol
+    mapping(bytes32 => mapping(address => DebtData)) public userDebtStateBySymbol;
 
     // -------------------------------------------------------
     function __LnDebtSystem_init(address _admin) public initializer {
