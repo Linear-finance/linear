@@ -177,7 +177,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
         userLastClaimPeriodIds[recipient] = periodId;
 
         // Users can only claim rewards if target ratio is satisfied
-        require(collateralSystem.IsSatisfyTargetRatio(recipient, CURRENCY_LINA), "LnRewardSystem: below target ratio");
+        require(collateralSystem.IsSatisfyTargetRatioByCurrency(recipient, CURRENCY_LINA), "LnRewardSystem: below target ratio");
 
         // Verify EIP-712 signature
         bytes32 digest =

@@ -420,7 +420,15 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
-    function IsSatisfyTargetRatio(address _user, bytes32 _currencySymbol) public view returns (bool) {
+    // /**
+    //  * @notice This function is deprecated as it only return the boolean of whether
+    //  * target ratio of LINA is satisfied. Use IsSatisfyTargetRatioByCurrency()` instead.
+    //  */
+    function IsSatisfyTargetRatio(address _user) public view returns (bool) {
+        return IsSatisfyTargetRatioByCurrency(_user, "LINA");
+    }
+
+    function IsSatisfyTargetRatioByCurrency(address _user, bytes32 _currencySymbol) public view returns (bool) {
         (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(_user, _currencySymbol);
         if (debtBalance == 0) {
             return true;
