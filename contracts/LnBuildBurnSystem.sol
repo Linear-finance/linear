@@ -119,7 +119,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
 
         // calc debt
         (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) =
-            debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+            debtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
 
         uint256 newTotalAssetSupply = totalAssetSupplyInUsd.add(amount);
         // update debt data
@@ -132,7 +132,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         }
 
         // update debt
-        debtSystem.UpdateDebt(user, newUserDebtProportion, oldTotalProportion, currencySymbol);
+        debtSystem.UpdateDebtByCurrency(user, newUserDebtProportion, oldTotalProportion, currencySymbol);
 
         // mint asset
         lUSDToken.mint(user, amount);
@@ -167,7 +167,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         require(amount > 0, "amount need > 0");
         // calc debt
         (uint256 oldUserDebtBalance, uint256 totalAssetSupplyInUsd) =
-            debtSystem.GetUserDebtBalanceInUsd(debtUser, currencySymbol);
+            debtSystem.GetUserDebtBalanceInUsdByCurrency(debtUser, currencySymbol);
         require(oldUserDebtBalance > 0, "no debt, no burn");
         uint256 burnAmount = oldUserDebtBalance < amount ? oldUserDebtBalance : amount;
         // burn asset
@@ -188,7 +188,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         }
 
         // update debt
-        debtSystem.UpdateDebt(debtUser, newUserDebtProportion, oldTotalProportion, currencySymbol);
+        debtSystem.UpdateDebtByCurrency(debtUser, newUserDebtProportion, oldTotalProportion, currencySymbol);
     }
 
     // /**
@@ -219,7 +219,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         uint256 buildRatio = mConfig.getUint(mConfig.getBuildRatioKey(currencySymbol));
         uint256 totalCollateral = collaterSys.GetUserCollateral(user, currencySymbol);
         uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
-        (uint256 debtAsset, ) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+        (uint256 debtAsset, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
         require(debtAsset > maxBuildAssetToTarget, "You maybe want build to target");
 
         uint256 needBurn = debtAsset.sub(maxBuildAssetToTarget);

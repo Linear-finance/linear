@@ -46,7 +46,7 @@ describe("Integration | Perpetual", function () {
   const assertAliceDebt = async (amount: BigNumber) => {
     expect(
       (
-        await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+        await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
           alice.address,
           linaCurrencyKey
         )

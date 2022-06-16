@@ -83,7 +83,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     function getFreeCollateralInUsd(address user, bytes32 currencySymbol) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserCollateralInUsd(user, currencySymbol);
 
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
         if (debtBalance == 0) {
             return totalCollateralInUsd;
         }
@@ -105,7 +105,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     // }
 
     function maxRedeemable(address user, bytes32 currencySymbol) public view returns (uint256) {
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
         uint256 stakedAmount = userCollateralData[user][currencySymbol].collateral;
 
         if (debtBalance == 0) {
@@ -432,7 +432,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     function IsSatisfyTargetRatio(address _user, bytes32 _currencySymbol) public view returns (bool) {
-        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(_user, _currencySymbol);
+        (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(_user, _currencySymbol);
         if (debtBalance == 0) {
             return true;
         }

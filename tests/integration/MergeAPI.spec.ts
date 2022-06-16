@@ -44,14 +44,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       expandTo18Decimals(10_000) // amount
     );
   });
-  
+
   describe("With ERC20 tokens", function () {
     it("can stake without building", async function () {
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10_000)
       );
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(0);
-  
+
       // Alice can stake LINA without building lUSD
       await expect(
         stack.lnCollateralSystem.connect(alice).stakeAndBuild(
@@ -62,10 +62,10 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnCollateralSystem, "CollateralLog")
         .and.not.emit(stack.lnDebtSystem, "PushDebtLog");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(0);
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(0);
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -74,21 +74,21 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey
           )
         )[0]
       ).to.equal(0);
     });
-  
+
     it("can build without staking", async function () {
       await stack.lnCollateralSystem.connect(alice).stakeAndBuild(
         linaCurrencyKey, // stakeCurrency
         expandTo18Decimals(10_000), // stakeAmount
         0 // buildAmount
       );
-  
+
       await expect(
         stack.lnCollateralSystem.connect(alice).stakeAndBuild(
           linaCurrencyKey, // stakeCurrency
@@ -98,12 +98,12 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnDebtSystem, "PushDebtLog")
         .and.not.emit(stack.lnCollateralSystem, "CollateralLog");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(0);
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -112,14 +112,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(10));
     });
-  
+
     it("can stake and build atomically", async function () {
       await expect(
         stack.lnCollateralSystem.connect(alice).stakeAndBuild(
@@ -130,12 +130,12 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnCollateralSystem, "CollateralLog")
         .and.emit(stack.lnDebtSystem, "PushDebtLog");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(0);
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -144,14 +144,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(10));
     });
-  
+
     it("can stake and build max atomically", async function () {
       // lUSD = 10,000 * 0.01 * 0.2 = 20
       await expect(
@@ -162,12 +162,12 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnCollateralSystem, "CollateralLog")
         .and.emit(stack.lnDebtSystem, "PushDebtLog");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(0);
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(20)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -176,21 +176,21 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(20));
     });
-  
+
     it("can burn without unstaking", async function () {
       // Alice stakes 10,000 LINA and builds 20 lUSD
       await stack.lnCollateralSystem.connect(alice).stakeAndBuildMax(
         linaCurrencyKey, // stakeCurrency
         expandTo18Decimals(10_000) // stakeAmount
       );
-  
+
       await expect(
         stack.lnCollateralSystem.connect(alice).burnAndUnstake(
           expandTo18Decimals(10), // burnAmount
@@ -200,12 +200,12 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnDebtSystem, "PushDebtLog")
         .and.not.emit(stack.lnCollateralSystem, "RedeemCollateral");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(0);
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -214,14 +214,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(10));
     });
-  
+
     it("can unstake without burning", async function () {
       // Alice stakes 10,000 LINA and builds 10 lUSD
       await stack.lnCollateralSystem.connect(alice).stakeAndBuild(
@@ -229,7 +229,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         expandTo18Decimals(10_000), // stakeAmount
         expandTo18Decimals(10) // buildAmount
       );
-  
+
       await expect(
         stack.lnCollateralSystem.connect(alice).burnAndUnstake(
           0, // burnAmount
@@ -239,14 +239,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnCollateralSystem, "RedeemCollateral")
         .and.not.emit(stack.lnDebtSystem, "PushDebtLog");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(4_000)
       );
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -255,21 +255,21 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(6_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(10));
     });
-  
+
     it("can burn and unstake atomically", async function () {
       // Alice stakes 10,000 LINA and builds 20 lUSD
       await stack.lnCollateralSystem.connect(alice).stakeAndBuildMax(
         linaCurrencyKey, // stakeCurrency
         expandTo18Decimals(10_000) // stakeAmount
       );
-  
+
       await expect(
         stack.lnCollateralSystem.connect(alice).burnAndUnstake(
           expandTo18Decimals(10), // burnAmount
@@ -279,14 +279,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnDebtSystem, "PushDebtLog")
         .and.emit(stack.lnCollateralSystem, "RedeemCollateral");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(2_000)
       );
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(10)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -295,21 +295,21 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(8_000));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
         )[0]
       ).to.equal(expandTo18Decimals(10));
     });
-  
+
     it("can burn and unstake max atomically", async function () {
       // Alice stakes 10,000 LINA and builds 20 lUSD
       await stack.lnCollateralSystem.connect(alice).stakeAndBuildMax(
         linaCurrencyKey, // stakeCurrency
         expandTo18Decimals(10_000) // stakeAmount
       );
-  
+
       await expect(
         stack.lnCollateralSystem.connect(alice).burnAndUnstakeMax(
           expandTo18Decimals(5), // burnAmount
@@ -318,14 +318,14 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       )
         .to.emit(stack.lnDebtSystem, "PushDebtLog")
         .and.emit(stack.lnCollateralSystem, "RedeemCollateral");
-  
+
       expect(await stack.linaToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(2_500)
       );
       expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
         expandTo18Decimals(15)
       );
-  
+
       expect(
         await stack.lnCollateralSystem.GetUserCollateral(
           alice.address, // _user
@@ -334,7 +334,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(7_500));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             linaCurrencyKey // _currency
           )
@@ -384,7 +384,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey
           )
@@ -424,7 +424,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -462,7 +462,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -501,7 +501,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -546,7 +546,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(10));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -593,7 +593,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(6));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -639,7 +639,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(8));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )
@@ -683,7 +683,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
       ).to.equal(expandTo18Decimals(7.5));
       expect(
         (
-          await stack.lnDebtSystem.GetUserDebtBalanceInUsd(
+          await stack.lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(
             alice.address, // _user
             bnbCurrencyKey // _currency
           )

@@ -399,7 +399,7 @@ contract LnLiquidation is LnAdminUpgradeable {
     }
 
     function evalUserPostion(address user, bytes32 currencySymbol) private view returns (EvalUserPositionResult memory) {
-        (uint256 debtBalance, ) = lnDebtSystem.GetUserDebtBalanceInUsd(user, currencySymbol);
+        (uint256 debtBalance, ) = lnDebtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
 
         uint256 stakedCollateral;
         uint256 lockedCollateral;
