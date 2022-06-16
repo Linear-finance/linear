@@ -32,8 +32,12 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     uint256 public lastDeletTo; // delete to array index, lastDeletTo < lastCloseAt
     uint256 public constant MAX_DEL_PER_TIME = 50;
 
-    // Debt state for other currencies is stored in userDebtStateBySymbol
-    mapping(bytes32 => mapping(address => DebtData)) public userDebtStateBySymbol;
+    // Debt state for other currencies is stored in userDebtStateByCurrency
+    mapping(bytes32 => mapping(address => DebtData)) public userDebtStateByCurrency;
+    mapping(bytes32 => mapping(uint256 => uint256)) public lastDebtFactorsByCurrency;
+    mapping(bytes32 => uint256) public debtCurrentIndexByCurrency;
+    mapping(bytes32 => uint256) public lastCloseAtByCurrency;
+    mapping(bytes32 => uint256) public lastDeletToByCurrency;
 
     // -------------------------------------------------------
     function __LnDebtSystem_init(address _admin) public initializer {
@@ -101,31 +105,68 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         debtCurrentIndex = debtCurrentIndex + users.length;
     }
 
-    function _pushDebtFactor(uint256 _factor) private {
-        if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex - 1] == 0) {
-            // init or all debt has be cleared, new set value will be one unit
-            lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
-        } else {
-            lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(_factor);
-        }
-        emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
+    function _pushDebtFactor(uint256 _factor, bytes32 _currencySymbol) private {
+        uint256 currentIndex;
+        uint256 lastDebtFactor;
+        if (_currencySymbol == "LINA") {
+            currentIndex = debtCurrentIndex;
+            lastDebtFactor = lastDebtFactors[debtCurrentIndex - 1];
 
-        debtCurrentIndex = debtCurrentIndex.add(1);
-
-        // delete out of date data
-        if (lastDeletTo < lastCloseAt) {
-            // safe check
-            uint256 delNum = lastCloseAt - lastDeletTo;
-            delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
-            for (uint256 i = lastDeletTo; i < delNum; i++) {
-                delete lastDebtFactors[i];
+            if (currentIndex == 0 || lastDebtFactor == 0) {
+                // init or all debt has be cleared, new set value will be one unit
+                lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
+            } else {
+                lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(_factor);
             }
-            lastDeletTo = lastDeletTo.add(delNum);
+
+            emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
+
+            debtCurrentIndex = debtCurrentIndex.add(1);
+
+            // delete out of date data
+            if (lastDeletTo < lastCloseAt) {
+                // safe check
+                uint256 delNum = lastCloseAt - lastDeletTo;
+                delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
+                for (uint256 i = lastDeletTo; i < delNum; i++) {
+                    delete lastDebtFactors[i];
+                }
+                lastDeletTo = lastDeletTo.add(delNum);
+            }
+        } else {
+            currentIndex = debtCurrentIndexByCurrency[_currencySymbol];
+            lastDebtFactor = lastDebtFactorsByCurrency[_currencySymbol][currentIndex - 1];
+
+            if (currentIndex == 0 || lastDebtFactor == 0) {
+                // init or all debt has be cleared, new set value will be one unit
+                lastDebtFactorsByCurrency[_currencySymbol][currentIndex] = SafeDecimalMath.preciseUnit();
+            } else {
+                lastDebtFactorsByCurrency[_currencySymbol][currentIndex] = lastDebtFactorsByCurrency[_currencySymbol][currentIndex - 1].multiplyDecimalRoundPrecise(_factor);
+            }
+            
+            emit PushDebtLog(currentIndex, lastDebtFactorsByCurrency[_currencySymbol][currentIndex], block.timestamp);
+
+            debtCurrentIndexByCurrency[_currencySymbol] = debtCurrentIndexByCurrency[_currencySymbol].add(1);
+
+            // delete out of date data
+            if (lastDeletToByCurrency[_currencySymbol] < lastCloseAtByCurrency[_currencySymbol]) {
+                // safe check
+                uint256 delNum = lastCloseAtByCurrency[_currencySymbol] - lastDeletToByCurrency[_currencySymbol];
+                delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
+                for (uint256 i = lastDeletToByCurrency[_currencySymbol]; i < delNum; i++) {
+                    delete lastDebtFactorsByCurrency[_currencySymbol][i];
+                }
+                lastDeletToByCurrency[_currencySymbol] = lastDeletToByCurrency[_currencySymbol].add(delNum);
+            }
         }
     }
 
     function PushDebtFactor(uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
-        _pushDebtFactor(_factor);
+        _pushDebtFactor(_factor, "LINA");
+    }
+
+    function PushDebtFactorOfCurrency(uint256 _factor, bytes32 _currencySymbol) external OnlyDebtSystemRole(msg.sender) {
+        _pushDebtFactor(_factor, _currencySymbol);
     }
 
     function _updateUserDebt(
@@ -135,10 +176,10 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     ) private {
         if (_currencySymbol == "LINA") {
             userDebtState[_user].debtProportion = _debtProportion;
-            userDebtState[_user].debtFactor = _lastSystemDebtFactor();
+            userDebtState[_user].debtFactor = _lastSystemDebtFactor(_currencySymbol);
         } else {
-            userDebtStateBySymbol[_currencySymbol][_user].debtProportion = _debtProportion;
-            userDebtStateBySymbol[_currencySymbol][_user].debtFactor = _lastSystemDebtFactor();
+            userDebtStateByCurrency[_currencySymbol][_user].debtProportion = _debtProportion;
+            userDebtStateByCurrency[_currencySymbol][_user].debtFactor = _lastSystemDebtFactor(_currencySymbol);
         }
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
     }
@@ -175,8 +216,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         uint256 _debtProportion,
         uint256 _factor
     ) external OnlyDebtSystemRole(msg.sender) {
-        // TODO: check if currencySymbol is accepted
-        _pushDebtFactor(_factor);
+        _pushDebtFactor(_factor, "LINA");
         _updateUserDebt(_user, _debtProportion, "LINA");
     }
 
@@ -187,7 +227,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         bytes32 _currencySymbol
     ) external OnlyDebtSystemRole(msg.sender) {
         // TODO: check if currencySymbol is accepted
-        _pushDebtFactor(_factor);
+        _pushDebtFactor(_factor, _currencySymbol);
         _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
@@ -220,20 +260,32 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             debtProportion = userDebtState[_user].debtProportion;
             debtFactor = userDebtState[_user].debtFactor;
         } else {
-            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
-            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+            debtProportion = userDebtStateByCurrency[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateByCurrency[_currencySymbol][_user].debtFactor;
         }
     }
 
-    function _lastSystemDebtFactor() private view returns (uint256) {
-        if (debtCurrentIndex == 0) {
-            return SafeDecimalMath.preciseUnit();
+    function _lastSystemDebtFactor(bytes32 _currencySymbol) private view returns (uint256) {
+        if (_currencySymbol == "LINA") {
+            if (debtCurrentIndex == 0) {
+                return SafeDecimalMath.preciseUnit();
+            }
+            return lastDebtFactors[debtCurrentIndex - 1];
+        } else {
+            if (debtCurrentIndexByCurrency[_currencySymbol] == 0) {
+                return SafeDecimalMath.preciseUnit();
+            }
+            return lastDebtFactorsByCurrency[_currencySymbol][debtCurrentIndexByCurrency[_currencySymbol] - 1];
         }
-        return lastDebtFactors[debtCurrentIndex - 1];
+
     }
 
     function LastSystemDebtFactor() external view returns (uint256) {
-        return _lastSystemDebtFactor();
+        return _lastSystemDebtFactor("LINA");
+    }
+
+    function LastSystemDebtFactorByCurrency(bytes32 _currencySymbol) external view returns (uint256) {
+        return _lastSystemDebtFactor(_currencySymbol);
     }
     
     // /**
@@ -255,8 +307,8 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             debtProportion = userDebtState[_user].debtProportion;
             debtFactor = userDebtState[_user].debtFactor;
         } else {
-            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
-            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+            debtProportion = userDebtStateByCurrency[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateByCurrency[_currencySymbol][_user].debtFactor;
         }
 
         if (debtProportion == 0) {
@@ -264,7 +316,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         }
 
         uint256 currentUserDebtProportion =
-            _lastSystemDebtFactor().divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
+            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
         return currentUserDebtProportion;
     }
 
@@ -293,8 +345,8 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             debtProportion = userDebtState[_user].debtProportion;
             debtFactor = userDebtState[_user].debtFactor;
         } else {
-            debtProportion = userDebtStateBySymbol[_currencySymbol][_user].debtProportion;
-            debtFactor = userDebtStateBySymbol[_currencySymbol][_user].debtFactor;
+            debtProportion = userDebtStateByCurrency[_currencySymbol][_user].debtProportion;
+            debtFactor = userDebtStateByCurrency[_currencySymbol][_user].debtFactor;
         }
 
         if (debtProportion == 0) {
@@ -302,7 +354,7 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         }
 
         uint256 currentUserDebtProportion =
-            _lastSystemDebtFactor().divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
+            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
         uint256 userDebtBalance =
             totalAssetSupplyInUsd
                 .decimalToPreciseDecimal()
