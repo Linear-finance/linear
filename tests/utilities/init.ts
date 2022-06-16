@@ -285,6 +285,30 @@ export const deployLinearStack = async (
       key: "LiquidationDelay",
       value: Duration.fromObject({ days: 3 }).as("seconds"),
     },
+    {
+      key: "LiquidationRatioLina",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "LiquidationLiquidatorRewardLina",
+      value: expandTo18Decimals(0.1),
+    },
+    {
+      key: "LiquidationRatioBusd",
+      value: expandTo18Decimals(0.95),
+    },
+    {
+      key: "LiquidationLiquidatorRewardBusd",
+      value: expandTo18Decimals(0.08),
+    },
+    {
+      key: "LiquidationRatioBnb",
+      value: expandTo18Decimals(0.75),
+    },
+    {
+      key: "LiquidationLiquidatorRewardBnb",
+      value: expandTo18Decimals(0.09),
+    }
   ])
     await lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String(config.key), // key
@@ -547,6 +571,34 @@ export const deployLinearStack = async (
   await lnExchangeSystem
     .connect(admin)
     .updateAddressCache(lnAssetSystem.address);
+
+  /**
+   * Set config keys for different currency in `LnLiquidation`, including: 
+   * - liquidationReward
+   * - liquidationRatio
+   */
+  for (const keys of [
+    {
+      currency: ethers.utils.formatBytes32String("LINA"),
+      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardLina"),
+      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioLina"),
+    },
+    {
+      currency: ethers.utils.formatBytes32String("BUSD"),
+      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBusd"),
+      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBusd"),
+    },
+    {
+      currency: ethers.utils.formatBytes32String("BUSD"),
+      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBnb"),
+      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBnb"),
+    },
+  ])
+    await lnLiquidation.connect(admin).setConfigKey(
+      keys.currency, // currencySymbol
+      keys.liquidationReward, // liquidationRewardKey
+      keys.liquidationRatio // liquidationRatioKey
+    );
 
   /**
    * Set LnPerpExchange pool fee holder to LnRewardSystem

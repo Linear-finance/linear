@@ -27,6 +27,7 @@ describe("Integration | Liquidation", function () {
   let stack: DeployedStack;
 
   const liquidationDelay: Duration = Duration.fromObject({ days: 3 });
+  const linaCurrencyKey = formatBytes32String("LINA");
 
   const passLiquidationDelay = async (): Promise<void> => {
     await setNextBlockTimestamp(
@@ -194,7 +195,8 @@ describe("Integration | Liquidation", function () {
       .to.emit(stack.lnLiquidation, "PositionMarked")
       .withArgs(
         alice.address, // user
-        bob.address // marker
+        bob.address, // marker
+        linaCurrencyKey // currencySymbol
       );
 
     // Confirm mark
@@ -235,7 +237,8 @@ describe("Integration | Liquidation", function () {
     )
       .to.emit(stack.lnLiquidation, "PositionUnmarked")
       .withArgs(
-        alice.address // user
+        alice.address, // user
+        linaCurrencyKey // currencySymbol
       );
   });
 
