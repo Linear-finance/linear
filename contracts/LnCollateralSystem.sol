@@ -71,14 +71,14 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         _;
     }
 
-    // /**
-    //  * @notice This function is deprecated as it doesn't do what its name suggests. Use
-    //  * `getFreeCollateralInUsd()` instead. This function is not removed since it's still
-    //  * used by `LnBuildBurnSystem`.
-    //  */
-    // function MaxRedeemableInUsd(address _user) public view returns (uint256) {
-    //     return getFreeCollateralInUsd(_user);
-    // }
+    /**
+     * @notice This function is deprecated as it doesn't do what its name suggests. Use
+     * `getFreeCollateralInUsd()` instead. This function is not removed since it's still
+     * used by `LnBuildBurnSystem`.
+     */
+    function MaxRedeemableInUsd(address _user) public view returns (uint256) {
+        return getFreeCollateralInUsd(_user, "LINA");
+    }
 
     function getFreeCollateralInUsd(address user, bytes32 currencySymbol) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserCollateralInUsd(user, currencySymbol);
@@ -232,7 +232,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
-    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) public view returns (uint256 rTotal) {
+    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) internal view returns (uint256 rTotal) {
         uint256 collateralAmount = userCollateralData[_user][_currencySymbol].collateral;
         if (Currency_LINA == _currencySymbol) {
             collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));
@@ -244,14 +244,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     function GetUserTotalCollateralInUsd(address _user) public view returns (uint256 rTotal) {
         for (uint256 i = 0; i < tokenSymbol.length; i++) {
-            bytes32 currency = tokenSymbol[i];
-            uint256 collateralAmount = userCollateralData[_user][currency].collateral;
-            if (Currency_LINA == currency) {
-                collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));
-            }
-            if (collateralAmount > 0) {
-                rTotal = rTotal.add(collateralAmount.multiplyDecimal(priceGetter.getPrice(currency)));
-            }
+            rTotal = rTotal.add(GetUserCollateralInUsd(_user, tokenSymbol[i]));
         }
 
         if (userCollateralData[_user][Currency_ETH].collateral > 0) {
@@ -261,15 +254,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
-    function GetUserCollateral(address _user, bytes32 _currencySymbol) external view returns (uint256) {
-        return _getUserCollateral(_user, _currencySymbol);
-    }
-
-    function _getUserCollateral(address _user, bytes32 _currencySymbol) internal view returns (uint256) {
-        if (Currency_LINA != _currencySymbol) {
-            return userCollateralData[_user][_currencySymbol].collateral;
+    function GetUserCollateral(address _user, bytes32 _currency) external view returns (uint256) {
+        if (Currency_LINA != _currency) {
+            return userCollateralData[_user][_currency].collateral;
         }
-        return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currencySymbol].collateral);
+        return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
     }
 
     function getUserLinaCollateralBreakdown(address _user) external view returns (uint256 staked, uint256 locked) {
@@ -438,7 +427,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
 
         uint256 buildRatio = mConfig.getUint(mConfig.getBuildRatioKey(_currencySymbol));
-        uint256 collateralInUsd = _getUserCollateral(_user, _currencySymbol);
+        uint256 collateralInUsd = GetUserCollateralInUsd(_user, _currencySymbol);
         if (collateralInUsd == 0) {
             return false;
         }
