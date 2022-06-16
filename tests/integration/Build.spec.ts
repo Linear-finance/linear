@@ -76,7 +76,6 @@ describe("Integration | Build", function () {
     // Alice can build 1 lUSD without staking
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(1), // amount
-      linaCurrencyKey
     );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
@@ -90,7 +89,7 @@ describe("Integration | Build", function () {
       .Collateral(busdCurrencyKey, expandTo18Decimals(10));
 
     // Alice can build 1 lUSD without staking
-    await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
+    await stack.lnBuildBurnSystem.connect(alice).BuildAssetByCurrency(
       expandTo18Decimals(1), // amount
       busdCurrencyKey
     );
@@ -106,7 +105,7 @@ describe("Integration | Build", function () {
       .Collateral(busdCurrencyKey, expandTo18Decimals(10));
 
     // Alice can build 1 lUSD without staking
-    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAsset(
+    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAssetByCurrency(
       busdCurrencyKey
     );
 
@@ -135,7 +134,7 @@ describe("Integration | Build", function () {
       );
 
     // Alice can build 1 lUSD without staking
-    await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
+    await stack.lnBuildBurnSystem.connect(alice).BuildAssetByCurrency(
       expandTo18Decimals(1), // amount
       bnbCurrencyKey
     );
@@ -164,7 +163,7 @@ describe("Integration | Build", function () {
       );
 
     // Alice can build 1 lUSD without staking
-    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAsset(
+    await stack.lnBuildBurnSystem.connect(alice).BuildMaxAssetByCurrency(
       bnbCurrencyKey
     );
 
@@ -245,7 +244,6 @@ describe("Integration | Build", function () {
     // Alice builds 10 lUSD
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(10), // amount
-      linaCurrencyKey
     );
 
     // 5,000 LINA is set aside

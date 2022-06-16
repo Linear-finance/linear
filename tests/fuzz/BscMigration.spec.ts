@@ -82,7 +82,7 @@ describe("Fuzz | BscMigration", function () {
 
         actionTx = await stack.lnBuildBurnSystem
           .connect(user)
-          .BuildAsset(amountToBuild, linaCurrencyKey);
+          .BuildAsset(amountToBuild);
       } else {
         let amountToBurn: BigNumber = currentCollateralAmount.div(
           BigNumber.from(Math.floor(Math.random() * 10 + 1))
@@ -91,7 +91,7 @@ describe("Fuzz | BscMigration", function () {
 
         actionTx = await stack.lnBuildBurnSystem
           .connect(user)
-          .BurnAsset(amountToBurn, linaCurrencyKey);
+          .BurnAsset(amountToBurn);
       }
 
       const logsFromTx: LogDescription[] = (await actionTx.wait()).events

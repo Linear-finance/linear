@@ -104,7 +104,6 @@ describe("Integration | Exchange", function () {
     // Alice builds 1,000 lUSD
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(1_000), // amount
-      ethers.utils.formatBytes32String("LINA")
     );
   });
 

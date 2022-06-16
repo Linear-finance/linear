@@ -93,8 +93,16 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return maxBuildableAmount;
     }
 
+    // /**
+    //  * @notice This function is deprecated as it only builds with LINA. Use
+    //  * `BuildAssetByCurrency()` instead.
+    //  */
+    function BuildAsset(uint256 amount) external whenNotPaused returns (bool) {
+        return _buildAsset(msg.sender, amount, "LINA");
+    }
+
     // build lusd with currency specified
-    function BuildAsset(uint256 amount, bytes32 currencySymbol) external whenNotPaused returns (bool) {
+    function BuildAssetByCurrency(uint256 amount, bytes32 currencySymbol) external whenNotPaused returns (bool) {
         address user = msg.sender;
         return _buildAsset(user, amount, currencySymbol);
     }
@@ -132,7 +140,15 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return true;
     }
 
-    function BuildMaxAsset(bytes32 currencySymbol) external whenNotPaused {
+    // /**
+    //  * @notice This function is deprecated as it only builds with LINA. Use
+    //  * `BuildMaxAssetByCurrency()` instead.
+    //  */
+    function BuildMaxAsset() external whenNotPaused {
+        _buildMaxAsset(msg.sender, "LINA");
+    }
+
+    function BuildMaxAssetByCurrency(bytes32 currencySymbol) external whenNotPaused {
         _buildMaxAsset(msg.sender, currencySymbol);
     }
 
@@ -175,10 +191,18 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         debtSystem.UpdateDebt(debtUser, newUserDebtProportion, oldTotalProportion, currencySymbol);
     }
 
+    // /**
+    //  * @notice This function is deprecated as it only burns lusd with LINA as collateral. Use
+    //  * `BurnAssetByCurrency()` instead.
+    //  */
+    function BurnAsset(uint256 amount) external whenNotPaused returns (bool) {
+        _burnAsset(msg.sender, msg.sender, amount, "LINA");
+        return true;
+    }
+
     // burn
-    function BurnAsset(uint256 amount, bytes32 currencySymbol) external whenNotPaused returns (bool) {
-        address user = msg.sender;
-        _burnAsset(user, user, amount, currencySymbol);
+    function BurnAssetByCurrency(uint256 amount, bytes32 currencySymbol) external whenNotPaused returns (bool) {
+        _burnAsset(msg.sender, msg.sender, amount, currencySymbol);
         return true;
     }
 
