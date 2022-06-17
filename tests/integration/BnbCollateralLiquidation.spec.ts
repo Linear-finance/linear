@@ -12,7 +12,7 @@ import {
   setNextBlockTimestamp,
 } from "../utilities/timeTravel";
 
-describe("Integration | Liquidation", function () {
+describe("Integration | BNB collateral Liquidation", function () {
   let deployer: SignerWithAddress,
     admin: SignerWithAddress,
     alice: SignerWithAddress,

@@ -393,7 +393,11 @@ contract LnLiquidation is LnAdminUpgradeable {
 
         // If the position is completely liquidated, remove the marker
         if (params.lusdToBurn == maxLusdToBurn) {
-            delete undercollateralizationMarks[params.user];
+            if (params.currencySymbol == "LINA") {
+                delete undercollateralizationMarks[params.user];
+            } else {
+                delete undercollateralizationMarksByCurrency[params.currencySymbol][params.user];
+            }
             emit PositionUnmarked(params.user, params.currencySymbol);
         }
     }
