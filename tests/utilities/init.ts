@@ -589,7 +589,7 @@ export const deployLinearStack = async (
       liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBusd"),
     },
     {
-      currency: ethers.utils.formatBytes32String("BUSD"),
+      currency: ethers.utils.formatBytes32String("BNB"),
       liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBnb"),
       liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBnb"),
     },
