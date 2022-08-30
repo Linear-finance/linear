@@ -1707,6 +1707,11 @@
       "address": "0xC6856Ea6a543Ad838C184e9c3bF05677210B7d55",
       "kind": "transparent",
       "txHash": "0xc326f418dc832c0a703ac3599ff1395d4fd2a49c618c6dd14e28a33aa0aef284"
+    },
+    {
+      "address": "0xF7f7353AcD3F6ca8393C67f2417B3A3E435d635a",
+      "kind": "transparent",
+      "txHash": "0xe01744c1d4d3bae96d7e4c68267cd3dae68b2f34304db17121cee0c4478c9c2e"
     }
   ],
   "admin": {

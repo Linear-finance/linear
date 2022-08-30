@@ -6017,6 +6017,11 @@
       "address": "0x9C1cC828c8D7F065686CDE293cf84f8938dD7742",
       "kind": "transparent",
       "txHash": "0x6d6133d7319d82d512b86c1dd0b76a2568d2b4ffb64030f2c7a7fcd724aedc24"
+    },
+    {
+      "address": "0xa51077CcaA4AD1B0B36fb25AF36D01403795E092",
+      "kind": "transparent",
+      "txHash": "0xe6819ad31c766dd822588bcb5476b1c9002643ecdbd965a145115bb5c913932e"
     }
   ],
   "admin": {
