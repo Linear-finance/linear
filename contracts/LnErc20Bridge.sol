@@ -61,6 +61,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         bytes32 currency,
         uint256 amount
     );
+    event ForcedWithdrawal(uint256 srcChainId, uint256 depositId, address actualRecipient);
     event RelayerChanged(address oldRelayer, address newRelayer);
     event TokenAdded(bytes32 tokenKey, address tokenAddress, uint8 lockType);
     event TokenRemoved(bytes32 tokenKey);
@@ -252,6 +253,64 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         }
 
         emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
+    }
+
+    function forceUithdraw(
+        uint256 srcChainId,
+        uint256 destChainId,
+        uint256 depositId,
+        bytes32 depositor,
+        bytes32 recipient,
+        bytes32 currency,
+        uint256 amount,
+        bytes calldata signature,
+        address overrideRecipient
+    ) external onlyAdmin {
+        require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
+        require(!withdrawnDeposits[srcChainId][depositId], "LnErc20Bridge: already withdrawn");
+        require(recipient != 0, "LnErc20Bridge: zero address");
+        require(amount > 0, "LnErc20Bridge: amount must be positive");
+
+        TokenInfo memory tokenInfo = tokenInfos[currency];
+        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
+
+        // Verify EIP-712 signature
+        bytes32 digest =
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(
+                        abi.encode(
+                            DEPOSIT_TYPEHASH,
+                            srcChainId,
+                            destChainId,
+                            depositId,
+                            depositor,
+                            recipient,
+                            currency,
+                            amount
+                        )
+                    )
+                )
+            );
+        address recoveredAddress = digest.recover(signature);
+        require(recoveredAddress == relayer, "LnErc20Bridge: invalid signature");
+
+        withdrawnDeposits[srcChainId][depositId] = true;
+
+        address decodedRecipient = overrideRecipient;
+
+        if (tokenInfo.lockType == TOKEN_LOCK_TYPE_TRANSFER) {
+            safeTransfer(tokenInfo.tokenAddress, decodedRecipient, amount);
+        } else if (tokenInfo.lockType == TOKEN_LOCK_TYPE_MINT_BURN) {
+            IMintBurnToken(tokenInfo.tokenAddress).mint(decodedRecipient, amount);
+        } else {
+            require(false, "LnErc20Bridge: unknown token lock type");
+        }
+
+        emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
+        emit ForcedWithdrawal(srcChainId, depositId, decodedRecipient);
     }
 
     function _setRelayer(address _relayer) private {
