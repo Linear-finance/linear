@@ -5950,6 +5950,131 @@
           }
         }
       }
+    },
+    "0a85573a3ffdc991c054cef53aa0c8220228ab5d4ed453319cbc3f8ed8ed4da0": {
+      "address": "0xCED2e3AEff36063C5f5A8c5Bc0Ff376927b501e4",
+      "txHash": "0xdbb1b70124980e5fcb673edb78813fefeb005674688a81cab372b2a02bbbb223",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "currentChainId",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:76"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "relayer",
+            "type": "t_address",
+            "src": "contracts/LnErc20Bridge.sol:77"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "depositCount",
+            "type": "t_uint256",
+            "src": "contracts/LnErc20Bridge.sol:78"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenInfos",
+            "type": "t_mapping(t_bytes32,t_struct(TokenInfo)5667_storage)",
+            "src": "contracts/LnErc20Bridge.sol:79"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "tokenSupportedOnChain",
+            "type": "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:80"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "withdrawnDeposits",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "src": "contracts/LnErc20Bridge.sol:81"
+          },
+          {
+            "contract": "LnErc20Bridge",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnErc20Bridge.sol:83"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(TokenInfo)5667_storage)": {
+            "label": "mapping(bytes32 => struct LnErc20Bridge.TokenInfo)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(TokenInfo)5667_storage": {
+            "label": "struct LnErc20Bridge.TokenInfo",
+            "members": [
+              {
+                "label": "tokenAddress",
+                "type": "t_address"
+              },
+              {
+                "label": "lockType",
+                "type": "t_uint8"
+              }
+            ]
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_mapping(t_bytes32,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(bytes32 => mapping(uint256 => bool))"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          }
+        }
+      }
     }
   },
   "proxies": [
