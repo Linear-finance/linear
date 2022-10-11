@@ -6,7 +6,7 @@
 
 import { Duration } from "luxon";
 import { ethers, upgrades } from "hardhat";
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
 import { expandTo18Decimals, zeroAddress } from ".";
@@ -252,6 +252,10 @@ export const deployLinearStack = async (
     {
       key: "BuildRatio",
       value: expandTo18Decimals(0.2),
+    },
+    {
+      key: "LiquidationMarkRemoveRatio",
+      value: BigNumber.from("222222222222222222"),
     },
     {
       key: "LiquidationRatio",

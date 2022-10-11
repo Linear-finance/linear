@@ -216,17 +216,17 @@ describe("Integration | Liquidation", function () {
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
 
-    // LINA price goes to $0.099. Alice cannot remove mark
-    await setLinaPrice(0.099);
+    // LINA price goes to $0.089. Alice cannot remove mark
+    await setLinaPrice(0.089);
 
     await expect(
       stack.lnLiquidation
         .connect(alice)
         .removeUndercollateralizationMark(alice.address)
-    ).to.be.revertedWith("LnLiquidation: still undercollateralized");
+    ).to.be.revertedWith("LnLiquidation: mark removal ratio violation");
 
-    // LINA price goes to $0.1. Alice can now remove mark
-    await setLinaPrice(0.1);
+    // LINA price goes to $0.09. Alice can now remove mark
+    await setLinaPrice(0.09);
     await expect(
       stack.lnLiquidation
         .connect(alice)
