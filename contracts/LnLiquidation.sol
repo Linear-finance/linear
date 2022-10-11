@@ -89,6 +89,7 @@ contract LnLiquidation is LnAdminUpgradeable {
     bytes32 public constant LIQUIDATION_RATIO_KEY = "LiquidationRatio";
     bytes32 public constant LIQUIDATION_DELAY_KEY = "LiquidationDelay";
     bytes32 public constant BUILD_RATIO_KEY = "BuildRatio";
+    bytes32 public constant LIQUIDATION_MARK_REMOVAL_RATIO_KEY = "LiquidationMarkRemoveRatio";
 
     function isPositionMarkedAsUndercollateralized(address user) public view returns (bool) {
         return undercollateralizationMarks[user].timestamp > 0;
@@ -153,8 +154,8 @@ contract LnLiquidation is LnAdminUpgradeable {
 
         // Can only remove mark if C ratio is restored to issuance ratio
         EvalUserPositionResult memory evalResult = evalUserPostion(user);
-        uint256 issuanceRatio = lnConfig.getUint(BUILD_RATIO_KEY);
-        require(evalResult.collateralizationRatio <= issuanceRatio, "LnLiquidation: still undercollateralized");
+        uint256 markRemoveRatio = lnConfig.getUint(LIQUIDATION_MARK_REMOVAL_RATIO_KEY);
+        require(evalResult.collateralizationRatio <= markRemoveRatio, "LnLiquidation: mark removal ratio violation");
 
         delete undercollateralizationMarks[user];
 
