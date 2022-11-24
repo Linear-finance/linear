@@ -341,7 +341,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         )[0]
       ).to.equal(expandTo18Decimals(15));
     });
-  })
+  });
 
   describe("With native tokens", function () {
     beforeEach(async function () {
@@ -364,7 +364,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
           expandTo18Decimals(10), // stakeAmount
           0, // buildAmount
           {
-            value: expandTo18Decimals(10)
+            value: expandTo18Decimals(10),
           }
         )
       )
@@ -398,7 +398,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         expandTo18Decimals(10), // stakeAmount
         0, // buildAmount
         {
-          value: expandTo18Decimals(10)
+          value: expandTo18Decimals(10),
         }
       );
 
@@ -440,7 +440,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
           expandTo18Decimals(10), // stakeAmount
           expandTo18Decimals(1), // buildAmount
           {
-            value: expandTo18Decimals(10)
+            value: expandTo18Decimals(10),
           }
         )
       )
@@ -479,7 +479,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
           bnbCurrencyKey, // stakeCurrency
           expandTo18Decimals(10), // stakeAmount
           {
-            value: expandTo18Decimals(10)
+            value: expandTo18Decimals(10),
           }
         )
       )
@@ -517,7 +517,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         bnbCurrencyKey, // stakeCurrency
         expandTo18Decimals(10), // stakeAmount
         {
-          value: expandTo18Decimals(10)
+          value: expandTo18Decimals(10),
         }
       );
 
@@ -561,7 +561,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         expandTo18Decimals(10), // stakeAmount
         expandTo18Decimals(10), // buildAmount
         {
-          value: expandTo18Decimals(10)
+          value: expandTo18Decimals(10),
         }
       );
 
@@ -607,7 +607,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         bnbCurrencyKey, // stakeCurrency
         expandTo18Decimals(10), // stakeAmount
         {
-          value: expandTo18Decimals(10)
+          value: expandTo18Decimals(10),
         }
       );
 
@@ -653,7 +653,7 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         bnbCurrencyKey, // stakeCurrency
         expandTo18Decimals(10), // stakeAmount
         {
-          value: expandTo18Decimals(10)
+          value: expandTo18Decimals(10),
         }
       );
 
@@ -690,5 +690,5 @@ describe("Integration | Merge API: Stake/Build and Burn/Unstake", function () {
         )[0]
       ).to.equal(expandTo18Decimals(562.5));
     });
-  })
+  });
 });

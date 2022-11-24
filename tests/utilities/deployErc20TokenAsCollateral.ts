@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expandTo18Decimals } from '.';
-import { Contract } from 'ethers';
-import { formatBytes32String } from 'ethers/lib/utils';
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expandTo18Decimals } from ".";
+import { Contract } from "ethers";
+import { formatBytes32String } from "ethers/lib/utils";
 
 export const deployErc20TokenAsCollateral = async (
   name: string,
@@ -19,8 +19,8 @@ export const deployErc20TokenAsCollateral = async (
   );
 
   /**
- * Register BUSD on `LnCollateralSystem`
- */
+   * Register BUSD on `LnCollateralSystem`
+   */
   await lnCollateralSystem.connect(admin).UpdateTokenInfo(
     formatBytes32String(symbol), // _currency
     busdToken.address, // _tokenAddr
@@ -29,4 +29,4 @@ export const deployErc20TokenAsCollateral = async (
   );
 
   return busdToken;
-}
+};

@@ -97,9 +97,9 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return totalCollateralInUsd.sub(minCollateral);
     }
 
-    // /**
-    //  * @notice This function is removed due to contract size limit.
-    //  */
+    /**
+     * @notice This function is removed due to contract size limit.
+     */
     // function maxRedeemableLina(address user) public view returns (uint256) {
     //     return maxRedeemable(user, "LINA");
     // }
@@ -122,7 +122,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             } else {
                 return stakedAmount.sub(minCollateralToken);
             }
-
         }
     }
 
@@ -169,7 +168,10 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(_currency[0] != 0, "symbol cannot empty");
         require(_currency != Currency_ETH, "ETH is used by system");
         require(_tokenAddr != address(0), "token address cannot zero");
-        require(_tokenAddr.isContract() || _tokenAddr == address(0x000000000000000000000000000000000000dEaD), "token address is not a contract");
+        require(
+            _tokenAddr.isContract() || _tokenAddr == address(0x000000000000000000000000000000000000dEaD),
+            "token address is not a contract"
+        );
 
         if (tokenInfos[_currency].tokenAddr == address(0)) {
             // new token
@@ -324,7 +326,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         bytes32 stakeCurrency,
         uint256 stakeAmount,
         uint256 buildAmount
-    ) payable external whenNotPaused {
+    ) external payable whenNotPaused {
         require(stakeAmount > 0 || buildAmount > 0, "LnCollateralSystem: zero amount");
 
         if (stakeAmount > 0) {
@@ -342,7 +344,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
      * @param stakeCurrency ID of the collateral currency
      * @param stakeAmount Amount of collateral currency to stake
      */
-    function stakeAndBuildMax(bytes32 stakeCurrency, uint256 stakeAmount) payable external whenNotPaused {
+    function stakeAndBuildMax(bytes32 stakeCurrency, uint256 stakeAmount) external payable whenNotPaused {
         require(stakeAmount > 0, "LnCollateralSystem: zero amount");
 
         _collateral(msg.sender, stakeCurrency, stakeAmount);
@@ -387,7 +389,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     // need approve
-    function Collateral(bytes32 _currency, uint256 _amount) payable external whenNotPaused returns (bool) {
+    function Collateral(bytes32 _currency, uint256 _amount) external payable whenNotPaused returns (bool) {
         address user = msg.sender;
         return _collateral(user, _currency, _amount);
     }
@@ -409,7 +411,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             IERC20 erc20 = IERC20(tokenInfo.tokenAddr);
             require(erc20.balanceOf(user) >= _amount, "insufficient balance");
             require(erc20.allowance(user, address(this)) >= _amount, "insufficient allowance, need approve more amount");
-    
+
             TransferHelper.safeTransferFrom(tokenInfo.tokenAddr, user, address(this), _amount);
         }
 
@@ -420,10 +422,10 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         return true;
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only return the boolean of whether
-    //  * target ratio of LINA is satisfied. Use IsSatisfyTargetRatioByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only return the boolean of whether
+     * target ratio of LINA is satisfied. Use IsSatisfyTargetRatioByCurrency()` instead.
+     */
     function IsSatisfyTargetRatio(address _user) public view returns (bool) {
         return IsSatisfyTargetRatioByCurrency(_user, "LINA");
     }

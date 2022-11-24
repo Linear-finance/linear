@@ -77,10 +77,10 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
 
     event UpdateLusdToken(address oldAddr, address newAddr);
 
-    // /**
-    //  * @notice This function is deprecated as it doesn't distinguish the underlying collateral. Use
-    //  * `getMaxBuildableLusdAmount()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it doesn't distinguish the underlying collateral. Use
+     * `getMaxBuildableLusdAmount()` instead.
+     */
     function MaxCanBuildAsset(address user) external view returns (uint256) {
         return getMaxBuildableLusdAmount(user, Currency_LINA);
     }
@@ -93,10 +93,10 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return maxBuildableAmount;
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only builds with LINA. Use
-    //  * `BuildAssetByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only builds with LINA. Use
+     * `BuildAssetByCurrency()` instead.
+     */
     function BuildAsset(uint256 amount) external whenNotPaused returns (bool) {
         return _buildAsset(msg.sender, amount, "LINA");
     }
@@ -140,10 +140,10 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         return true;
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only builds with LINA. Use
-    //  * `BuildMaxAssetByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only builds with LINA. Use
+     * `BuildMaxAssetByCurrency()` instead.
+     */
     function BuildMaxAsset() external whenNotPaused {
         _buildMaxAsset(msg.sender, "LINA");
     }
@@ -191,10 +191,10 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         debtSystem.UpdateDebtByCurrency(debtUser, newUserDebtProportion, oldTotalProportion, currencySymbol);
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only burns lusd with LINA as collateral. Use
-    //  * `BurnAssetByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only burns lusd with LINA as collateral. Use
+     * `BurnAssetByCurrency()` instead.
+     */
     function BurnAsset(uint256 amount) external whenNotPaused returns (bool) {
         _burnAsset(msg.sender, msg.sender, amount, "LINA");
         return true;

@@ -49,7 +49,7 @@ describe("Integration | BNB collateral Liquidation", function () {
       bnbCurrencyKey, // _currency
       stakeAmount, // _amount
       {
-        value: stakeAmount
+        value: stakeAmount,
       }
     );
     await stack.lnBuildBurnSystem.connect(user).BuildAssetByCurrency(
@@ -76,7 +76,7 @@ describe("Integration | BNB collateral Liquidation", function () {
       {
         key: "LiquidationLiquidatorRewardBnb",
         value: expandTo18Decimals(0.1),
-      }
+      },
     ])
       await stack.lnConfig.connect(admin).setUint(
         ethers.utils.formatBytes32String(config.key), // key
@@ -93,11 +93,7 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(1000);
 
     // Alice stakes 0.1 BNB ($100) and builds 20 lUSD
-    await stakeAndBuild(
-      alice,
-      expandTo18Decimals(0.1),
-      expandTo18Decimals(20)
-    );
+    await stakeAndBuild(alice, expandTo18Decimals(0.1), expandTo18Decimals(20));
 
     // Bob staks 100 BNB ($100,000) nd builds 1,000 lUSD
     await stakeAndBuild(
@@ -115,7 +111,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey)
+        .markPositionAsUndercollateralizedByCurrency(
+          alice.address,
+          bnbCurrencyKey
+        )
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // Price of BNB drops such that Alice's C-ratio falls below liquidation ratio
@@ -125,7 +124,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey)
+        .markPositionAsUndercollateralizedByCurrency(
+          alice.address,
+          bnbCurrencyKey
+        )
     )
       .to.emit(stack.lnLiquidation, "PositionMarked")
       .withArgs(
@@ -154,7 +156,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(350);
     await stack.lnLiquidation
       .connect(bob)
-      .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey);
+      .markPositionAsUndercollateralizedByCurrency(
+        alice.address,
+        bnbCurrencyKey
+      );
 
     // BNB price goes to $99. Alice cannot remove mark
     await setBnbPrice(99);
@@ -162,7 +167,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(alice)
-        .removeUndercollateralizationMarkByCurrency(alice.address, bnbCurrencyKey)
+        .removeUndercollateralizationMarkByCurrency(
+          alice.address,
+          bnbCurrencyKey
+        )
     ).to.be.revertedWith("LnLiquidation: still undercollateralized");
 
     // BNB price goes to $1000. Alice can now remove mark
@@ -170,7 +178,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(alice)
-        .removeUndercollateralizationMarkByCurrency(alice.address, bnbCurrencyKey)
+        .removeUndercollateralizationMarkByCurrency(
+          alice.address,
+          bnbCurrencyKey
+        )
     )
       .to.emit(stack.lnLiquidation, "PositionUnmarked")
       .withArgs(
@@ -184,7 +195,9 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(350);
 
     await expect(
-      stack.lnLiquidation.connect(bob).liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1, [])
+      stack.lnLiquidation
+        .connect(bob)
+        .liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1, [])
     ).to.be.revertedWith("LnLiquidation: not marked for undercollateralized");
   });
 
@@ -197,7 +210,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setNextBlockTimestamp(ethers.provider, markTime);
     await stack.lnLiquidation
       .connect(bob)
-      .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey);
+      .markPositionAsUndercollateralizedByCurrency(
+        alice.address,
+        bnbCurrencyKey
+      );
 
     // Cannot liquidate before delay is passed
     await setNextBlockTimestamp(
@@ -205,7 +221,9 @@ describe("Integration | BNB collateral Liquidation", function () {
       markTime.plus(liquidationDelay)
     );
     await expect(
-      stack.lnLiquidation.connect(bob).liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1000, [])
+      stack.lnLiquidation
+        .connect(bob)
+        .liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1000, [])
     ).to.be.revertedWith("LnLiquidation: liquidation delay not passed");
 
     // Can liquidate after delay is passed
@@ -223,7 +241,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(350);
     await stack.lnLiquidation
       .connect(bob)
-      .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey);
+      .markPositionAsUndercollateralizedByCurrency(
+        alice.address,
+        bnbCurrencyKey
+      );
     await passLiquidationDelay();
 
     // C-ratio restored but mark is not removed
@@ -231,7 +252,9 @@ describe("Integration | BNB collateral Liquidation", function () {
 
     // Position cannot be liquidated now
     await expect(
-      stack.lnLiquidation.connect(bob).liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1000, [])
+      stack.lnLiquidation
+        .connect(bob)
+        .liquidateCollateralPosition(alice.address, bnbCurrencyKey, 1000, [])
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // C-ratio falls below issuance ratio
@@ -248,7 +271,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(350);
     await stack.lnLiquidation
       .connect(bob)
-      .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey);
+      .markPositionAsUndercollateralizedByCurrency(
+        alice.address,
+        bnbCurrencyKey
+      );
     await passLiquidationDelay();
 
     /**
@@ -264,13 +290,23 @@ describe("Integration | BNB collateral Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .liquidateCollateralPosition(alice.address, bnbCurrencyKey, maxLusdToBurn.add(1), [])
+        .liquidateCollateralPosition(
+          alice.address,
+          bnbCurrencyKey,
+          maxLusdToBurn.add(1),
+          []
+        )
     ).to.be.revertedWith("LnLiquidation: burn amount too large");
 
     // Can burn exactly the max amount
     await stack.lnLiquidation
       .connect(bob)
-      .liquidateCollateralPosition(alice.address, bnbCurrencyKey, maxLusdToBurn, []);
+      .liquidateCollateralPosition(
+        alice.address,
+        bnbCurrencyKey,
+        maxLusdToBurn,
+        []
+      );
 
     // Mark is removed after buring the max amount
     expect(
@@ -286,7 +322,10 @@ describe("Integration | BNB collateral Liquidation", function () {
     await setBnbPrice(350);
     await stack.lnLiquidation
       .connect(bob)
-      .markPositionAsUndercollateralizedByCurrency(alice.address, bnbCurrencyKey);
+      .markPositionAsUndercollateralizedByCurrency(
+        alice.address,
+        bnbCurrencyKey
+      );
     await passLiquidationDelay();
 
     await stack.lnLiquidation

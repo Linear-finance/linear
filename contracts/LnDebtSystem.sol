@@ -116,7 +116,9 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
                 // init or all debt has be cleared, new set value will be one unit
                 lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
             } else {
-                lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(_factor);
+                lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(
+                    _factor
+                );
             }
 
             emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
@@ -141,9 +143,12 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
                 // init or all debt has be cleared, new set value will be one unit
                 lastDebtFactorsByCurrency[_currencySymbol][currentIndex] = SafeDecimalMath.preciseUnit();
             } else {
-                lastDebtFactorsByCurrency[_currencySymbol][currentIndex] = lastDebtFactorsByCurrency[_currencySymbol][currentIndex - 1].multiplyDecimalRoundPrecise(_factor);
+                lastDebtFactorsByCurrency[_currencySymbol][currentIndex] = lastDebtFactorsByCurrency[_currencySymbol][
+                    currentIndex - 1
+                ]
+                    .multiplyDecimalRoundPrecise(_factor);
             }
-            
+
             emit PushDebtLog(currentIndex, lastDebtFactorsByCurrency[_currencySymbol][currentIndex], block.timestamp);
 
             debtCurrentIndexByCurrency[_currencySymbol] = debtCurrentIndexByCurrency[_currencySymbol].add(1);
@@ -184,20 +189,17 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only update user debt with LINA
-    //  *  as collateral. Use UpdateUserDebtByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only update user debt with LINA
+     *  as collateral. Use UpdateUserDebtByCurrency()` instead.
+     */
     // need update lastDebtFactors first
-    function UpdateUserDebt(
-        address _user,
-        uint256 _debtProportion
-    ) external OnlyDebtSystemRole(msg.sender) {
+    function UpdateUserDebt(address _user, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
         // TODO: check if currencySymbol is accepted
         _updateUserDebt(_user, _debtProportion, "LINA");
     }
 
-        // need update lastDebtFactors first
+    // need update lastDebtFactors first
     function UpdateUserDebtByCurrency(
         address _user,
         uint256 _debtProportion,
@@ -207,10 +209,10 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only update debt with LINA
-    //  *  as collateral. Use UpdateDebtByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only update debt with LINA
+     *  as collateral. Use UpdateDebtByCurrency()` instead.
+     */
     function UpdateDebt(
         address _user,
         uint256 _debtProportion,
@@ -231,15 +233,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         _updateUserDebt(_user, _debtProportion, _currencySymbol);
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only get user debt data with LINA
-    //  *  as collateral. Use GetUserDebtDataByCurrency()` instead.
-    //  */
-    function GetUserDebtData(address _user)
-        external
-        view
-        returns (uint256 debtProportion, uint256 debtFactor)
-    {
+    /**
+     * @notice This function is deprecated as it only get user debt data with LINA
+     *  as collateral. Use GetUserDebtDataByCurrency()` instead.
+     */
+    function GetUserDebtData(address _user) external view returns (uint256 debtProportion, uint256 debtFactor) {
         (debtProportion, debtFactor) = _getUserDebtData(_user, "LINA");
     }
 
@@ -277,7 +275,6 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
             }
             return lastDebtFactorsByCurrency[_currencySymbol][debtCurrentIndexByCurrency[_currencySymbol] - 1];
         }
-
     }
 
     function LastSystemDebtFactor() external view returns (uint256) {
@@ -287,11 +284,11 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
     function LastSystemDebtFactorByCurrency(bytes32 _currencySymbol) external view returns (uint256) {
         return _lastSystemDebtFactor(_currencySymbol);
     }
-    
-    // /**
-    //  * @notice This function is deprecated as it only get user current debt proportion
-    //  *  with LINA as collateral. Use GetUserDebtDataByCurrency()` instead.
-    //  */
+
+    /**
+     * @notice This function is deprecated as it only get user current debt proportion
+     *  with LINA as collateral. Use GetUserDebtDataByCurrency()` instead.
+     */
     function GetUserCurrentDebtProportion(address _user) public view returns (uint256) {
         return _getUserCurrentDebtProportion(_user, "LINA");
     }
@@ -316,19 +313,25 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         }
 
         uint256 currentUserDebtProportion =
-            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
+            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(
+                debtProportion
+            );
         return currentUserDebtProportion;
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only get user debt balance
-    //  *  with LINA as collateral. Use GetUserDebtDataByCurrency()` instead.
-    //  */
+    /**
+     * @notice This function is deprecated as it only get user debt balance
+     *  with LINA as collateral. Use GetUserDebtDataByCurrency()` instead.
+     */
     function GetUserDebtBalanceInUsd(address _user) external view returns (uint256, uint256) {
         return _getUserDebtBalanceInUsd(_user, "LINA");
     }
 
-    function GetUserDebtBalanceInUsdByCurrency(address _user, bytes32 _currencySymbol) external view returns (uint256, uint256) {
+    function GetUserDebtBalanceInUsdByCurrency(address _user, bytes32 _currencySymbol)
+        external
+        view
+        returns (uint256, uint256)
+    {
         return _getUserDebtBalanceInUsd(_user, _currencySymbol);
     }
 
@@ -354,7 +357,9 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
         }
 
         uint256 currentUserDebtProportion =
-            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
+            _lastSystemDebtFactor(_currencySymbol).divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(
+                debtProportion
+            );
         uint256 userDebtBalance =
             totalAssetSupplyInUsd
                 .decimalToPreciseDecimal()

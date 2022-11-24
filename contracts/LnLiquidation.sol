@@ -103,12 +103,15 @@ contract LnLiquidation is LnAdminUpgradeable {
     mapping(bytes32 => ConfigKey) public configKeys;
     mapping(bytes32 => mapping(address => UndercollateralizationMark)) public undercollateralizationMarksByCurrency;
 
-
     function isPositionMarkedAsUndercollateralized(address user) public view returns (bool) {
         return undercollateralizationMarks[user].timestamp > 0;
     }
 
-    function isPositionMarkedAsUndercollateralizedByCurrency(address user, bytes32 currencySymbol) public view returns (bool) {
+    function isPositionMarkedAsUndercollateralizedByCurrency(address user, bytes32 currencySymbol)
+        public
+        view
+        returns (bool)
+    {
         if (currencySymbol == "LINA") {
             return undercollateralizationMarks[user].timestamp > 0;
         } else {
@@ -120,7 +123,11 @@ contract LnLiquidation is LnAdminUpgradeable {
         return undercollateralizationMarks[user].marker;
     }
 
-    function getUndercollateralizationMarkMarkerByCurrency(address user, bytes32 currencySymbol) public view returns (address) {
+    function getUndercollateralizationMarkMarkerByCurrency(address user, bytes32 currencySymbol)
+        public
+        view
+        returns (address)
+    {
         if (currencySymbol == "LINA") {
             return undercollateralizationMarks[user].marker;
         } else {
@@ -186,7 +193,7 @@ contract LnLiquidation is LnAdminUpgradeable {
         _markPositionAsUndercollateralizedByCurrency(user, "LINA");
     }
 
-    function markPositionAsUndercollateralizedByCurrency (address user, bytes32 currencySymbol) external {
+    function markPositionAsUndercollateralizedByCurrency(address user, bytes32 currencySymbol) external {
         _markPositionAsUndercollateralizedByCurrency(user, currencySymbol);
     }
 
@@ -208,7 +215,6 @@ contract LnLiquidation is LnAdminUpgradeable {
                 timestamp: uint64(block.timestamp)
             });
         }
-        
 
         emit PositionMarked(user, msg.sender, currencySymbol);
     }
@@ -216,7 +222,7 @@ contract LnLiquidation is LnAdminUpgradeable {
     function removeUndercollateralizationMark(address user) external {
         _removeUndercollateralizationMarkByCurrency(user, "LINA");
     }
-    
+
     function removeUndercollateralizationMarkByCurrency(address user, bytes32 currencySymbol) external {
         _removeUndercollateralizationMarkByCurrency(user, currencySymbol);
     }
@@ -238,11 +244,11 @@ contract LnLiquidation is LnAdminUpgradeable {
         emit PositionUnmarked(user, currencySymbol);
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only liquidates LINA. Use
-    //  * `liquidateCollateralPosition()` instead. This function is not removed since it's still
-    //  *  used by some services.
-    //  */
+    /**
+     * @notice This function is deprecated as it only liquidates LINA. Use
+     * `liquidateCollateralPosition()` instead. This function is not removed since it's still
+     *  used by some services.
+     */
     function liquidatePosition(
         address user,
         uint256 lusdToBurn,
@@ -265,22 +271,37 @@ contract LnLiquidation is LnAdminUpgradeable {
         require(lusdToBurn > 0, "LnLiquidation: zero amount");
 
         _liquidatePosition(
-            LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: lusdToBurn, currencySymbol: currencySymbol}),
+            LiquidatePositionParams({
+                user: user,
+                liquidator: msg.sender,
+                lusdToBurn: lusdToBurn,
+                currencySymbol: currencySymbol
+            }),
             rewardEntryIds
         );
     }
 
-    // /**
-    //  * @notice This function is deprecated as it only liquidates LINA. Use
-    //  * `liquidateCollateralPositionMax()` instead. This function is not removed since it's still
-    //  *  used by some services.
-    //  */
+    /**
+     * @notice This function is deprecated as it only liquidates LINA. Use
+     * `liquidateCollateralPositionMax()` instead. This function is not removed since it's still
+     *  used by some services.
+     */
     function liquidatePositionMax(address user, uint256[] calldata rewardEntryIds) external {
-        _liquidatePosition(LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: 0, currencySymbol: "LINA"}), rewardEntryIds);
+        _liquidatePosition(
+            LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: 0, currencySymbol: "LINA"}),
+            rewardEntryIds
+        );
     }
 
-    function liquidateCollateralPositionMax(address user, bytes32 currencySymbol, uint256[] calldata rewardEntryIds) external {
-        _liquidatePosition(LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: 0, currencySymbol: currencySymbol}), rewardEntryIds);
+    function liquidateCollateralPositionMax(
+        address user,
+        bytes32 currencySymbol,
+        uint256[] calldata rewardEntryIds
+    ) external {
+        _liquidatePosition(
+            LiquidatePositionParams({user: user, liquidator: msg.sender, lusdToBurn: 0, currencySymbol: currencySymbol}),
+            rewardEntryIds
+        );
     }
 
     function _liquidatePosition(LiquidatePositionParams memory params, uint256[] calldata rewardEntryIds) private {
@@ -505,7 +526,12 @@ contract LnLiquidation is LnAdminUpgradeable {
             liquidatorRewardFromLocked = liquidatorRewardFromLocked.sub(liquidatorRewardFromStaked);
 
             lnCollateralSystem.moveCollateral(params.user, params.marker, params.currencySymbol, markerRewardFromStaked);
-            lnCollateralSystem.moveCollateral(params.user, params.liquidator, params.currencySymbol, liquidatorRewardFromStaked);
+            lnCollateralSystem.moveCollateral(
+                params.user,
+                params.liquidator,
+                params.currencySymbol,
+                liquidatorRewardFromStaked
+            );
         }
 
         if (amountFromLocked > 0) {

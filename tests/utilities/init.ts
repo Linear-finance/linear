@@ -308,7 +308,7 @@ export const deployLinearStack = async (
     {
       key: "LiquidationLiquidatorRewardBnb",
       value: expandTo18Decimals(0.09),
-    }
+    },
   ])
     await lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String(config.key), // key
@@ -573,24 +573,34 @@ export const deployLinearStack = async (
     .updateAddressCache(lnAssetSystem.address);
 
   /**
-   * Set config keys for different currency in `LnLiquidation`, including: 
+   * Set config keys for different currency in `LnLiquidation`, including:
    * - liquidationReward
    * - liquidationRatio
    */
   for (const keys of [
     {
       currency: ethers.utils.formatBytes32String("LINA"),
-      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardLina"),
-      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioLina"),
+      liquidationReward: ethers.utils.formatBytes32String(
+        "LiquidationLiquidatorRewardLina"
+      ),
+      liquidationRatio: ethers.utils.formatBytes32String(
+        "LiquidationRatioLina"
+      ),
     },
     {
       currency: ethers.utils.formatBytes32String("BUSD"),
-      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBusd"),
-      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBusd"),
+      liquidationReward: ethers.utils.formatBytes32String(
+        "LiquidationLiquidatorRewardBusd"
+      ),
+      liquidationRatio: ethers.utils.formatBytes32String(
+        "LiquidationRatioBusd"
+      ),
     },
     {
       currency: ethers.utils.formatBytes32String("BNB"),
-      liquidationReward: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBnb"),
+      liquidationReward: ethers.utils.formatBytes32String(
+        "LiquidationLiquidatorRewardBnb"
+      ),
       liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBnb"),
     },
   ])

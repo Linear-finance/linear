@@ -44,7 +44,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
     uint256 public constant PERIOD_LENGTH = 1 weeks;
     uint256 public constant CLAIM_WINDOW_PERIOD_COUNT = 2;
     uint256 public constant STAKING_REWARD_LOCK_PERIOD = 52 weeks;
-    
+
     bytes32 public constant CURRENCY_LINA = "LINA";
 
     function getCurrentPeriodId() public view returns (uint256) {
@@ -177,7 +177,10 @@ contract LnRewardSystem is LnAdminUpgradeable {
         userLastClaimPeriodIds[recipient] = periodId;
 
         // Users can only claim rewards if target ratio is satisfied
-        require(collateralSystem.IsSatisfyTargetRatioByCurrency(recipient, CURRENCY_LINA), "LnRewardSystem: below target ratio");
+        require(
+            collateralSystem.IsSatisfyTargetRatioByCurrency(recipient, CURRENCY_LINA),
+            "LnRewardSystem: below target ratio"
+        );
 
         // Verify EIP-712 signature
         bytes32 digest =

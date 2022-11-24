@@ -55,7 +55,7 @@ describe("Integration | Liquidation", function () {
       stakeAmount // _amount
     );
     await stack.lnBuildBurnSystem.connect(user).BuildAsset(
-      buildAmount, // amount
+      buildAmount // amount
     );
   };
 

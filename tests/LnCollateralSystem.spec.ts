@@ -102,7 +102,7 @@ describe("LnCollateralSystem", function () {
     await lnCollateralSystem
       .connect(admin)
       .UpdateTokenInfos([linaCurrencyKey], [linaToken.address], [1], [false]);
-    
+
     await lnCollateralSystem
       .connect(admin)
       .UpdateTokenInfos([busdCurrencyKey], [busdToken.address], [1], [false]);
@@ -316,11 +316,10 @@ describe("LnCollateralSystem", function () {
   });
 
   it("can NOT deposit collateral with unsupported tokens", async function () {
-    await expect(lnCollateralSystem
-      .connect(alice)
-      .Collateral(
-        formatBytes32String("GG"),
-        expandTo18Decimals(10)
-      )).to.be.revertedWith("Invalid collateral");
+    await expect(
+      lnCollateralSystem
+        .connect(alice)
+        .Collateral(formatBytes32String("GG"), expandTo18Decimals(10))
+    ).to.be.revertedWith("Invalid collateral");
   });
 });
