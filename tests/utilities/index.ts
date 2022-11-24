@@ -2,7 +2,6 @@ import Big, { RoundingMode } from "big.js";
 import { BigNumber } from "ethers";
 
 export const zeroAddress: string = "0x0000000000000000000000000000000000000000";
-export const nullAddress: string = "0x000000000000000000000000000000000000dEaD";
 export const uint32Max: BigNumber = BigNumber.from("0xffffffff");
 export const uint128Max: BigNumber = BigNumber.from(
   "0xffffffffffffffffffffffffffffffff"

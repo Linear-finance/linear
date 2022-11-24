@@ -59,8 +59,6 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     bytes32 private constant BUILD_RATIO_KEY = "BuildRatio";
 
-    bytes32 public constant Currency_BNB = "BNB";
-
     modifier onlyLiquidation() {
         require(msg.sender == liquidation, "LnCollateralSystem: not liquidation");
         _;
@@ -168,10 +166,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(_currency[0] != 0, "symbol cannot empty");
         require(_currency != Currency_ETH, "ETH is used by system");
         require(_tokenAddr != address(0), "token address cannot zero");
-        require(
-            _tokenAddr.isContract() || _tokenAddr == address(0x000000000000000000000000000000000000dEaD),
-            "token address is not a contract"
-        );
+        require(_tokenAddr.isContract(), "token address is not a contract");
 
         if (tokenInfos[_currency].tokenAddr == address(0)) {
             // new token
@@ -326,7 +321,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         bytes32 stakeCurrency,
         uint256 stakeAmount,
         uint256 buildAmount
-    ) external payable whenNotPaused {
+    ) external whenNotPaused {
         require(stakeAmount > 0 || buildAmount > 0, "LnCollateralSystem: zero amount");
 
         if (stakeAmount > 0) {
@@ -344,7 +339,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
      * @param stakeCurrency ID of the collateral currency
      * @param stakeAmount Amount of collateral currency to stake
      */
-    function stakeAndBuildMax(bytes32 stakeCurrency, uint256 stakeAmount) external payable whenNotPaused {
+    function stakeAndBuildMax(bytes32 stakeCurrency, uint256 stakeAmount) external whenNotPaused {
         require(stakeAmount > 0, "LnCollateralSystem: zero amount");
 
         _collateral(msg.sender, stakeCurrency, stakeAmount);
@@ -389,7 +384,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     // need approve
-    function Collateral(bytes32 _currency, uint256 _amount) external payable whenNotPaused returns (bool) {
+    function Collateral(bytes32 _currency, uint256 _amount) external whenNotPaused returns (bool) {
         address user = msg.sender;
         return _collateral(user, _currency, _amount);
     }
@@ -403,17 +398,13 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         require(_amount > tokenInfo.minCollateral, "Collateral amount too small");
         require(tokenInfo.tokenAddr != address(0) && tokenInfo.bClose == false, "Invalid collateral");
 
-        if (_currency == Currency_BNB) {
-            require(msg.value >= _amount, "LnCollateralSystem: Not enough tokens sent");
-        } else {
-            require(tokenInfo.tokenAddr.isContract(), "Invalid token symbol");
+        require(tokenInfo.tokenAddr.isContract(), "Invalid token symbol");
 
-            IERC20 erc20 = IERC20(tokenInfo.tokenAddr);
-            require(erc20.balanceOf(user) >= _amount, "insufficient balance");
-            require(erc20.allowance(user, address(this)) >= _amount, "insufficient allowance, need approve more amount");
+        IERC20 erc20 = IERC20(tokenInfo.tokenAddr);
+        require(erc20.balanceOf(user) >= _amount, "insufficient balance");
+        require(erc20.allowance(user, address(this)) >= _amount, "insufficient allowance, need approve more amount");
 
-            TransferHelper.safeTransferFrom(tokenInfo.tokenAddr, user, address(this), _amount);
-        }
+        TransferHelper.safeTransferFrom(tokenInfo.tokenAddr, user, address(this), _amount);
 
         userCollateralData[user][_currency].collateral = userCollateralData[user][_currency].collateral.add(_amount);
         tokenInfo.totalCollateral = tokenInfo.totalCollateral.add(_amount);
@@ -469,12 +460,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
         tokenInfo.totalCollateral = tokenInfo.totalCollateral.sub(_amount);
 
-        if (_currency == Currency_BNB) {
-            (bool success, bytes memory _) = payable(user).call{value: _amount}("");
-            require(success, "LnCollateralSystem: failed to send tokens");
-        } else {
-            TransferHelper.safeTransfer(tokenInfo.tokenAddr, user, _amount);
-        }
+        TransferHelper.safeTransfer(tokenInfo.tokenAddr, user, _amount);
 
         emit RedeemCollateral(user, _currency, _amount, userCollateralData[user][_currency].collateral);
     }

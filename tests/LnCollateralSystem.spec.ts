@@ -2,7 +2,7 @@ import { ethers, waffle } from "hardhat";
 import { expect, use } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { expandTo18Decimals, nullAddress, zeroAddress } from "./utilities";
+import { expandTo18Decimals, zeroAddress } from "./utilities";
 
 const { formatBytes32String } = ethers.utils;
 
@@ -29,7 +29,6 @@ describe("LnCollateralSystem", function () {
   const mockLnLiquidationAddr = "0x0000000000000000000000000000000000000005";
   const linaCurrencyKey = formatBytes32String("LINA");
   const busdCurrencyKey = formatBytes32String("BUSD");
-  const bnbCurrencyKey = formatBytes32String("BNB");
 
   beforeEach(async function () {
     [
@@ -106,10 +105,6 @@ describe("LnCollateralSystem", function () {
     await lnCollateralSystem
       .connect(admin)
       .UpdateTokenInfos([busdCurrencyKey], [busdToken.address], [1], [false]);
-
-    await lnCollateralSystem
-      .connect(admin)
-      .UpdateTokenInfos([bnbCurrencyKey], [nullAddress], [1], [false]);
   });
 
   it("only reward locker can call collateralFromUnlockReward function", async () => {

@@ -266,10 +266,6 @@ export const deployLinearStack = async (
       value: expandTo18Decimals(0.7),
     },
     {
-      key: "BuildRatioBnb",
-      value: expandTo18Decimals(0.3),
-    },
-    {
       key: "LiquidationRatio",
       value: expandTo18Decimals(0.5),
     },
@@ -300,14 +296,6 @@ export const deployLinearStack = async (
     {
       key: "LiquidationLiquidatorRewardBusd",
       value: expandTo18Decimals(0.08),
-    },
-    {
-      key: "LiquidationRatioBnb",
-      value: expandTo18Decimals(0.75),
-    },
-    {
-      key: "LiquidationLiquidatorRewardBnb",
-      value: expandTo18Decimals(0.09),
     },
   ])
     await lnConfig.connect(admin).setUint(
@@ -595,13 +583,6 @@ export const deployLinearStack = async (
       liquidationRatio: ethers.utils.formatBytes32String(
         "LiquidationRatioBusd"
       ),
-    },
-    {
-      currency: ethers.utils.formatBytes32String("BNB"),
-      liquidationReward: ethers.utils.formatBytes32String(
-        "LiquidationLiquidatorRewardBnb"
-      ),
-      liquidationRatio: ethers.utils.formatBytes32String("LiquidationRatioBnb"),
     },
   ])
     await lnLiquidation.connect(admin).setConfigKey(
