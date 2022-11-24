@@ -12,9 +12,6 @@ contract LnConfig is LnAdminUpgradeable {
 
     //some configue keys
     bytes32 public constant BUILD_RATIO = "BuildRatio"; // percent, base 10e18
-    bytes32 public constant BUILD_RATIO_BNB = "BuildRatioBnb"; // percent, base 10e18
-    bytes32 public constant BUILD_RATIO_BUSD = "BuildRatioBusd"; // percent, base 10e18
-    bytes32 public constant BUILD_RATIO_LINA = "BuildRatioLina"; // percent, base 10e18
 
     function getUint(bytes32 key) external view returns (uint) {
         return mUintConfig[key];
@@ -40,19 +37,7 @@ contract LnConfig is LnAdminUpgradeable {
     }
 
     function getBuildRatioKey(bytes32 currencySymbol) external pure returns (bytes32) {
-        require(
-            currencySymbol == "LINA" || currencySymbol == "BUSD" || currencySymbol == "BNB",
-            "LnConfig: currency not accepted"
-        );
-        if (currencySymbol == "LINA") {
-            return BUILD_RATIO_LINA;
-        }
-        if (currencySymbol == "BUSD") {
-            return BUILD_RATIO_BUSD;
-        }
-        if (currencySymbol == "BNB") {
-            return BUILD_RATIO_BNB;
-        }
+        return keccak256(abi.encodePacked(BUILD_RATIO, currencySymbol));
     }
 
     event SetUintConfig(bytes32 key, uint value);
