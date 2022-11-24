@@ -31,7 +31,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     ILnRewardLocker public mRewardLocker;
 
     bytes32 public constant Currency_ETH = "ETH";
-    bytes32 public constant Currency_LINA = "LINA";
+    bytes32 public constant CURRENCY_LINA = "LINA";
 
     // -------------------------------------------------------
     uint256 public uniqueId; // use log
@@ -75,7 +75,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
      * used by `LnBuildBurnSystem`.
      */
     function MaxRedeemableInUsd(address _user) public view returns (uint256) {
-        return getFreeCollateralInUsd(_user, "LINA");
+        return getFreeCollateralInUsd(_user, CURRENCY_LINA);
     }
 
     function getFreeCollateralInUsd(address user, bytes32 currencySymbol) public view returns (uint256) {
@@ -99,7 +99,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
      * @notice This function is removed due to contract size limit.
      */
     // function maxRedeemableLina(address user) public view returns (uint256) {
-    //     return maxRedeemable(user, "LINA");
+    //     return maxRedeemable(user, CURRENCY_LINA);
     // }
 
     function maxRedeemable(address user, bytes32 currencySymbol) public view returns (uint256) {
@@ -114,7 +114,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
             uint256 buildRatio = mConfig.getUint(mConfig.getBuildRatioKey(currencySymbol));
             uint256 minCollateralUsd = debtBalance.divideDecimal(buildRatio);
             uint256 minCollateralToken = minCollateralUsd.divideDecimal(priceGetter.getPrice(currencySymbol));
-            if (currencySymbol == Currency_LINA) {
+            if (currencySymbol == CURRENCY_LINA) {
                 uint256 lockedLinaAmount = mRewardLocker.balanceOf(user);
                 return MathUpgradeable.min(stakedAmount, stakedAmount.add(lockedLinaAmount).sub(minCollateralToken));
             } else {
@@ -216,7 +216,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         for (uint256 i = 0; i < tokenSymbol.length; i++) {
             bytes32 currency = tokenSymbol[i];
             uint256 collateralAmount = tokenInfos[currency].totalCollateral;
-            if (Currency_LINA == currency) {
+            if (CURRENCY_LINA == currency) {
                 collateralAmount = collateralAmount.add(mRewardLocker.totalLockedAmount());
             }
             if (collateralAmount > 0) {
@@ -231,7 +231,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) internal view returns (uint256 rTotal) {
         uint256 collateralAmount = userCollateralData[_user][_currencySymbol].collateral;
-        if (Currency_LINA == _currencySymbol) {
+        if (CURRENCY_LINA == _currencySymbol) {
             collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));
         }
         if (collateralAmount > 0) {
@@ -252,14 +252,14 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
     }
 
     function GetUserCollateral(address _user, bytes32 _currency) external view returns (uint256) {
-        if (Currency_LINA != _currency) {
+        if (CURRENCY_LINA != _currency) {
             return userCollateralData[_user][_currency].collateral;
         }
         return mRewardLocker.balanceOf(_user).add(userCollateralData[_user][_currency].collateral);
     }
 
     function getUserLinaCollateralBreakdown(address _user) external view returns (uint256 staked, uint256 locked) {
-        return (userCollateralData[_user]["LINA"].collateral, mRewardLocker.balanceOf(_user));
+        return (userCollateralData[_user][CURRENCY_LINA].collateral, mRewardLocker.balanceOf(_user));
     }
 
     // NOTE: LINA collateral not include reward in locker
@@ -418,7 +418,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
      * target ratio of LINA is satisfied. Use IsSatisfyTargetRatioByCurrency()` instead.
      */
     function IsSatisfyTargetRatio(address _user) public view returns (bool) {
-        return IsSatisfyTargetRatioByCurrency(_user, "LINA");
+        return IsSatisfyTargetRatioByCurrency(_user, CURRENCY_LINA);
     }
 
     function IsSatisfyTargetRatioByCurrency(address _user, bytes32 _currencySymbol) public view returns (bool) {

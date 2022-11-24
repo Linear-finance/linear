@@ -27,7 +27,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
     ILnConfig private mConfig;
     address private liquidation;
 
-    bytes32 public constant Currency_LINA = "LINA";
+    bytes32 public constant CURRENCY_LINA = "LINA";
 
     modifier onlyCollaterSys {
         require((msg.sender == address(collaterSys)), "LnBuildBurnSystem: not collateral system");
@@ -82,7 +82,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
      * `getMaxBuildableLusdAmount()` instead.
      */
     function MaxCanBuildAsset(address user) external view returns (uint256) {
-        return getMaxBuildableLusdAmount(user, Currency_LINA);
+        return getMaxBuildableLusdAmount(user, CURRENCY_LINA);
     }
 
     function getMaxBuildableLusdAmount(address user, bytes32 currencySymbol) public view returns (uint256) {
@@ -98,7 +98,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
      * `BuildAssetByCurrency()` instead.
      */
     function BuildAsset(uint256 amount) external whenNotPaused returns (bool) {
-        return _buildAsset(msg.sender, amount, "LINA");
+        return _buildAsset(msg.sender, amount, CURRENCY_LINA);
     }
 
     // build lusd with currency specified
@@ -145,7 +145,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
      * `BuildMaxAssetByCurrency()` instead.
      */
     function BuildMaxAsset() external whenNotPaused {
-        _buildMaxAsset(msg.sender, "LINA");
+        _buildMaxAsset(msg.sender, CURRENCY_LINA);
     }
 
     function BuildMaxAssetByCurrency(bytes32 currencySymbol) external whenNotPaused {
@@ -196,7 +196,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
      * `BurnAssetByCurrency()` instead.
      */
     function BurnAsset(uint256 amount) external whenNotPaused returns (bool) {
-        _burnAsset(msg.sender, msg.sender, amount, "LINA");
+        _burnAsset(msg.sender, msg.sender, amount, CURRENCY_LINA);
         return true;
     }
 
