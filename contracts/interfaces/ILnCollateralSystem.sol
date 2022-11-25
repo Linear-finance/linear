@@ -27,4 +27,6 @@ interface ILnCollateralSystem {
         bytes32 currency,
         uint256 amount
     ) external;
+
+    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) external view returns (uint256 rTotal);
 }

@@ -229,7 +229,7 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
         }
     }
 
-    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) internal view returns (uint256 rTotal) {
+    function GetUserCollateralInUsd(address _user, bytes32 _currencySymbol) public view returns (uint256 rTotal) {
         uint256 collateralAmount = userCollateralData[_user][_currencySymbol].collateral;
         if (CURRENCY_LINA == _currencySymbol) {
             collateralAmount = collateralAmount.add(mRewardLocker.balanceOf(_user));

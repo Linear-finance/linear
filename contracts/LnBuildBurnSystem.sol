@@ -217,7 +217,7 @@ contract LnBuildBurnSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddress
         address user = msg.sender;
 
         uint256 buildRatio = mConfig.getUint(mConfig.getBuildRatioKey(currencySymbol));
-        uint256 totalCollateral = collaterSys.GetUserCollateral(user, currencySymbol);
+        uint256 totalCollateral = collaterSys.GetUserCollateralInUsd(user, currencySymbol);
         uint256 maxBuildAssetToTarget = totalCollateral.multiplyDecimal(buildRatio);
         (uint256 debtAsset, ) = debtSystem.GetUserDebtBalanceInUsdByCurrency(user, currencySymbol);
         require(debtAsset > maxBuildAssetToTarget, "You maybe want build to target");
