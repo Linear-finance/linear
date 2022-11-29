@@ -5,4 +5,6 @@ interface ILnConfig {
     function BUILD_RATIO() external view returns (bytes32);
 
     function getUint(bytes32 key) external view returns (uint);
+
+    function getBuildRatioKey(bytes32 currencySymbol) external pure returns (bytes32);
 }

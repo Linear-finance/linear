@@ -250,32 +250,71 @@ export const deployLinearStack = async (
    */
   for (const config of [
     {
-      key: "BuildRatio",
+      key: ethers.utils.solidityKeccak256(
+        ["bytes32"],
+        [ethers.utils.formatBytes32String("BuildRatio")]
+      ),
       value: expandTo18Decimals(0.2),
     },
     {
-      key: "LiquidationMarkRemoveRatio",
+      key: ethers.utils.formatBytes32String("LiquidationMarkRemoveRatio"),
       value: BigNumber.from("222222222222222222"),
     },
     {
-      key: "LiquidationRatio",
+      key: ethers.utils.solidityKeccak256(
+        ["bytes32", "bytes32"],
+        [
+          ethers.utils.formatBytes32String("BuildRatio"),
+          ethers.utils.formatBytes32String("LINA"),
+        ]
+      ),
+      value: expandTo18Decimals(0.2),
+    },
+    {
+      key: ethers.utils.solidityKeccak256(
+        ["bytes32", "bytes32"],
+        [
+          ethers.utils.formatBytes32String("BuildRatio"),
+          ethers.utils.formatBytes32String("BUSD"),
+        ]
+      ),
+      value: expandTo18Decimals(0.7),
+    },
+    {
+      key: ethers.utils.formatBytes32String("LiquidationRatio"),
       value: expandTo18Decimals(0.5),
     },
     {
-      key: "LiquidationMarkerReward",
+      key: ethers.utils.formatBytes32String("LiquidationMarkerReward"),
       value: expandTo18Decimals(0.05),
     },
     {
-      key: "LiquidationLiquidatorReward",
+      key: ethers.utils.formatBytes32String("LiquidationLiquidatorReward"),
       value: expandTo18Decimals(0.1),
     },
     {
-      key: "LiquidationDelay",
+      key: ethers.utils.formatBytes32String("LiquidationDelay"),
       value: Duration.fromObject({ days: 3 }).as("seconds"),
+    },
+    {
+      key: ethers.utils.formatBytes32String("LiquidationRatioLina"),
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardLina"),
+      value: expandTo18Decimals(0.1),
+    },
+    {
+      key: ethers.utils.formatBytes32String("LiquidationRatioBusd"),
+      value: expandTo18Decimals(0.95),
+    },
+    {
+      key: ethers.utils.formatBytes32String("LiquidationLiquidatorRewardBusd"),
+      value: expandTo18Decimals(0.08),
     },
   ])
     await lnConfig.connect(admin).setUint(
-      ethers.utils.formatBytes32String(config.key), // key
+      config.key, // key
       config.value // value
     );
 
@@ -535,6 +574,37 @@ export const deployLinearStack = async (
   await lnExchangeSystem
     .connect(admin)
     .updateAddressCache(lnAssetSystem.address);
+
+  /**
+   * Set config keys for different currency in `LnLiquidation`, including:
+   * - liquidationReward
+   * - liquidationRatio
+   */
+  for (const keys of [
+    {
+      currency: ethers.utils.formatBytes32String("LINA"),
+      liquidationReward: ethers.utils.formatBytes32String(
+        "LiquidationLiquidatorRewardLina"
+      ),
+      liquidationRatio: ethers.utils.formatBytes32String(
+        "LiquidationRatioLina"
+      ),
+    },
+    {
+      currency: ethers.utils.formatBytes32String("BUSD"),
+      liquidationReward: ethers.utils.formatBytes32String(
+        "LiquidationLiquidatorRewardBusd"
+      ),
+      liquidationRatio: ethers.utils.formatBytes32String(
+        "LiquidationRatioBusd"
+      ),
+    },
+  ])
+    await lnLiquidation.connect(admin).setConfigKey(
+      keys.currency, // currencySymbol
+      keys.liquidationReward, // liquidationRewardKey
+      keys.liquidationRatio // liquidationRatioKey
+    );
 
   /**
    * Set LnPerpExchange pool fee holder to LnRewardSystem

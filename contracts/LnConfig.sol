@@ -36,6 +36,10 @@ contract LnConfig is LnAdminUpgradeable {
         }
     }
 
+    function getBuildRatioKey(bytes32 currencySymbol) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(BUILD_RATIO, currencySymbol));
+    }
+
     event SetUintConfig(bytes32 key, uint value);
 
     // Reserved storage space to allow for layout changes in the future.
