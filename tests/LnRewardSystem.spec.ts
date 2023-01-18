@@ -98,7 +98,7 @@ describe("LnRewardSystem", function () {
       deployer,
       ILnCollateralSystem.abi
     );
-    await lnCollateralSystem.mock.IsSatisfyTargetRatio.returns(true);
+    await lnCollateralSystem.mock.IsSatisfyTargetRatioByCurrency.returns(true);
 
     lnRewardLocker = await MockLnRewardLocker.deploy();
 
@@ -266,7 +266,7 @@ describe("LnRewardSystem", function () {
     await setNextBlockTimestamp(ethers.provider, getPeriodEndTime(1));
 
     // This is a unit test so we just set it to false directly
-    await lnCollateralSystem.mock.IsSatisfyTargetRatio.returns(false);
+    await lnCollateralSystem.mock.IsSatisfyTargetRatioByCurrency.returns(false);
 
     await expect(
       lnRewardSystem.connect(alice).claimReward(

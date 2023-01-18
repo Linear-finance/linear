@@ -43,6 +43,8 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
         uint256 amount2Left;
     }
 
+    bytes32 public constant CURRENCY_LINA = "LINA";
+
     uint256 public lastRewardEntryId;
     mapping(uint256 => mapping(address => RewardEntry)) public rewardEntries;
     mapping(address => uint256) public lockedAmountByAddresses;
@@ -187,7 +189,7 @@ contract LnRewardLocker is ILnRewardLocker, LnAdminUpgradeable {
         ILnCollateralSystem(collateralSystemAddr).collateralFromUnlockReward(
             user,
             rewarderAddress,
-            "LINA",
+            CURRENCY_LINA,
             rewardEntry.amount
         );
 
