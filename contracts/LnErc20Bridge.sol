@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
+pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import "./interfaces/IMintBurnToken.sol";
+import "./interfaces/IWormhole.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 
 /**
  * @title LnErc20Bridge
  *
- * @dev An upgradeable contract for moving ERC20 tokens across blockchains. An
- * off-chain relayer is responsible for signing proofs of deposits to be used on destination
- * chains of the transactions. A multi-relayer set up can be used for enhanced security and
- * decentralization.
- *
- * @dev The relayer should wait for finality on the source chain before generating a deposit
- * proof. Otherwise a double-spending attack is possible.
+ * @dev An upgradeable contract for moving ERC20 tokens across blockchains. It makes use of the
+ * Wormhole messaging functionality for verifying deposit proofs. Before Wormhole was integrated,
+ * the contract uses a centralized relayer for deposit verification.
  *
  * @dev The bridge can operate in two different modes for each token: transfer mode and mint/burn
  * mode, depending on the nature of the token.
@@ -27,7 +24,23 @@ import "./upgradeable/LnAdminUpgradeable.sol";
  * a list of custom IDs might be used instead when non-EVM compatible chains are added.
  */
 contract LnErc20Bridge is LnAdminUpgradeable {
-    using ECDSAUpgradeable for bytes32;
+    /**
+     * These events are no longer used. Archiving them here for reference but they won't show up in
+     * ABI. You need to manually edit the ABI if you want to index old events in subgraphs, for
+     * example.
+     *
+     * event TokenDeposited(
+     *     uint256 srcChainId,
+     *     uint256 destChainId,
+     *     uint256 depositId,
+     *     bytes32 depositor,
+     *     bytes32 recipient,
+     *     bytes32 currency,
+     *     uint256 amount
+     * );
+     * event ForcedWithdrawal(uint256 srcChainId, uint256 depositId, address actualRecipient);
+     * event RelayerChanged(address oldRelayer, address newRelayer);
+     */
 
     /**
      * @dev Emits when a deposit is made.
@@ -42,6 +55,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
      * @param recipient Address of the account on the destination chain that will receive the amount
      * @param currency A bytes32-encoded universal currency key
      * @param amount Amount of tokens being deposited to recipient's address.
+     * @param wormholeSequence Wormhole message sequence.
      */
     event TokenDeposited(
         uint256 srcChainId,
@@ -50,7 +64,8 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         bytes32 depositor,
         bytes32 recipient,
         bytes32 currency,
-        uint256 amount
+        uint256 amount,
+        uint64 wormholeSequence
     );
     event TokenWithdrawn(
         uint256 srcChainId,
@@ -61,31 +76,42 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         bytes32 currency,
         uint256 amount
     );
-    event ForcedWithdrawal(uint256 srcChainId, uint256 depositId, address actualRecipient);
-    event RelayerChanged(address oldRelayer, address newRelayer);
     event TokenAdded(bytes32 tokenKey, address tokenAddress, uint8 lockType);
     event TokenRemoved(bytes32 tokenKey);
     event ChainSupportForTokenAdded(bytes32 tokenKey, uint256 chainId);
     event ChainSupportForTokenDropped(bytes32 tokenKey, uint256 chainId);
+    event WormholeSetup(address coreContract, uint8 consistencyLevel);
+    event BridgeAddressForChainUpdated(uint256 chainId, address bridgeAddress);
+    event WormholeNetworkIdUpdated(uint256 chainId, uint16 wormholeNetworkId);
 
     struct TokenInfo {
         address tokenAddress;
         uint8 lockType;
     }
 
+    struct WormholeConfig {
+        IWormhole coreContract;
+        uint8 consistencyLevel;
+    }
+
     uint256 public currentChainId;
-    address public relayer;
+
+    // This storage slot used to be named `relayer` for storing the address of the centralized
+    // relayer, and was removed after Wormhole integration.
+    address private DEPRECATED_DO_NOT_USE_0;
+
     uint256 public depositCount;
     mapping(bytes32 => TokenInfo) public tokenInfos;
     mapping(bytes32 => mapping(uint256 => bool)) public tokenSupportedOnChain;
     mapping(uint256 => mapping(uint256 => bool)) public withdrawnDeposits;
 
-    bytes32 public DOMAIN_SEPARATOR; // For EIP-712
+    // This storage slot used to be named `DOMAIN_SEPARATOR` for EIP-712 signature verification,
+    // and was removed after Wormhole integration.
+    bytes32 private DEPRECATED_DO_NOT_USE_1;
 
-    bytes32 public constant DEPOSIT_TYPEHASH =
-        keccak256(
-            "Deposit(uint256 srcChainId,uint256 destChainId,uint256 depositId,bytes32 depositor,bytes32 recipient,bytes32 currency,uint256 amount)"
-        );
+    WormholeConfig public wormhole;
+    mapping(uint256 => bytes32) public bridgeContractsByChainId;
+    mapping(uint256 => uint16) public wormholeNetworkIdsByChainId;
 
     uint8 public constant TOKEN_LOCK_TYPE_TRANSFER = 1;
     uint8 public constant TOKEN_LOCK_TYPE_MINT_BURN = 2;
@@ -105,29 +131,47 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         return tokenSupportedOnChain[tokenKey][chainId];
     }
 
-    function __LnErc20Bridge_init(address _relayer, address _admin) public initializer {
+    function __LnErc20Bridge_init(address _admin) public initializer {
         __LnAdminUpgradeable_init(_admin);
-
-        _setRelayer(_relayer);
 
         uint256 chainId;
         assembly {
             chainId := chainid()
         }
         currentChainId = chainId;
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes("Linear")),
-                keccak256(bytes("1")),
-                chainId,
-                address(this)
-            )
-        );
     }
 
-    function setRelayer(address _relayer) external onlyAdmin {
-        _setRelayer(_relayer);
+    // This function must be called after the wormhole upgrade for the bridge to be functional.
+    function setUpWormhole(address _coreContract, uint8 _consistencyLevel) external onlyAdmin {
+        require(address(wormhole.coreContract) == address(0), "LnErc20Bridge: already set up");
+
+        require(_coreContract != address(0), "LnErc20Bridge: zero address");
+
+        wormhole = WormholeConfig({coreContract: IWormhole(_coreContract), consistencyLevel: _consistencyLevel});
+
+        // Clean up the deprecated slots so that we can reuse them in a future upgrade.
+        DEPRECATED_DO_NOT_USE_0 = address(0);
+        DEPRECATED_DO_NOT_USE_1 = bytes32(0);
+
+        emit WormholeSetup(_coreContract, _consistencyLevel);
+    }
+
+    function setBridgeAddressForChain(uint256 chainId, address bridgeAddress) external onlyAdmin {
+        require(chainId != 0, "LnErc20Bridge: zero chain id");
+        require(bridgeAddress != address(0), "LnErc20Bridge: zero address");
+
+        bridgeContractsByChainId[chainId] = bytes32(uint256(bridgeAddress));
+
+        emit BridgeAddressForChainUpdated(chainId, bridgeAddress);
+    }
+
+    function setWormholeNetworkIdForChain(uint256 chainId, uint16 wormholeNetworkId) external onlyAdmin {
+        require(chainId != 0, "LnErc20Bridge: zero chain id");
+        require(wormholeNetworkId != 0, "LnErc20Bridge: zero network id");
+
+        wormholeNetworkIdsByChainId[chainId] = wormholeNetworkId;
+
+        emit WormholeNetworkIdUpdated(chainId, wormholeNetworkId);
     }
 
     function addToken(
@@ -170,6 +214,8 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         uint256 destChainId,
         bytes32 recipient
     ) external {
+        require(address(wormhole.coreContract) != address(0), "LnErc20Bridge: wormhole not set up");
+
         TokenInfo memory tokenInfo = tokenInfos[token];
         require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
 
@@ -188,6 +234,10 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             require(false, "LnErc20Bridge: unknown token lock type");
         }
 
+        bytes memory wormholeMessage =
+            abi.encode(currentChainId, destChainId, depositCount, bytes32(uint256(msg.sender)), recipient, token, amount);
+        uint64 wormholeSequence = wormhole.coreContract.publishMessage(0, wormholeMessage, wormhole.consistencyLevel);
+
         emit TokenDeposited(
             currentChainId,
             destChainId,
@@ -195,20 +245,36 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             bytes32(uint256(msg.sender)),
             recipient,
             token,
-            amount
+            amount,
+            wormholeSequence
         );
     }
 
-    function withdraw(
-        uint256 srcChainId,
-        uint256 destChainId,
-        uint256 depositId,
-        bytes32 depositor,
-        bytes32 recipient,
-        bytes32 currency,
-        uint256 amount,
-        bytes calldata signature
-    ) external {
+    function withdraw(bytes calldata encodedWormholeMessage) external {
+        require(address(wormhole.coreContract) != address(0), "LnErc20Bridge: wormhole not set up");
+
+        (IWormhole.VM memory wormholeMessage, bool isWormholeMessageValid, ) =
+            wormhole.coreContract.parseAndVerifyVM(encodedWormholeMessage);
+        require(isWormholeMessageValid, "LnErc20Bridge: wormhole message verification failed");
+
+        (
+            uint256 srcChainId,
+            uint256 destChainId,
+            uint256 depositId,
+            bytes32 depositor,
+            bytes32 recipient,
+            bytes32 currency,
+            uint256 amount
+        ) = abi.decode(wormholeMessage.payload, (uint256, uint256, uint256, bytes32, bytes32, bytes32, uint256));
+
+        uint16 expectedWormholeNetwork = wormholeNetworkIdsByChainId[srcChainId];
+        require(expectedWormholeNetwork != 0, "LnErc20Bridge: network id not set");
+        require(expectedWormholeNetwork == wormholeMessage.emitterChainId, "LnErc20Bridge: network id mismatch");
+
+        bytes32 srcChainBridgeAddress = bridgeContractsByChainId[srcChainId];
+        require(srcChainBridgeAddress != bytes32(0), "LnErc20Bridge: bridge address not set");
+        require(srcChainBridgeAddress == wormholeMessage.emitterAddress, "LnErc20Bridge: emitter mismatch");
+
         require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
         require(!withdrawnDeposits[srcChainId][depositId], "LnErc20Bridge: already withdrawn");
         require(recipient != 0, "LnErc20Bridge: zero address");
@@ -216,29 +282,6 @@ contract LnErc20Bridge is LnAdminUpgradeable {
 
         TokenInfo memory tokenInfo = tokenInfos[currency];
         require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
-
-        // Verify EIP-712 signature
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            DEPOSIT_TYPEHASH,
-                            srcChainId,
-                            destChainId,
-                            depositId,
-                            depositor,
-                            recipient,
-                            currency,
-                            amount
-                        )
-                    )
-                )
-            );
-        address recoveredAddress = digest.recover(signature);
-        require(recoveredAddress == relayer, "LnErc20Bridge: invalid signature");
 
         withdrawnDeposits[srcChainId][depositId] = true;
 
@@ -253,74 +296,6 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         }
 
         emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
-    }
-
-    function forceUithdraw(
-        uint256 srcChainId,
-        uint256 destChainId,
-        uint256 depositId,
-        bytes32 depositor,
-        bytes32 recipient,
-        bytes32 currency,
-        uint256 amount,
-        bytes calldata signature,
-        address overrideRecipient
-    ) external onlyAdmin {
-        require(destChainId == currentChainId, "LnErc20Bridge: wrong chain");
-        require(!withdrawnDeposits[srcChainId][depositId], "LnErc20Bridge: already withdrawn");
-        require(recipient != 0, "LnErc20Bridge: zero address");
-        require(amount > 0, "LnErc20Bridge: amount must be positive");
-
-        TokenInfo memory tokenInfo = tokenInfos[currency];
-        require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
-
-        // Verify EIP-712 signature
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            DEPOSIT_TYPEHASH,
-                            srcChainId,
-                            destChainId,
-                            depositId,
-                            depositor,
-                            recipient,
-                            currency,
-                            amount
-                        )
-                    )
-                )
-            );
-        address recoveredAddress = digest.recover(signature);
-        require(recoveredAddress == relayer, "LnErc20Bridge: invalid signature");
-
-        withdrawnDeposits[srcChainId][depositId] = true;
-
-        address decodedRecipient = overrideRecipient;
-
-        if (tokenInfo.lockType == TOKEN_LOCK_TYPE_TRANSFER) {
-            safeTransfer(tokenInfo.tokenAddress, decodedRecipient, amount);
-        } else if (tokenInfo.lockType == TOKEN_LOCK_TYPE_MINT_BURN) {
-            IMintBurnToken(tokenInfo.tokenAddress).mint(decodedRecipient, amount);
-        } else {
-            require(false, "LnErc20Bridge: unknown token lock type");
-        }
-
-        emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
-        emit ForcedWithdrawal(srcChainId, depositId, decodedRecipient);
-    }
-
-    function _setRelayer(address _relayer) private {
-        require(_relayer != address(0), "LnErc20Bridge: zero address");
-        require(_relayer != relayer, "LnErc20Bridge: relayer not changed");
-
-        address oldRelayer = relayer;
-        relayer = _relayer;
-
-        emit RelayerChanged(oldRelayer, relayer);
     }
 
     function safeTransfer(
