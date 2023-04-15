@@ -6374,6 +6374,133 @@
           }
         }
       }
+    },
+    "a44e8f498c159cbc6890cca5f614d66f128f520f09b4d61ceb9dea0f4736a241": {
+      "address": "0xF14d778546C227Ff64ec80258cFa75ce5B6fDED2",
+      "txHash": "0x4085873ddae22653dee4b584909273a6601d6ecdd459f34be81cdbe63ba85854",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:16"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "candidate",
+            "type": "t_address",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:17"
+          },
+          {
+            "contract": "LnAdminUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)48_storage",
+            "src": "contracts/upgradeable/LnAdminUpgradeable.sol:44"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "firstPeriodStartTime",
+            "type": "t_uint256",
+            "src": "contracts/LnRewardSystem.sol:31"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "DEPRECATED_DO_NOT_USE",
+            "type": "t_address",
+            "src": "contracts/LnRewardSystem.sol:36"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "userLastClaimPeriodIds",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/LnRewardSystem.sol:38"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "lusd",
+            "type": "t_contract(IERC20Upgradeable)1790",
+            "src": "contracts/LnRewardSystem.sol:40"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "collateralSystem",
+            "type": "t_contract(ILnCollateralSystem)15619",
+            "src": "contracts/LnRewardSystem.sol:41"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardLocker",
+            "type": "t_contract(ILnRewardLocker)15884",
+            "src": "contracts/LnRewardSystem.sol:42"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "DOMAIN_SEPARATOR",
+            "type": "t_bytes32",
+            "src": "contracts/LnRewardSystem.sol:44"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "rewardSigners",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/LnRewardSystem.sol:46"
+          },
+          {
+            "contract": "LnRewardSystem",
+            "label": "__gap",
+            "type": "t_array(t_uint256)42_storage",
+            "src": "contracts/LnRewardSystem.sol:238"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(IERC20Upgradeable)1790": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_contract(ILnCollateralSystem)15619": {
+            "label": "contract ILnCollateralSystem"
+          },
+          "t_contract(ILnRewardLocker)15884": {
+            "label": "contract ILnRewardLocker"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_array(t_uint256)42_storage": {
+            "label": "uint256[42]"
+          },
+          "t_array(t_uint256)48_storage": {
+            "label": "uint256[48]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "proxies": [
