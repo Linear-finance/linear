@@ -48,6 +48,10 @@ contract MockRewardSystem is LnAdminUpgradeable {
     uint256 public constant CLAIM_WINDOW_PERIOD_COUNT = 2;
     uint256 public constant STAKING_REWARD_LOCK_PERIOD = 30 minutes;
 
+    function getSignerCount() public view returns (uint256) {
+        return rewardSigners.length;
+    }
+
     function getCurrentPeriodId() public view returns (uint256) {
         require(block.timestamp >= firstPeriodStartTime, "LnRewardSystem: first period not started");
         return (block.timestamp - firstPeriodStartTime) / PERIOD_LENGTH + 1; // No SafeMath needed
