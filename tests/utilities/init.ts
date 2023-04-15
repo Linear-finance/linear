@@ -501,9 +501,7 @@ export const deployLinearStack = async (
   const lnRewardSystem = await upgrades.deployProxy(
     LnRewardSystem,
     [
-      (
-        await ethers.provider.getBlock("latest")
-      ).timestamp, // _firstPeriodStartTime
+      (await ethers.provider.getBlock("latest")).timestamp, // _firstPeriodStartTime
       [admin.address, "0xffffffffffffffffffffffffffffffffffffffff"], // _rewardSigners
       lusdToken.address, // _lusdAddress
       lnCollateralSystem.address, // _collateralSystemAddress
