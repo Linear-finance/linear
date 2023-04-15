@@ -13,21 +13,22 @@ describe("Integration | Unlock Reward", function () {
     alice: SignerWithAddress,
     rewardUnlocker: SignerWithAddress,
     rewarder: SignerWithAddress,
-    rewardSigner: Wallet;
+    rewardSigner1: Wallet,
+    rewardSigner2: Wallet;
 
   let stack: DeployedStack;
 
-  let aliceSignaturePeriod1: string;
+  let aliceSignaturePeriod1: string[];
   const periodDuration: Duration = Duration.fromObject({ weeks: 1 });
   const stakingRewardLockTime: Duration = Duration.fromObject({ weeks: 52 });
 
-  const createSignature = async (
-    signer: Wallet,
+  const createSignatures = async (
+    signers: Wallet[],
     periodId: BigNumber,
     recipient: string,
     stakingReward: BigNumber,
     feeReward: BigNumber
-  ): Promise<string> => {
+  ): Promise<string[]> => {
     const domain = {
       name: "Linear",
       version: "1",
@@ -51,15 +52,25 @@ describe("Integration | Unlock Reward", function () {
       feeReward,
     };
 
-    const signatureHex = await signer._signTypedData(domain, types, value);
-
-    return signatureHex;
+    return await Promise.all(
+      signers.map((signer) => signer._signTypedData(domain, types, value))
+    );
   };
 
   beforeEach(async function () {
     [deployer, alice, rewardUnlocker, rewarder] = await ethers.getSigners();
     admin = deployer;
-    rewardSigner = Wallet.createRandom();
+    rewardSigner1 = Wallet.createRandom();
+    rewardSigner2 = Wallet.createRandom();
+    if (
+      BigNumber.from(rewardSigner1.address).gt(
+        BigNumber.from(rewardSigner2.address)
+      )
+    ) {
+      const temp = rewardSigner1;
+      rewardSigner1 = rewardSigner2;
+      rewardSigner2 = temp;
+    }
 
     stack = await deployLinearStack(deployer, admin);
 
@@ -84,11 +95,11 @@ describe("Integration | Unlock Reward", function () {
     // Update LnRewardSystem reward signer to rewardSigner
     await stack.lnRewardSystem
       .connect(admin)
-      .setRewardSigner(rewardSigner.address);
+      .setRewardSigners([rewardSigner1.address, rewardSigner2.address]);
 
     // Create a signature of Period 1, 100 staking reward, 0 fee reward
-    aliceSignaturePeriod1 = await createSignature(
-      rewardSigner,
+    aliceSignaturePeriod1 = await createSignatures(
+      [rewardSigner1, rewardSigner2],
       BigNumber.from(1),
       alice.address,
       expandTo18Decimals(100),
@@ -111,7 +122,8 @@ describe("Integration | Unlock Reward", function () {
     ).to.equal(expandTo18Decimals(9_000));
 
     // Fast forward to 1st period end
-    const rewardSystemFirstPeriod = await stack.lnRewardSystem.firstPeriodStartTime();
+    const rewardSystemFirstPeriod =
+      await stack.lnRewardSystem.firstPeriodStartTime();
     await setNextBlockTimestamp(
       ethers.provider,
       DateTime.fromSeconds(parseInt(rewardSystemFirstPeriod.toString())).plus(
