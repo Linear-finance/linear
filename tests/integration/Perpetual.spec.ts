@@ -43,7 +43,11 @@ describe("Integration | Perpetual", function () {
 
   const assertAliceDebt = async (amount: BigNumber) => {
     expect(
-      (await stack.lnDebtSystem.GetUserDebtBalanceInUsd(alice.address))[0]
+      (
+        await stack.collaterals.lina.debtSystem.GetUserDebtBalanceInUsd(
+          alice.address
+        )
+      )[0]
     ).to.equal(amount);
   };
 
@@ -103,15 +107,15 @@ describe("Integration | Perpetual", function () {
     );
 
     // Mint 1,000,000 LINA to Alice
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(admin)
       .mint(alice.address, expandTo18Decimals(1_000_000));
 
     // Alice stakes all LINA and builds 10,000 lUSD
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(alice)
-      .approve(stack.lnCollateralSystem.address, uint256Max);
-    await stack.lnCollateralSystem.connect(alice).stakeAndBuild(
+      .approve(stack.collaterals.lina.collateralSystem.address, uint256Max);
+    await stack.collaterals.lina.collateralSystem.connect(alice).stakeAndBuild(
       formatBytes32String("LINA"), // stakeCurrnecy
       expandTo18Decimals(1_000_000), // stakeAmount
       expandTo18Decimals(10_000) // buildAmount

@@ -68,11 +68,13 @@ describe("LnVaultFixedRewardPool", function () {
 
     stakeToken = await MockERC20.deploy(
       "STAKE Token", // _name
-      "STAKE" //Î_symbol
+      "STAKE", //Î_symbol
+      18 // _decimals
     );
     rewardToken = await MockERC20.deploy(
       "REWARD Token", // _name
-      "REWARD" // _symbol
+      "REWARD", // _symbol
+      18 // _decimals
     );
     pool = await upgrades.deployProxy(
       LnVaultFixedRewardPool,

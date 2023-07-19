@@ -15,10 +15,7 @@ describe("LnCollateralSystem", function () {
     rewarder: SignerWithAddress,
     rewardLocker: SignerWithAddress;
 
-  let lnAccessControl: Contract,
-    lnCollateralSystem: Contract,
-    linaToken: Contract,
-    lnAssetSystem: Contract;
+  let lnCollateralSystem: Contract, linaToken: Contract;
 
   const mockLnPricesAddr = "0x0000000000000000000000000000000000000001";
   const mockLnDebtSystemAddr = "0x0000000000000000000000000000000000000002";
@@ -43,60 +40,30 @@ describe("LnCollateralSystem", function () {
     const LnAssetSystem = await ethers.getContractFactory("LnAssetSystem");
     const LINAToken = await ethers.getContractFactory("MockERC20");
 
-    lnAccessControl = await LnAccessControl.deploy();
-    await lnAccessControl.connect(deployer).__LnAccessControl_init(
-      admin.address // admin
-    );
-
     lnCollateralSystem = await LnCollateralSystem.deploy();
     await lnCollateralSystem.connect(deployer).__LnCollateralSystem_init(
-      admin.address // admin
+      admin.address, // _admin
+      mockLnPricesAddr, // _priceGetter
+      mockLnDebtSystemAddr, // _debtSystem
+      mockLnConfigAddr, // _mConfig
+      rewardLocker.address, // _mRewardLocker
+      mockLnBuildBurnSystemAddr, // _buildBurnSystem
+      mockLnLiquidationAddr // _liquidation
     );
 
     linaToken = await LINAToken.deploy(
       "Linear Finance", // _name
-      "LINA" // _symbol
+      "LINA", // _symbol
+      18 // _decimals
     );
 
-    lnAssetSystem = await LnAssetSystem.deploy();
-    await lnAssetSystem.connect(deployer).__LnAssetSystem_init(admin.address);
-
-    await lnAssetSystem
-      .connect(admin)
-      .updateAll(
-        [
-          ethers.utils.formatBytes32String("LnAssetSystem"),
-          ethers.utils.formatBytes32String("LnAccessControl"),
-          ethers.utils.formatBytes32String("LnConfig"),
-          ethers.utils.formatBytes32String("LnPrices"),
-          ethers.utils.formatBytes32String("LnDebtSystem"),
-          ethers.utils.formatBytes32String("LnBuildBurnSystem"),
-          ethers.utils.formatBytes32String("LnRewardLocker"),
-          ethers.utils.formatBytes32String("LnLiquidation"),
-        ],
-        [
-          lnAssetSystem.address,
-          lnAccessControl.address,
-          mockLnConfigAddr,
-          mockLnPricesAddr,
-          mockLnDebtSystemAddr,
-          mockLnBuildBurnSystemAddr,
-          rewardLocker.address,
-          mockLnLiquidationAddr,
-        ]
-      );
-
     await lnCollateralSystem
       .connect(admin)
-      .updateAddressCache(lnAssetSystem.address);
-
-    await lnCollateralSystem
-      .connect(admin)
-      .UpdateTokenInfos(
-        [ethers.utils.formatBytes32String("LINA")],
-        [linaToken.address],
-        [1],
-        [false]
+      .updateTokenInfo(
+        formatBytes32String("LINA"),
+        linaToken.address,
+        1,
+        false
       );
   });
 
@@ -218,7 +185,7 @@ describe("LnCollateralSystem", function () {
           ethers.utils.formatBytes32String("ETH"),
           expandTo18Decimals(10)
         )
-    ).to.be.revertedWith("LnCollateralSystem: Invalid token symbol");
+    ).to.be.revertedWith("LnCollateralSystem: currency symbol mismatch");
 
     let linaTokeninfo = await lnCollateralSystem.tokenInfos(
       ethers.utils.formatBytes32String("LINA")

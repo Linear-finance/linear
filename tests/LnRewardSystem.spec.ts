@@ -102,7 +102,8 @@ describe("LnRewardSystem", function () {
 
     lusd = await MockERC20.deploy(
       "lUSD", // _name
-      "lUSD" // _symbol
+      "lUSD", // _symbol
+      18 // _decimals
     );
 
     lnCollateralSystem = await waffle.deployMockContract(

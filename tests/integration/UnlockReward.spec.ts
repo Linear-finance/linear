@@ -75,15 +75,15 @@ describe("Integration | Unlock Reward", function () {
     stack = await deployLinearStack(deployer, admin);
 
     // Mint 1,000,000 LINA to Alice
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(admin)
       .mint(alice.address, expandTo18Decimals(1_000_000));
 
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(alice)
-      .approve(stack.lnCollateralSystem.address, uint256Max);
+      .approve(stack.collaterals.lina.collateralSystem.address, uint256Max);
 
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(alice)
       .transfer(rewarder.address, expandTo18Decimals(10_000));
 
@@ -109,14 +109,14 @@ describe("Integration | Unlock Reward", function () {
 
   it("end to end test from claim reward to unlock reward", async () => {
     // Alice stakes 9,000 LINA
-    await stack.lnCollateralSystem.connect(alice).Collateral(
+    await stack.collaterals.lina.collateralSystem.connect(alice).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
       expandTo18Decimals(9_000) // _amount
     );
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
+      await stack.collaterals.lina.collateralSystem.maxRedeemableLina(
         alice.address // user
       )
     ).to.equal(expandTo18Decimals(9_000));
@@ -160,9 +160,12 @@ describe("Integration | Unlock Reward", function () {
     );
 
     // Approve lnCollateralSystem to spend LINA from rewarder
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(rewarder)
-      .approve(stack.lnCollateralSystem.address, expandTo18Decimals(100));
+      .approve(
+        stack.collaterals.lina.collateralSystem.address,
+        expandTo18Decimals(100)
+      );
 
     await expect(
       stack.lnRewardLocker.connect(rewardUnlocker).unlockReward(
@@ -176,47 +179,50 @@ describe("Integration | Unlock Reward", function () {
         alice.address, // user
         expandTo18Decimals(100) // amount
       )
-      .to.emit(stack.lnCollateralSystem, "CollateralUnlockReward")
+      .to.emit(
+        stack.collaterals.lina.collateralSystem,
+        "CollateralUnlockReward"
+      )
       .withArgs(
         alice.address,
         ethers.utils.formatBytes32String("LINA"),
         expandTo18Decimals(100),
         expandTo18Decimals(9_100)
       )
-      .to.emit(stack.linaToken, "Transfer")
+      .to.emit(stack.collaterals.lina.token, "Transfer")
       .withArgs(
         rewarder.address,
-        stack.lnCollateralSystem.address,
+        stack.collaterals.lina.collateralSystem.address,
         expandTo18Decimals(100)
       );
 
     // Returns 9,000 when locked amount is zero
     expect(
-      await stack.lnCollateralSystem.maxRedeemableLina(
+      await stack.collaterals.lina.collateralSystem.maxRedeemableLina(
         alice.address // user
       )
     ).to.equal(expandTo18Decimals(9_100));
 
     await expect(
-      stack.lnCollateralSystem
+      stack.collaterals.lina.collateralSystem
         .connect(alice)
         .RedeemMax(ethers.utils.formatBytes32String("LINA"))
     )
-      .to.emit(stack.lnCollateralSystem, "RedeemCollateral")
+      .to.emit(stack.collaterals.lina.collateralSystem, "RedeemCollateral")
       .withArgs(
         alice.address,
         ethers.utils.formatBytes32String("LINA"),
         expandTo18Decimals(9_100),
         BigNumber.from("0")
       )
-      .to.emit(stack.linaToken, "Transfer")
+      .to.emit(stack.collaterals.lina.token, "Transfer")
       .withArgs(
-        stack.lnCollateralSystem.address,
+        stack.collaterals.lina.collateralSystem.address,
         alice.address,
         expandTo18Decimals(9_100)
       );
 
-    expect(await stack.linaToken.balanceOf(alice.address)).to.eq(
+    expect(await stack.collaterals.lina.token.balanceOf(alice.address)).to.eq(
       expandTo18Decimals(990_100)
     );
   });

@@ -49,11 +49,11 @@ describe("Integration | Liquidation", function () {
     stakeAmount: BigNumber,
     buildAmount: BigNumber
   ): Promise<void> => {
-    await stack.lnCollateralSystem.connect(user).Collateral(
+    await stack.collaterals.lina.collateralSystem.connect(user).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
       stakeAmount // _amount
     );
-    await stack.lnBuildBurnSystem.connect(user).BuildAsset(
+    await stack.collaterals.lina.buildBurnSystem.connect(user).BuildAsset(
       buildAmount // amount
     );
   };
@@ -63,7 +63,7 @@ describe("Integration | Liquidation", function () {
     staked: BigNumber,
     locked: BigNumber
   ): Promise<void> => {
-    const breakdown = await stack.lnCollateralSystem.getUserLinaCollateralBreakdown(
+    const breakdown = await stack.collaterals.lina.collateralSystem.getUserLinaCollateralBreakdown(
       user
     );
 
@@ -80,7 +80,7 @@ describe("Integration | Liquidation", function () {
       [amount], // _amounts
       [(await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds()] // _lockTo
     );
-    await stack.lnCollateralSystem.connect(user).Redeem(
+    await stack.collaterals.lina.collateralSystem.connect(user).Redeem(
       formatBytes32String("LINA"), // _currency
       amount // _amount
     );
@@ -147,12 +147,12 @@ describe("Integration | Liquidation", function () {
 
     // Grant Alice and Bob 1,000,000 LINA each
     for (const user of [alice, bob]) {
-      await stack.linaToken
+      await stack.collaterals.lina.token
         .connect(admin)
         .mint(user.address, expandTo18Decimals(1_000_000));
-      await stack.linaToken
+      await stack.collaterals.lina.token
         .connect(user)
-        .approve(stack.lnCollateralSystem.address, uint256Max);
+        .approve(stack.collaterals.lina.collateralSystem.address, uint256Max);
     }
 
     // Alice stakes 1,000 LINA ($100) and builds 20 lUSD
@@ -176,7 +176,7 @@ describe("Integration | Liquidation", function () {
 
     // Can't mark Alice's position as it's not *below* liquidation ratio
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(bob)
         .markPositionAsUndercollateralized(alice.address)
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
@@ -186,11 +186,11 @@ describe("Integration | Liquidation", function () {
 
     // Can mark position normally
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(bob)
         .markPositionAsUndercollateralized(alice.address)
     )
-      .to.emit(stack.lnLiquidation, "PositionMarked")
+      .to.emit(stack.collaterals.lina.liquidation, "PositionMarked")
       .withArgs(
         alice.address, // user
         bob.address // marker
@@ -198,12 +198,12 @@ describe("Integration | Liquidation", function () {
 
     // Confirm mark
     expect(
-      await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
+      await stack.collaterals.lina.liquidation.isPositionMarkedAsUndercollateralized(
         alice.address
       )
     ).to.equal(true);
     expect(
-      await stack.lnLiquidation.getUndercollateralizationMarkMarker(
+      await stack.collaterals.lina.liquidation.getUndercollateralizationMarkMarker(
         alice.address
       )
     ).to.equal(bob.address);
@@ -212,7 +212,7 @@ describe("Integration | Liquidation", function () {
   it("can remove position mark only when C-ratio is not below issuance ratio", async () => {
     // Alice gets marked for liquidation
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
 
@@ -220,7 +220,7 @@ describe("Integration | Liquidation", function () {
     await setLinaPrice(0.089);
 
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(alice)
         .removeUndercollateralizationMark(alice.address)
     ).to.be.revertedWith("LnLiquidation: mark removal ratio violation");
@@ -228,11 +228,11 @@ describe("Integration | Liquidation", function () {
     // LINA price goes to $0.09. Alice can now remove mark
     await setLinaPrice(0.09);
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(alice)
         .removeUndercollateralizationMark(alice.address)
     )
-      .to.emit(stack.lnLiquidation, "PositionUnmarked")
+      .to.emit(stack.collaterals.lina.liquidation, "PositionUnmarked")
       .withArgs(
         alice.address // user
       );
@@ -243,7 +243,9 @@ describe("Integration | Liquidation", function () {
     await setLinaPrice(0.035);
 
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.collaterals.lina.liquidation
+        .connect(bob)
+        .liquidatePosition(alice.address, 1, [])
     ).to.be.revertedWith("LnLiquidation: not marked for undercollateralized");
   });
 
@@ -254,7 +256,7 @@ describe("Integration | Liquidation", function () {
       days: 1,
     });
     await setNextBlockTimestamp(ethers.provider, markTime);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
 
@@ -264,7 +266,9 @@ describe("Integration | Liquidation", function () {
       markTime.plus(liquidationDelay)
     );
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.collaterals.lina.liquidation
+        .connect(bob)
+        .liquidatePosition(alice.address, 1, [])
     ).to.be.revertedWith("LnLiquidation: liquidation delay not passed");
 
     // Can liquidate after delay is passed
@@ -272,7 +276,7 @@ describe("Integration | Liquidation", function () {
       ethers.provider,
       markTime.plus(liquidationDelay).plus({ seconds: 1 })
     );
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, 1, []);
   });
@@ -280,7 +284,7 @@ describe("Integration | Liquidation", function () {
   it("cannot liquidate position even if delay is passed if C-ratio is restored", async () => {
     // Alice gets marked for liquidation
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
@@ -290,14 +294,16 @@ describe("Integration | Liquidation", function () {
 
     // Position cannot be liquidated now
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.collaterals.lina.liquidation
+        .connect(bob)
+        .liquidatePosition(alice.address, 1, [])
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // C-ratio falls below issuance ratio
     await setLinaPrice(0.09);
 
     // Position can now be liquidated
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, 1, []);
   });
@@ -313,14 +319,14 @@ describe("Integration | Liquidation", function () {
     // Alice has 2,000 LINA now, and will only be liquidated below $0.02
     await setLinaPrice(0.02);
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(bob)
         .markPositionAsUndercollateralized(alice.address)
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // LINA price drops to $0.019 and Alice can be liquidated
     await setLinaPrice(0.019);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
   });
@@ -328,7 +334,7 @@ describe("Integration | Liquidation", function () {
   it("can liquidate up to the amount to restore C-ratio to issuance ratio", async () => {
     // Alice gets marked for liquidation
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
@@ -344,19 +350,19 @@ describe("Integration | Liquidation", function () {
 
     // Burning 1 unit more lUSD fails
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(bob)
         .liquidatePosition(alice.address, maxLusdToBurn.add(1), [])
     ).to.be.revertedWith("LnLiquidation: burn amount too large");
 
     // Can burn exactly the max amount
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, maxLusdToBurn, []);
 
     // Mark is removed after buring the max amount
     expect(
-      await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
+      await stack.collaterals.lina.liquidation.isPositionMarkedAsUndercollateralized(
         alice.address
       )
     ).to.equal(false);
@@ -365,18 +371,18 @@ describe("Integration | Liquidation", function () {
   it("can burn max amount directly without specifying concrete amount", async () => {
     // Same as last case
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
 
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePositionMax(alice.address, []);
 
     // Mark is removed after buring the max amount
     expect(
-      await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
+      await stack.collaterals.lina.liquidation.isPositionMarkedAsUndercollateralized(
         alice.address
       )
     ).to.equal(false);
@@ -385,18 +391,18 @@ describe("Integration | Liquidation", function () {
   it("liquidation of position backed by staked collateral only", async () => {
     // Alice gets marked for liquidation by Charlie
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(charlie)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
 
     // Bob liquidates Alice's position by burning 10 lUSD
     await expect(
-      stack.lnLiquidation
+      stack.collaterals.lina.liquidation
         .connect(bob)
         .liquidatePosition(alice.address, expandTo18Decimals(10), [])
     )
-      .to.emit(stack.lnLiquidation, "PositionLiquidated")
+      .to.emit(stack.collaterals.lina.liquidation, "PositionLiquidated")
       .withArgs(
         alice.address, // user
         charlie.address, // marker
@@ -445,11 +451,11 @@ describe("Integration | Liquidation", function () {
 
     // The rest is the same as the last case. For calculations see the last case
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(charlie)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, expandTo18Decimals(10), [1]);
 
@@ -481,11 +487,11 @@ describe("Integration | Liquidation", function () {
 
     // Same as last case
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(charlie)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, expandTo18Decimals(10), [1]);
 
@@ -540,11 +546,11 @@ describe("Integration | Liquidation", function () {
 
     // Same as last case
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(charlie)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, expandTo18Decimals(10), [1]);
 
@@ -593,11 +599,11 @@ describe("Integration | Liquidation", function () {
 
     // Same as last case
     await setLinaPrice(0.035);
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(charlie)
       .markPositionAsUndercollateralized(alice.address);
     await passLiquidationDelay();
-    await stack.lnLiquidation
+    await stack.collaterals.lina.liquidation
       .connect(bob)
       .liquidatePosition(alice.address, expandTo18Decimals(10), [1, 2, 3, 4]);
 

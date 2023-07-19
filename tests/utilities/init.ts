@@ -9,27 +9,43 @@ import { ethers, upgrades } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
-import { expandTo18Decimals, zeroAddress } from ".";
+import {
+  expandTo18Decimals,
+  expandTo8Decimals,
+  zeroAddress,
+  mockAddress,
+} from ".";
 import { formatBytes32String } from "ethers/lib/utils";
 
 export interface DeployedStack {
-  linaToken: Contract;
+  collaterals: MultiColalteralContracts;
   lusdToken: Contract;
   lbtcToken: Contract;
   lbtcPerp: Contract;
   lnAccessControl: Contract;
   lnAssetSystem: Contract;
-  lnBuildBurnSystem: Contract;
   lnPrices: Contract;
-  lnCollateralSystem: Contract;
   lnConfig: Contract;
-  lnDebtSystem: Contract;
+  debtDistribution: Contract;
   lnExchangeSystem: Contract;
   lnPerpExchange: Contract;
   lnPerpPositionToken: Contract;
   lnRewardLocker: Contract;
   lnRewardSystem: Contract;
-  lnLiquidation: Contract;
+}
+
+export interface MultiColalteralContracts {
+  lina: CollateralContracts;
+  wbtc: CollateralContracts;
+}
+
+export interface CollateralContracts {
+  symbol: String;
+  token: Contract;
+  debtSystem: Contract;
+  buildBurnSystem: Contract;
+  collateralSystem: Contract;
+  liquidation: Contract;
 }
 
 export const deployLinearStack = async (
@@ -62,6 +78,7 @@ export const deployLinearStack = async (
     LnPerpPositionToken,
     LnRewardLocker,
     LnRewardSystem,
+    MockERC20,
   ] = await Promise.all(
     [
       "LinearFinance",
@@ -75,6 +92,7 @@ export const deployLinearStack = async (
       "LnPerpPositionToken",
       "LnRewardLocker",
       "LnRewardSystem",
+      "MockERC20",
     ].map((contractName) => ethers.getContractFactory(contractName, deployer))
   );
 
@@ -83,6 +101,7 @@ export const deployLinearStack = async (
     LnBuildBurnSystem,
     MockLnPrices,
     LnDebtSystem,
+    DebtDistribution,
     LnExchangeSystem,
     LnLiquidation,
   ] = await Promise.all(
@@ -90,6 +109,7 @@ export const deployLinearStack = async (
       "LnBuildBurnSystem",
       "MockLnPrices",
       "LnDebtSystem",
+      "DebtDistribution",
       "LnExchangeSystem",
       "LnLiquidation",
     ].map((contractName) =>
@@ -116,6 +136,28 @@ export const deployLinearStack = async (
     }
   );
 
+  const wbtcToken = await MockERC20.deploy(
+    "Wrapped BTC", // _name
+    "WBTC", // _symbol
+    8 // _decimals
+  );
+
+  /**
+   * Create the base synthetic asset lUSD
+   */
+  const lusdToken = await upgrades.deployProxy(
+    LnAssetUpgradeable,
+    [
+      ethers.utils.formatBytes32String("lUSD"), // bytes32 _key,
+      "lUSD", // _name,
+      "lUSD", // _symbol
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnAssetUpgradeable_init",
+    }
+  );
+
   /**
    * This contract serves two purposes:
    * - An asset registry for recording all synthetic assets
@@ -128,21 +170,6 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetSystem_init",
-    }
-  );
-
-  /**
-   * The contract for controlling issuance and burning of synthetic assets
-   */
-  const lnBuildBurnSystem = await upgrades.deployProxy(
-    LnBuildBurnSystem,
-    [
-      admin.address, // admin
-      zeroAddress, // _lUSDTokenAddr
-    ],
-    {
-      initializer: "__LnBuildBurnSystem_init",
-      unsafeAllowLinkedLibraries: true,
     }
   );
 
@@ -179,26 +206,6 @@ export const deployLinearStack = async (
     Duration.fromObject({ hours: 12 }).as("seconds") // _stalePeriod
   );
 
-  const lnDebtSystem = await upgrades.deployProxy(
-    LnDebtSystem,
-    [admin.address],
-    {
-      initializer: "__LnDebtSystem_init",
-      unsafeAllowLinkedLibraries: true,
-    }
-  );
-
-  const lnCollateralSystem = await upgrades.deployProxy(
-    LnCollateralSystem,
-    [
-      admin.address, // admin
-    ],
-    {
-      initializer: "__LnCollateralSystem_init",
-      unsafeAllowLinkedLibraries: true,
-    }
-  );
-
   const lnRewardLocker = await upgrades.deployProxy(
     LnRewardLocker,
     [
@@ -208,6 +215,105 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardLocker_init",
+    }
+  );
+
+  const debtDistribution = await upgrades.deployProxy(
+    DebtDistribution,
+    [lnAssetSystem.address],
+    {
+      initializer: "__DebtDistribution_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const linaDebtSystem = await upgrades.deployProxy(
+    LnDebtSystem,
+    [admin.address, lnAccessControl.address, lnAssetSystem.address],
+    {
+      initializer: "__LnDebtSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const wbtcDebtSystem = await upgrades.deployProxy(
+    LnDebtSystem,
+    [admin.address, lnAccessControl.address, lnAssetSystem.address],
+    {
+      initializer: "__LnDebtSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  /**
+   * The contract for controlling issuance and burning of synthetic assets
+   */
+  const linaBuildBurnSystem = await upgrades.deployProxy(
+    LnBuildBurnSystem,
+    [
+      admin.address, // admin
+      lusdToken.address, // _lUSDToken
+      linaDebtSystem.address, // _debtSystem
+      lnPrices.address, // _priceGetter
+      mockAddress, // _collaterSys
+      lnConfig.address, // _mConfig
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnBuildBurnSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const wbtcBuildBurnSystem = await upgrades.deployProxy(
+    LnBuildBurnSystem,
+    [
+      admin.address, // admin
+      lusdToken.address, // _lUSDToken
+      wbtcDebtSystem.address, // _debtSystem
+      lnPrices.address, // _priceGetter
+      mockAddress, // _collaterSys
+      lnConfig.address, // _mConfig
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnBuildBurnSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const linaCollateralSystem = await upgrades.deployProxy(
+    LnCollateralSystem,
+    [
+      admin.address, // admin
+      lnPrices.address, // _priceGetter
+      linaDebtSystem.address, // _debtSystem
+      lnConfig.address, // _mConfig
+      lnRewardLocker.address, // _mRewardLocker
+      linaBuildBurnSystem.address, // _buildBurnSystem
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnCollateralSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  // Not setting _mRewardLocker as it's only relevant for the native currency
+  const wbtcCollateralSystem = await upgrades.deployProxy(
+    LnCollateralSystem,
+    [
+      admin.address, // admin
+      lnPrices.address, // _priceGetter
+      wbtcDebtSystem.address, // _debtSystem
+      lnConfig.address, // _mConfig
+      mockAddress, // _mRewardLocker
+      wbtcBuildBurnSystem.address, // _buildBurnSystem
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnCollateralSystem_init",
+      unsafeAllowLinkedLibraries: true,
     }
   );
 
@@ -222,13 +328,13 @@ export const deployLinearStack = async (
     }
   );
 
-  const lnLiquidation = await upgrades.deployProxy(
+  const linaLiquidation = await upgrades.deployProxy(
     LnLiquidation,
     [
-      lnBuildBurnSystem.address, // _lnBuildBurnSystem
-      lnCollateralSystem.address, // _lnCollateralSystem
+      linaBuildBurnSystem.address, // _lnBuildBurnSystem
+      linaCollateralSystem.address, // _lnCollateralSystem
       lnConfig.address, // _lnConfig
-      lnDebtSystem.address, // _lnDebtSystem
+      linaDebtSystem.address, // _lnDebtSystem
       lnPrices.address, // _lnPrices
       lnRewardLocker.address, // _lnRewardLocker
       admin.address, // _admin
@@ -239,8 +345,26 @@ export const deployLinearStack = async (
     }
   );
 
+  // Not setting _lnRewardLocker as it's only relevant for the native currency
+  const wbtcLiquidation = await upgrades.deployProxy(
+    LnLiquidation,
+    [
+      wbtcBuildBurnSystem.address, // _lnBuildBurnSystem
+      wbtcCollateralSystem.address, // _lnCollateralSystem
+      lnConfig.address, // _lnConfig
+      wbtcDebtSystem.address, // _lnDebtSystem
+      lnPrices.address, // _lnPrices
+      mockAddress, // _lnRewardLocker
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnLiquidation_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
   /**
-   * Set config items:
+   * Set config items for LINA collateral:
    *
    * - BuildRatio: 0.2
    * - LiquidationRatio: 0.5
@@ -280,6 +404,42 @@ export const deployLinearStack = async (
     );
 
   /**
+   * Set config items for WBTC collateral:
+   *
+   * - BuildRatio: 0.5
+   * - LiquidationRatio: 0.5
+   * - LiquidationMarkerReward: 0.02
+   * - LiquidationLiquidatorReward: 0.05
+   * - LiquidationDelay: 1 day
+   */
+  for (const item of [
+    {
+      key: "WBTC_BuildRatio",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "WBTC_LiqRatio",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "WBTC_LiqMarkerReward",
+      value: expandTo18Decimals(0.02),
+    },
+    {
+      key: "WBTC_LiqLiquidatorReward",
+      value: expandTo18Decimals(0.05),
+    },
+    {
+      key: "WBTC_LiqDelay",
+      value: Duration.fromObject({ days: 1 }).as("seconds"),
+    },
+  ])
+    await lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String(item.key), // key
+      item.value // value
+    );
+
+  /**
    * Assign the following roles to contract `LnBuildBurnSystem`:
    * - ISSUE_ASSET
    * - BURN_ASSET
@@ -287,13 +447,22 @@ export const deployLinearStack = async (
    */
   await lnAccessControl
     .connect(admin)
-    .SetIssueAssetRole([lnBuildBurnSystem.address], [true]);
+    .SetIssueAssetRole(
+      [linaBuildBurnSystem.address, wbtcBuildBurnSystem.address],
+      [true, true]
+    );
   await lnAccessControl
     .connect(admin)
-    .SetBurnAssetRole([lnBuildBurnSystem.address], [true]);
+    .SetBurnAssetRole(
+      [linaBuildBurnSystem.address, wbtcBuildBurnSystem.address],
+      [true, true]
+    );
   await lnAccessControl
     .connect(admin)
-    .SetDebtSystemRole([lnBuildBurnSystem.address], [true]);
+    .SetDebtSystemRole(
+      [linaBuildBurnSystem.address, wbtcBuildBurnSystem.address],
+      [true, true]
+    );
 
   /**
    * Assign the following roles to contract `LnExchangeSystem`:
@@ -316,10 +485,12 @@ export const deployLinearStack = async (
   /**
    * Assign the following role to contract `LnLiquidation`:
    * - MOVE_REWARD
+   *
+   * Only the native collateral needs this permission.
    */
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("MOVE_REWARD"), // roleType
-    [lnLiquidation.address], // addresses
+    [linaLiquidation.address], // addresses
     [true] // setTo
   );
 
@@ -334,53 +505,48 @@ export const deployLinearStack = async (
         ethers.utils.formatBytes32String("LnAccessControl"),
         ethers.utils.formatBytes32String("LnConfig"),
         ethers.utils.formatBytes32String("LnPrices"),
-        ethers.utils.formatBytes32String("LnDebtSystem"),
-        ethers.utils.formatBytes32String("LnCollateralSystem"),
-        ethers.utils.formatBytes32String("LnBuildBurnSystem"),
         ethers.utils.formatBytes32String("LnRewardLocker"),
         ethers.utils.formatBytes32String("LnExchangeSystem"),
-        ethers.utils.formatBytes32String("LnLiquidation"),
       ],
       [
         lnAssetSystem.address,
         lnAccessControl.address,
         lnConfig.address,
         lnPrices.address,
-        lnDebtSystem.address,
-        lnCollateralSystem.address,
-        lnBuildBurnSystem.address,
         lnRewardLocker.address,
         lnExchangeSystem.address,
-        lnLiquidation.address,
       ]
     );
 
   /**
-   * Synchronize contract address cache
+   * Fix circular dependencies
    */
-  await lnBuildBurnSystem
+  await linaBuildBurnSystem
     .connect(admin)
-    .updateAddressCache(lnAssetSystem.address);
-  await lnCollateralSystem
+    .setCollateralSystemAddress(linaCollateralSystem.address);
+  await linaBuildBurnSystem
     .connect(admin)
-    .updateAddressCache(lnAssetSystem.address);
-  await lnDebtSystem.connect(admin).updateAddressCache(lnAssetSystem.address);
+    .setLiquidationAddress(linaLiquidation.address);
+  await linaCollateralSystem
+    .connect(admin)
+    .setLiquidationAddress(linaLiquidation.address);
+  await wbtcBuildBurnSystem
+    .connect(admin)
+    .setCollateralSystemAddress(wbtcCollateralSystem.address);
+  await wbtcBuildBurnSystem
+    .connect(admin)
+    .setLiquidationAddress(wbtcLiquidation.address);
+  await wbtcCollateralSystem
+    .connect(admin)
+    .setLiquidationAddress(wbtcLiquidation.address);
+  await lnRewardLocker
+    .connect(admin)
+    .updateCollateralSystemAddress(linaCollateralSystem.address);
 
-  /**
-   * Create the base synthetic asset lUSD
-   */
-  const lusdToken = await upgrades.deployProxy(
-    LnAssetUpgradeable,
-    [
-      ethers.utils.formatBytes32String("lUSD"), // bytes32 _key,
-      "lUSD", // _name,
-      "lUSD", // _symbol
-      admin.address, // _admin
-    ],
-    {
-      initializer: "__LnAssetUpgradeable_init",
-    }
-  );
+  // Deployer owns 1M WBTC
+  await wbtcToken
+    .connect(admin)
+    .mint(admin.address, expandTo8Decimals(1_000_000));
 
   /**
    * Create synthetic asset lBTC
@@ -467,11 +633,6 @@ export const deployLinearStack = async (
   );
 
   /**
-   * Register lUSD on `LnBuildBurnSystem`
-   */
-  await lnBuildBurnSystem.connect(admin).SetLusdTokenAddress(lusdToken.address);
-
-  /**
    * Register synth assets and perps on `LnAssetSystem`
    */
   await lnAssetSystem.connect(admin).addAsset(lusdToken.address);
@@ -481,19 +642,32 @@ export const deployLinearStack = async (
   /**
    * Register LINA on `LnCollateralSystem`
    */
-  await lnCollateralSystem.connect(admin).UpdateTokenInfo(
+  await linaCollateralSystem.connect(admin).updateTokenInfo(
     ethers.utils.formatBytes32String("LINA"), // _currency
     linaToken.address, // _tokenAddr
     expandTo18Decimals(1), // _minCollateral
-    false // _close
+    false // _disabled
+  );
+  await wbtcCollateralSystem.connect(admin).updateTokenInfo(
+    formatBytes32String("WBTC"), // _currency
+    wbtcToken.address, // _tokenAddr
+    0_00010000, // _minCollateral
+    false // _disabled
   );
 
-  /**
-   * Set CollateralSystem addrress to `LnRewardLocker`
-   */
-  await lnRewardLocker
+  // Link `LnDebtSystem` instances to `DebtDistribution`
+  await debtDistribution
     .connect(admin)
-    .updateCollateralSystemAddress(lnCollateralSystem.address);
+    .addCollateral(linaDebtSystem.address, formatBytes32String("LINA"));
+  await linaDebtSystem
+    .connect(admin)
+    .setDebtDistribution(debtDistribution.address);
+  await debtDistribution
+    .connect(admin)
+    .addCollateral(wbtcDebtSystem.address, formatBytes32String("WBTC"));
+  await wbtcDebtSystem
+    .connect(admin)
+    .setDebtDistribution(debtDistribution.address);
 
   /**
    * A contract for distributing rewards calculated and signed off-chain.
@@ -504,7 +678,7 @@ export const deployLinearStack = async (
       (await ethers.provider.getBlock("latest")).timestamp, // _firstPeriodStartTime
       [admin.address, "0xffffffffffffffffffffffffffffffffffffffff"], // _rewardSigners
       lusdToken.address, // _lusdAddress
-      lnCollateralSystem.address, // _collateralSystemAddress
+      linaCollateralSystem.address, // _collateralSystemAddress
       lnRewardLocker.address, // _rewardLockerAddress
       admin.address, // _admin
     ],
@@ -542,22 +716,36 @@ export const deployLinearStack = async (
   await lnPerpExchange.connect(admin).setPoolFeeHolder(lnRewardSystem.address);
 
   return {
-    linaToken,
+    collaterals: {
+      lina: {
+        symbol: "LINA",
+        token: linaToken,
+        debtSystem: linaDebtSystem,
+        buildBurnSystem: linaBuildBurnSystem,
+        collateralSystem: linaCollateralSystem,
+        liquidation: linaLiquidation,
+      },
+      wbtc: {
+        symbol: "WBTC",
+        token: wbtcToken,
+        debtSystem: wbtcDebtSystem,
+        buildBurnSystem: wbtcBuildBurnSystem,
+        collateralSystem: wbtcCollateralSystem,
+        liquidation: wbtcLiquidation,
+      },
+    },
     lusdToken,
     lbtcToken,
     lbtcPerp,
     lnAccessControl,
     lnAssetSystem,
-    lnBuildBurnSystem,
     lnPrices,
-    lnCollateralSystem,
+    debtDistribution,
     lnConfig,
-    lnDebtSystem,
     lnExchangeSystem,
     lnPerpExchange,
     lnPerpPositionToken,
     lnRewardLocker,
     lnRewardSystem,
-    lnLiquidation,
   };
 };

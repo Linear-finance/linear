@@ -37,7 +37,8 @@ describe("TokenEscrow", function () {
 
     erc20Token = await MockERC20.deploy(
       "Mock Token", // _name
-      "MOCK" // _symbol
+      "MOCK", // _symbol
+      8 // _decimals
     );
     await erc20Token.connect(deployer).mint(
       owner.address, // account

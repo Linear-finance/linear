@@ -26,6 +26,14 @@ library SafeDecimalMath {
         return x.mul(y) / UNIT;
     }
 
+    function multiplyDecimalWith(
+        uint256 x,
+        uint256 y,
+        uint8 _decimals
+    ) internal pure returns (uint256) {
+        return x.mul(y) / (10**uint(_decimals));
+    }
+
     function _multiplyDecimalRound(
         uint x,
         uint y,
@@ -50,6 +58,14 @@ library SafeDecimalMath {
 
     function divideDecimal(uint x, uint y) internal pure returns (uint) {
         return x.mul(UNIT).div(y);
+    }
+
+    function divideDecimalWith(
+        uint256 x,
+        uint256 y,
+        uint8 _decimals
+    ) internal pure returns (uint256) {
+        return x.mul(10**uint(_decimals)) / y;
     }
 
     function _divideDecimalRound(

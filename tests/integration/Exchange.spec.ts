@@ -88,21 +88,21 @@ describe("Integration | Exchange", function () {
     );
 
     // Mint 1,000,000 LINA to Alice
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(admin)
       .mint(alice.address, expandTo18Decimals(1_000_000));
 
     // Alice stakes all LINA
-    await stack.linaToken
+    await stack.collaterals.lina.token
       .connect(alice)
-      .approve(stack.lnCollateralSystem.address, uint256Max);
-    await stack.lnCollateralSystem.connect(alice).Collateral(
+      .approve(stack.collaterals.lina.collateralSystem.address, uint256Max);
+    await stack.collaterals.lina.collateralSystem.connect(alice).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
       expandTo18Decimals(1_000_000) // _amount
     );
 
     // Alice builds 1,000 lUSD
-    await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
+    await stack.collaterals.lina.buildBurnSystem.connect(alice).BuildAsset(
       expandTo18Decimals(1_000) // amount
     );
   });

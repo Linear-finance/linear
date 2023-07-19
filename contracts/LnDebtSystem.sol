@@ -4,183 +4,129 @@ pragma solidity ^0.6.12;
 import "./upgradeable/LnAdminUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
-import "./LnAddressCache.sol";
+import "./interfaces/IDebtDistribution.sol";
 import "./interfaces/ILnAccessControl.sol";
 import "./interfaces/ILnAssetSystem.sol";
 
-contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
+// Note to code reader by Tommy as of 2023-07-10:
+//
+// This contract has been mostly rewritten after it's been deployed in production to properly
+// support multi-collateral, with backward compatibility as a hard requirement.
+//
+// The original codebase has a questionable design of storing the latest "debt factor" values in an
+// array whereas the only thing that's actually needed would be the latest value. It's meant to
+// have a mechanism for deleting old values but it never actually kicks in as the trigger condition
+// is never satisfied. This has caused a significant waste of gas for end users.
+//
+// To eventually move away from the questionable design, the multi-collateral upgrade changes to
+// _also_ persist the latest value to a single slot, but never to actually use it. Once we make
+// sure the on-chain value of this new slot syncs with the array value, we can make another upgrade
+// to stop writing to the array for good.
+//
+// As such, the will be seemingly weird implementations across the contract that might make you
+// wonder why it's even coded that way. Most likely it's for backward compatibility with the
+// previous implementation. For more details check Git history.
+contract LnDebtSystem is LnAdminUpgradeable {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
-    // -------------------------------------------------------
-    // need set before system running value.
-    ILnAccessControl private accessCtrl;
-    ILnAssetSystem private assetSys;
-    // -------------------------------------------------------
-    struct DebtData {
-        uint256 debtProportion;
-        uint256 debtFactor; // PRECISE_UNIT
-    }
-    mapping(address => DebtData) public userDebtState;
-
-    //use mapping to store array data
-    mapping(uint256 => uint256) public lastDebtFactors; // PRECISE_UNIT Note: 能直接记 factor 的记 factor, 不能记的就用index查
-    uint256 public debtCurrentIndex; // length of array. this index of array no value
-    // follow var use to manage array size.
-    uint256 public lastCloseAt; // close at array index
-    uint256 public lastDeletTo; // delete to array index, lastDeletTo < lastCloseAt
-    uint256 public constant MAX_DEL_PER_TIME = 50;
-
-    //
-
-    // -------------------------------------------------------
-    function __LnDebtSystem_init(address _admin) public initializer {
-        __LnAdminUpgradeable_init(_admin);
-    }
-
-    event UpdateAddressStorage(address oldAddr, address newAddr);
     event UpdateUserDebtLog(address addr, uint256 debtProportion, uint256 debtFactor, uint256 timestamp);
     event PushDebtLog(uint256 index, uint256 newFactor, uint256 timestamp);
 
-    // ------------------ system config ----------------------
-    function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
-        accessCtrl = ILnAccessControl(
-            _addressStorage.getAddressWithRequire("LnAccessControl", "LnAccessControl address not valid")
-        );
-        assetSys = ILnAssetSystem(_addressStorage.getAddressWithRequire("LnAssetSystem", "LnAssetSystem address not valid"));
-
-        emit CachedAddressUpdated("LnAccessControl", address(accessCtrl));
-        emit CachedAddressUpdated("LnAssetSystem", address(assetSys));
+    struct UserDebtData {
+        uint256 debtProportion;
+        uint256 debtFactor;
     }
 
-    // -----------------------------------------------
+    ILnAccessControl public accessCtrl;
+    ILnAssetSystem public assetSys;
+
+    mapping(address => UserDebtData) public userDebtState;
+
+    // These two fields are the result of the original questionable design. See the rewrite note at
+    // the top for more details.
+    mapping(uint256 => uint256) public lastDebtFactors;
+    uint256 public debtCurrentIndex;
+
+    // There were originally two storage vars here: `lastCloseAt` and `lastDeletTo`, which were
+    // supposed to power the old storage data pruning mechanism. However, it turned out to be
+    // unused. We can safely remove them and repurpose the slots as they are and will stay zero.
+
+    // The global debt factor for this collateral managed by this contract instance.
+    //
+    // To understand this field, imagine the owner of the first ever debt entry under this
+    // collateral to have never performed any action after the initial mint.
+    //
+    // With this setup, this number represents the proportion of the that first ever debt with
+    // regard to the current debt pool. Natually, this number shrinks over time as other users
+    // would build up debt as well.
+    //
+    // Why is this useful? Well, at any point in time, when any user makes any changes to his/her
+    // debt, the current "global debt factor" can be recorded. At a later time, we can compare this
+    // previously marked down value with the actual lastest value to figure out how much the debt
+    // proportion of this specific user have changed. We can then derive the latest proportion of
+    // the user's debt with regard to the entire debt pool.
+    //
+    // This mechanism enables efficient tracking of everyone's debt in O(1).
+    uint256 public collateralDebtFactor;
+
+    IDebtDistribution public debtDistribution;
+
     modifier OnlyDebtSystemRole(address _address) {
         require(accessCtrl.hasRole(accessCtrl.DEBT_SYSTEM(), _address), "Need debt system access role");
         _;
     }
 
-    function SetLastCloseFeePeriodAt(uint256 index) external OnlyDebtSystemRole(msg.sender) {
-        require(index >= lastCloseAt, "Close index can not return to pass");
-        require(index <= debtCurrentIndex, "Can not close at future index");
-        lastCloseAt = index;
-    }
-
     /**
-     * @dev A temporary method for migrating debt records from Ethereum to Binance Smart Chain.
+     * @return [0] the debt balance of user. [1] the debt balance for this collateral.
      */
-    function importDebtData(
-        address[] calldata users,
-        uint256[] calldata debtProportions,
-        uint256[] calldata debtFactors,
-        uint256[] calldata timestamps
-    ) external onlyAdmin {
-        require(
-            users.length == debtProportions.length &&
-                debtProportions.length == debtFactors.length &&
-                debtFactors.length == timestamps.length,
-            "Length mismatch"
-        );
-
-        for (uint256 ind = 0; ind < users.length; ind++) {
-            address user = users[ind];
-            uint256 debtProportion = debtProportions[ind];
-            uint256 debtFactor = debtFactors[ind];
-            uint256 timestamp = timestamps[ind];
-
-            uint256 currentIndex = debtCurrentIndex + ind;
-
-            lastDebtFactors[currentIndex] = debtFactor;
-            userDebtState[user] = DebtData({debtProportion: debtProportion, debtFactor: debtFactor});
-
-            emit PushDebtLog(currentIndex, debtFactor, timestamp);
-            emit UpdateUserDebtLog(user, debtProportion, debtFactor, timestamp);
-        }
-
-        debtCurrentIndex = debtCurrentIndex + users.length;
+    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256, uint256) {
+        return _getUserDebtBalanceInUsd(_user);
     }
 
-    function _pushDebtFactor(uint256 _factor) private {
-        if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex - 1] == 0) {
-            // init or all debt has be cleared, new set value will be one unit
-            lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
-        } else {
-            lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(_factor);
-        }
-        emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
+    function __LnDebtSystem_init(
+        address _admin,
+        ILnAccessControl _accessCtrl,
+        ILnAssetSystem _assetSys
+    ) external initializer {
+        __LnAdminUpgradeable_init(_admin);
 
-        debtCurrentIndex = debtCurrentIndex.add(1);
+        require(address(_accessCtrl) != address(0), "LnDebtSystem: zero address");
+        require(address(_assetSys) != address(0), "LnDebtSystem: zero address");
 
-        // delete out of date data
-        if (lastDeletTo < lastCloseAt) {
-            // safe check
-            uint256 delNum = lastCloseAt - lastDeletTo;
-            delNum = (delNum > MAX_DEL_PER_TIME) ? MAX_DEL_PER_TIME : delNum; // not delete all in one call, for saving someone fee.
-            for (uint256 i = lastDeletTo; i < delNum; i++) {
-                delete lastDebtFactors[i];
-            }
-            lastDeletTo = lastDeletTo.add(delNum);
-        }
+        accessCtrl = _accessCtrl;
+        assetSys = _assetSys;
     }
 
-    function PushDebtFactor(uint256 _factor) external OnlyDebtSystemRole(msg.sender) {
-        _pushDebtFactor(_factor);
+    function setDebtDistribution(IDebtDistribution _debtDistribution) external onlyAdmin {
+        require(address(_debtDistribution) != address(0), "LnDebtSystem: zero address");
+        debtDistribution = _debtDistribution;
     }
 
-    function _updateUserDebt(address _user, uint256 _debtProportion) private {
-        userDebtState[_user].debtProportion = _debtProportion;
-        userDebtState[_user].debtFactor = _lastSystemDebtFactor();
-        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
+    function increaseDebt(address _user, uint256 _amount) external OnlyDebtSystemRole(msg.sender) {
+        _increaseDebt(_user, _amount);
     }
 
-    // need update lastDebtFactors first
-    function UpdateUserDebt(address _user, uint256 _debtProportion) external OnlyDebtSystemRole(msg.sender) {
-        _updateUserDebt(_user, _debtProportion);
-    }
-
-    function UpdateDebt(
-        address _user,
-        uint256 _debtProportion,
-        uint256 _factor
-    ) external OnlyDebtSystemRole(msg.sender) {
-        _pushDebtFactor(_factor);
-        _updateUserDebt(_user, _debtProportion);
-    }
-
-    function GetUserDebtData(address _user) external view returns (uint256 debtProportion, uint256 debtFactor) {
-        debtProportion = userDebtState[_user].debtProportion;
-        debtFactor = userDebtState[_user].debtFactor;
+    function decreaseDebt(address _user, uint256 _amount) external OnlyDebtSystemRole(msg.sender) {
+        _decreaseDebt(_user, _amount);
     }
 
     function _lastSystemDebtFactor() private view returns (uint256) {
         if (debtCurrentIndex == 0) {
             return SafeDecimalMath.preciseUnit();
+        } else {
+            uint256 latestFactor = lastDebtFactors[debtCurrentIndex - 1];
+            return latestFactor == 0 ? SafeDecimalMath.preciseUnit() : latestFactor;
         }
-        return lastDebtFactors[debtCurrentIndex - 1];
-    }
-
-    function LastSystemDebtFactor() external view returns (uint256) {
-        return _lastSystemDebtFactor();
-    }
-
-    function GetUserCurrentDebtProportion(address _user) public view returns (uint256) {
-        uint256 debtProportion = userDebtState[_user].debtProportion;
-        uint256 debtFactor = userDebtState[_user].debtFactor;
-
-        if (debtProportion == 0) {
-            return 0;
-        }
-
-        uint256 currentUserDebtProportion =
-            _lastSystemDebtFactor().divideDecimalRoundPrecise(debtFactor).multiplyDecimalRoundPrecise(debtProportion);
-        return currentUserDebtProportion;
     }
 
     /**
-     *
-     *@return [0] the debt balance of user. [1] system total asset in usd.
+     * @return [0] the debt balance of user. [1] the debt balance for this collateral.
      */
-    function GetUserDebtBalanceInUsd(address _user) external view returns (uint256, uint256) {
-        uint256 totalAssetSupplyInUsd = assetSys.totalAssetsInUsd();
+    function _getUserDebtBalanceInUsd(address _user) private view returns (uint256, uint256) {
+        require(address(debtDistribution) != address(0), "LnDebtSystem: DebtDistribution not set");
+
+        uint256 totalAssetSupplyInUsd = debtDistribution.getCollateralDebtBalanceByDebtSystemAddress(address(this));
 
         uint256 debtProportion = userDebtState[_user].debtProportion;
         uint256 debtFactor = userDebtState[_user].debtFactor;
@@ -198,6 +144,75 @@ contract LnDebtSystem is LnAdminUpgradeable, LnAddressCache {
                 .preciseDecimalToDecimal();
 
         return (userDebtBalance, totalAssetSupplyInUsd);
+    }
+
+    function _increaseDebt(address _user, uint256 _amount) private {
+        require(address(debtDistribution) != address(0), "LnDebtSystem: DebtDistribution not set");
+
+        (uint256 oldUserDebtBalance, uint256 oldSystemDebtBalance) = _getUserDebtBalanceInUsd(_user);
+
+        uint256 newUserDebtBalance = oldUserDebtBalance.add(_amount);
+        uint256 newSystemDebtBalance = oldSystemDebtBalance.add(_amount);
+        uint256 amountProportion = _amount.divideDecimalRoundPrecise(newSystemDebtBalance);
+
+        uint256 newUserDebtProportion = newUserDebtBalance.divideDecimalRoundPrecise(newSystemDebtBalance);
+        uint256 oldDebtProportion = SafeDecimalMath.preciseUnit().sub(amountProportion);
+
+        _updateDebt(_user, newUserDebtProportion, oldDebtProportion);
+
+        debtDistribution.increaseDebt(_amount);
+    }
+
+    function _decreaseDebt(address _user, uint256 _amount) private {
+        require(address(debtDistribution) != address(0), "LnDebtSystem: DebtDistribution not set");
+
+        (uint256 oldUserDebtBalance, uint256 oldSystemDebtBalance) = _getUserDebtBalanceInUsd(_user);
+
+        uint256 newUserDebtBalance = oldUserDebtBalance.sub(_amount);
+        uint256 newSystemDebtBalance = oldSystemDebtBalance.sub(_amount);
+
+        uint256 newUserDebtProportion = newUserDebtBalance.divideDecimalRoundPrecise(newSystemDebtBalance);
+
+        uint256 oldDebtProportion;
+        if (newSystemDebtBalance > 0) {
+            uint256 amountProportion = _amount.divideDecimalRoundPrecise(newSystemDebtBalance);
+            oldDebtProportion = SafeDecimalMath.preciseUnit().add(amountProportion);
+        } else {
+            oldDebtProportion = 0;
+        }
+
+        _updateDebt(_user, newUserDebtProportion, oldDebtProportion);
+
+        debtDistribution.decreaseDebt(_amount);
+    }
+
+    function _updateDebt(
+        address _user,
+        uint256 _debtProportion,
+        uint256 _factor
+    ) private {
+        // This is the old questionable logic. We're keeping it here until the next upgrade
+        {
+            if (debtCurrentIndex == 0 || lastDebtFactors[debtCurrentIndex - 1] == 0) {
+                // init or all debt has be cleared, new set value will be one unit
+                lastDebtFactors[debtCurrentIndex] = SafeDecimalMath.preciseUnit();
+            } else {
+                lastDebtFactors[debtCurrentIndex] = lastDebtFactors[debtCurrentIndex - 1].multiplyDecimalRoundPrecise(
+                    _factor
+                );
+            }
+            emit PushDebtLog(debtCurrentIndex, lastDebtFactors[debtCurrentIndex], block.timestamp);
+
+            debtCurrentIndex = debtCurrentIndex.add(1);
+        }
+
+        // This new storage slot is what enables use to get rid of the legacy logic above in the
+        // next upgrade.
+        collateralDebtFactor = lastDebtFactors[debtCurrentIndex - 1];
+
+        userDebtState[_user].debtProportion = _debtProportion;
+        userDebtState[_user].debtFactor = _lastSystemDebtFactor();
+        emit UpdateUserDebtLog(_user, _debtProportion, userDebtState[_user].debtFactor, block.timestamp);
     }
 
     // Reserved storage space to allow for layout changes in the future.

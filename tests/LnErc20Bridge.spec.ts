@@ -67,11 +67,13 @@ describe("LnErc20Bridge", function () {
 
     lina = await MockERC20.deploy(
       "Linear Token", // _name
-      "LINA" // _symbol
+      "LINA", // _symbol
+      18 // _decimals
     );
     lusd = await MockERC20.deploy(
       "lUSD", // _name
-      "lUSD" // _symbol
+      "lUSD", // _symbol
+      18 // _decimals
     );
 
     wormhole = await MockWormhole.deploy();

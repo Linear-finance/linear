@@ -10,7 +10,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * use it for production.
  */
 contract MockERC20 is ERC20 {
-    constructor(string memory _name, string memory _symbol) public ERC20(_name, _symbol) {}
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals
+    ) public ERC20(_name, _symbol) {
+        _setupDecimals(_decimals);
+    }
 
     function mint(address account, uint256 amount) external {
         _mint(account, amount);

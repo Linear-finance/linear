@@ -115,11 +115,13 @@ describe("LnVaultDynamicInterestPool", function () {
 
     stakeToken = await MockERC20.deploy(
       "STAKE Token", // _name
-      "STAKE" //Î_symbol
+      "STAKE", //Î_symbol
+      18 // _decimals
     );
     interestToken = await MockERC20.deploy(
       "INTEREST Token", // _name
-      "INTEREST" // _symbol
+      "INTEREST", // _symbol
+      18 // _decimals
     );
     pool = await upgrades.deployProxy(
       LnVaultDynamicInterestPool,
