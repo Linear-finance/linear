@@ -14,7 +14,8 @@
     "url": "https://github.com/Linear-finance/linear"
   },
   "dependencies": {
-    "@typechain/hardhat": "^2.3.0"
+    "@typechain/hardhat": "^2.3.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

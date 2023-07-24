@@ -18,3 +18,5 @@ artifacts/
 !.openzeppelin/unknown-56.json
 
 typechain/
+
+.env
