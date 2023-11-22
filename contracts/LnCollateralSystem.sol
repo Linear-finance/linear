@@ -80,12 +80,11 @@ contract LnCollateralSystem is LnAdminUpgradeable, PausableUpgradeable, LnAddres
 
     function getFreeCollateralInUsd(address user) public view returns (uint256) {
         uint256 totalCollateralInUsd = GetUserTotalCollateralInUsd(user);
-
         (uint256 debtBalance, ) = debtSystem.GetUserDebtBalanceInUsd(user);
         if (debtBalance == 0) {
             return totalCollateralInUsd;
         }
-
+        
         uint256 buildRatio = mConfig.getUint(BUILD_RATIO_KEY);
         uint256 minCollateral = debtBalance.divideDecimal(buildRatio);
         if (totalCollateralInUsd < minCollateral) {

@@ -126,6 +126,10 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         emit FoundationFeeHolderChanged(newFoundationFeeHolder);
     }
 
+    function SetLusdTokenAddress(address _address) external onlyOwner {
+        _setLusdTokenAddress(_address);
+    }  
+    
     function openPosition(
         bytes32 underlying,
         bool isLong,
@@ -222,6 +226,12 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         require(revertDelay > 0, "LnPerpExchange: revert delay not set");
         require(block.timestamp >= actionMeta.timestamp + settlementDelay, "LnPerpExchange: settlement delay not passed");
         require(block.timestamp <= actionMeta.timestamp + revertDelay, "LnPerpExchange: action can only be reverted now");
+        
+        if(actionMeta.timestamp <= 1697918755) {
+            delete pendingActionMetas[pendingActionId];
+            emit ActionReverted(pendingActionId);
+            return;
+        }        
 
         uint256 underlyingPrice;
 
@@ -268,6 +278,12 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
         uint256 revertDelay = lnConfig.getUint(CONFIG_TRADE_REVERT_DELAY);
         require(revertDelay > 0, "LnPerpExchange: revert delay not set");
         require(block.timestamp > actionMeta.timestamp + revertDelay, "LnPerpExchange: revert delay not passed");
+
+        if(actionMeta.timestamp <= 1697918755) {
+            delete pendingActionMetas[pendingActionId];
+            emit ActionReverted(pendingActionId);
+            return;
+        }
 
         // Refund collateral taken
         if (actionMeta.actionType == ACTION_TYPE_OPEN_POSITION) {
@@ -351,6 +367,13 @@ contract LnPerpExchange is ILnPerpExchange, OwnableUpgradeable {
             user: user,
             actionType: actionType
         });
+    }
+
+    function _setLusdTokenAddress(address _lusdAddress) private {        
+        require(_lusdAddress != address(0), "IERC20Upgradeable: zero address");
+        require(_lusdAddress != address(lusdToken), "IERC20Upgradeable: address not changed");
+        address oldAddress = address(lusdToken); 
+        lusdToken = ILnAsset(_lusdAddress);        
     }
 
     function _getPerpContract(bytes32 symbol) private view returns (ILnPerpetual) {
