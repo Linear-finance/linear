@@ -134,6 +134,17 @@ contract LnLiquidation is LnAdminUpgradeable {
         lnPrices = newLnPrices;
     }
 
+    function removeUncollateralizedMarksFromUsers(address[] calldata users) external onlyAdmin {
+        
+        for (uint256 i = 0; i < users.length; i++) 
+        {
+            require(isPositionMarkedAsUndercollateralized(users[i]), "LnLiquidation: not marked");
+            delete undercollateralizationMarks[users[i]];
+            emit PositionUnmarked(users[i]);
+        }
+
+    }
+
     function markPositionAsUndercollateralized(address user) external {
         require(!isPositionMarkedAsUndercollateralized(user), "LnLiquidation: already marked");
 

@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./interfaces/ILnCollateralSystem.sol";
 import "./interfaces/ILnRewardLocker.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
-import "hardhat/console.sol";
 
 /**
  * @title LnRewardSystem
@@ -29,6 +28,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
     event RewardLockerAddressChanged(address oldAddress, address newAddress);
     event RewardClaimed(address recipient, uint256 periodId, uint256 stakingReward, uint256 feeReward);
 
+    event PauseRewardsUntilUpdated(uint256 oldPauseRewardsUntil, uint256 newPauseRewardsUntil);
     event PeriodLengthUpdated(uint256 oldPeriodLength, uint256 newPeriodLength);
     event ClaimWindowPeriodCountUpdated(uint256 oldClaimWindowPeriodCount, uint256 newClaimWindowPeriodCount);
     event StakingRewardLockPeriodUpdated(uint256 oldStakingRewardLockPeriod, uint256 newStakingRewardLockPeriod);
@@ -57,6 +57,7 @@ contract LnRewardSystem is LnAdminUpgradeable {
     uint256 public periodLength;//= 1 weeks;
     uint256 public claimWindowPeriodCount;// = 2;
     uint256 public stakingRewardLockPeriod;// = 52 weeks;
+    uint256 public pauseRewardsUntil;
 
     function getSignerCount() public view returns (uint256) {
         return rewardSigners.length;
@@ -133,6 +134,23 @@ contract LnRewardSystem is LnAdminUpgradeable {
         _SetPeriodLength(length);
     }  
 
+    function UnpauseRewards() external onlyAdmin
+    {
+        _SetPauseRewardsUntil(0);
+    }
+
+    function SetDomainSeparator(bytes32 separator) external onlyAdmin{
+        _setDomainSeparator(separator);
+    }
+
+    function PauseRewardsUntil(uint256 pauseRewardsUntil) external onlyAdmin {
+        _SetPauseRewardsUntil(pauseRewardsUntil);
+    }
+
+    function SetCollateralSystemAddress(address _address) external onlyAdmin {
+        _setCollateralSystemAddress(_address);
+    }
+
     function SetClaimWindowPeriodCount(uint256 count) external onlyAdmin {
         _SetClaimWindowPeriodCount(count);
     }  
@@ -152,6 +170,11 @@ contract LnRewardSystem is LnAdminUpgradeable {
     function setRewardLockerAddress(address _rewardLockerAddress) external onlyAdmin {
         _setRewardLockerAddress(_rewardLockerAddress);
     }
+
+    function updateRewardLastClaimedPeriods(address[] calldata _addresses, uint256[] calldata _claimPeriods) external onlyAdmin{
+        _updateRewardLastClaimedPeriods(_addresses, _claimPeriods);
+    }
+
 
     function claimReward(
         uint256 periodId,
@@ -179,6 +202,25 @@ contract LnRewardSystem is LnAdminUpgradeable {
         lusd = IERC20Upgradeable(_lusdAddress);        
     }
 
+    function _setCollateralSystemAddress(address _collateralSystemAddress) private {        
+        require(_collateralSystemAddress != address(0), "IERC20Upgradeable: zero address");
+        require(_collateralSystemAddress != address(collateralSystem), "IERC20Upgradeable: address not changed");
+        address oldAddress = address(collateralSystem); 
+        collateralSystem = ILnCollateralSystem(_collateralSystemAddress);        
+    }
+
+    function _setDomainSeparator(bytes32 _separator) private {     
+        DOMAIN_SEPARATOR = _separator;          
+    }
+
+    function _updateRewardLastClaimedPeriods(address[] calldata _addresses, uint256[] calldata _claimPeriods) private {
+        require(_addresses.length == _claimPeriods.length, "Data arrays must be the same length"); 
+        for (uint256 ind = 0; ind < _addresses.length; ind++) 
+        {            
+            userLastClaimPeriodIds[_addresses[ind]] = _claimPeriods[ind];
+        }
+    }
+
     function _SetStakingRewardLockPeriod(uint256 _stakingRewardLockPeriod) private 
     {        
         require(_stakingRewardLockPeriod != 0, "Cannot be 0");
@@ -186,6 +228,14 @@ contract LnRewardSystem is LnAdminUpgradeable {
         uint256 oldStakingRewardLockPeriod = stakingRewardLockPeriod; 
         stakingRewardLockPeriod = _stakingRewardLockPeriod;  
         emit StakingRewardLockPeriodUpdated(stakingRewardLockPeriod, oldStakingRewardLockPeriod);
+    }
+
+    function _SetPauseRewardsUntil(uint256 _pauseRewardsUntil) private
+    {
+        require(_pauseRewardsUntil != pauseRewardsUntil, "Value has not changed");
+        uint256 oldPauseRewardsUntil = pauseRewardsUntil;
+        pauseRewardsUntil = _pauseRewardsUntil;
+        emit PauseRewardsUntilUpdated(oldPauseRewardsUntil, pauseRewardsUntil);
     }
 
     function _SetClaimWindowPeriodCount(uint256 _claimWindowPeriodCount) private 
@@ -253,12 +303,13 @@ contract LnRewardSystem is LnAdminUpgradeable {
     ) private {
         require(periodId > 0, "LnRewardSystem: period ID must be positive");
         require(stakingReward > 0 || feeReward > 0, "LnRewardSystem: nothing to claim");
-
+        require(periodId > pauseRewardsUntil, "Rewards cannot be claimed for this period as they are paused");
         // Check if the target period is in the claiming window
         uint256 currentPeriodId = getCurrentPeriodId();
         require(periodId < currentPeriodId, "LnRewardSystem: period not ended");
         require(
-            currentPeriodId <= claimWindowPeriodCount || periodId >= currentPeriodId - claimWindowPeriodCount,
+            currentPeriodId <= claimWindowPeriodCount 
+            || periodId >= currentPeriodId - claimWindowPeriodCount,
             "LnRewardSystem: reward expired"
         );
 
@@ -298,5 +349,5 @@ contract LnRewardSystem is LnAdminUpgradeable {
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[42] private __gap;
+    uint256[41] private __gap;
 }
