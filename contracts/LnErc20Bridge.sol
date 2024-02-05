@@ -223,7 +223,6 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         require(destChainId != currentChainId, "LnErc20Bridge: dest must be different from src");
         require(isTokenSupportedOnChain(token, destChainId), "LnErc20Bridge: token not supported on chain");
         require(recipient != 0, "LnErc20Bridge: zero address");
-
         depositCount = depositCount + 1;
 
         if (tokenInfo.lockType == TOKEN_LOCK_TYPE_TRANSFER) {
@@ -233,9 +232,12 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         } else {
             require(false, "LnErc20Bridge: unknown token lock type");
         }
-
+        //This is to avoid people retrieving halted wormhole messages for the old lUSD contract, lUSD needs to be sent over the wormhole as lUSD2
+        bytes32 tokenCodeToSend = token;
+        if(tokenCodeToSend == bytes32("lUSD")){ tokenCodeToSend = bytes32("lUSD2"); }
+        
         bytes memory wormholeMessage =
-            abi.encode(currentChainId, destChainId, depositCount, bytes32(uint256(msg.sender)), recipient, token, amount);
+            abi.encode(currentChainId, destChainId, depositCount, bytes32(uint256(msg.sender)), recipient, tokenCodeToSend, amount);
         uint64 wormholeSequence = wormhole.coreContract.publishMessage(0, wormholeMessage, wormhole.consistencyLevel);
 
         emit TokenDeposited(
@@ -266,6 +268,12 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             bytes32 currency,
             uint256 amount
         ) = abi.decode(wormholeMessage.payload, (uint256, uint256, uint256, bytes32, bytes32, bytes32, uint256));
+        
+        //This is to avoid people retrieving halted wormhole messages for the old lUSD contract, wormhole will send things as lUSD2 and we need to map it back to lUSD
+        require(currency != bytes32("lUSD"), "lUSD is no longer supported across the bridge in this format");
+        bytes32 tokenCodeRetrieved = currency;
+        if(tokenCodeRetrieved == bytes32("lUSD2")){ 
+            tokenCodeRetrieved = bytes32("lUSD"); }
 
         uint16 expectedWormholeNetwork = wormholeNetworkIdsByChainId[srcChainId];
         require(expectedWormholeNetwork != 0, "LnErc20Bridge: network id not set");
@@ -280,7 +288,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
         require(recipient != 0, "LnErc20Bridge: zero address");
         require(amount > 0, "LnErc20Bridge: amount must be positive");
 
-        TokenInfo memory tokenInfo = tokenInfos[currency];
+        TokenInfo memory tokenInfo = tokenInfos[tokenCodeRetrieved];
         require(tokenInfo.tokenAddress != address(0), "LnErc20Bridge: token not found");
 
         withdrawnDeposits[srcChainId][depositId] = true;
@@ -295,7 +303,7 @@ contract LnErc20Bridge is LnAdminUpgradeable {
             require(false, "LnErc20Bridge: unknown token lock type");
         }
 
-        emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, currency, amount);
+        emit TokenWithdrawn(srcChainId, destChainId, depositId, depositor, recipient, tokenCodeRetrieved, amount);
     }
 
     function safeTransfer(

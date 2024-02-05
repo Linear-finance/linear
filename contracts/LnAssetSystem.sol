@@ -41,7 +41,8 @@ contract LnAssetSystem is LnAddressStorage {
         require(assetToRemove != address(0), "asset does not exist");
 
         // Remove from list
-        for (uint i = 0; i < mAssetList.length; i++) {
+        for (uint i = 0; i < mAssetList.length; i++) 
+        {
             if (address(mAssetList[i]) == assetToRemove) {
                 delete mAssetList[i];
                 mAssetList[i] = mAssetList[mAssetList.length - 1];
@@ -67,6 +68,15 @@ contract LnAssetSystem is LnAddressStorage {
         perpSymbols[address(perp)] = symbol;
 
         emit PerpAdded(symbol, address(perp));
+    }
+
+    function removePerp(ILnPerpetual perp) external onlyAdmin {
+        require(address(perp) != address(0), "LnAssetSystem: zero address");
+        bytes32 symbolToRemove = perp.underlyingTokenSymbol();
+        require(perpAddresses[symbolToRemove] != address(0), "LnAssetSystem: perp doens't exist");    
+        perpAddresses[symbolToRemove] = address(0);
+        perpSymbols[address(perp)] = bytes32(0);
+        emit PerpRemoved(symbolToRemove, address(perp));
     }
 
     function assetNumber() external view returns (uint) {
@@ -107,13 +117,15 @@ contract LnAssetSystem is LnAddressStorage {
         return addr;
     }
 
-    function isPerpAddressRegistered(address perpAddress) external view returns (bool) {
+    function isPerpAddressRegistered(address perpAddress) external view returns (bool) 
+    {
         return perpSymbols[perpAddress] != bytes32(0);
     }
 
     event AssetAdded(bytes32 name, address asset);
     event AssetRemoved(bytes32 name, address asset);
     event PerpAdded(bytes32 underlying, address perp);
+    event PerpRemoved(bytes32 underlying, address perp);
 
     // Reserved storage space to allow for layout changes in the future.
     uint256[48] private __gap;
