@@ -37,6 +37,34 @@ $ yarn test
 
 [![Discord](https://img.shields.io/discord/738363983031173151?label=discord&logo=discord&style=plastic)](https://discordapp.com/channels/738363983031173151/) [![Twitter Follow](https://img.shields.io/twitter/follow/LinearFinance?label=LinearFinance&style=social)](https://twitter.com/LinearFinance) [![Chat on Telegram](https://img.shields.io/badge/Telegram-brightgreen.svg?logo=telegram&color=%234b4e52)](https://t.me/joinchat/Tb3iAhuMZsyfspxhEWQLvw)
 
+## Contract Addresses
+
+| Contract | Address | Chain |
+| LinearFinance | 0x762539b45A1dCcE3D36d080F74d1AED37844b878 | BSC |
+| LnAccessControl | 0x7b260D7851d9DC9EE27Dc8d6fAbDB2d568711708 | BSC |
+| LnAddressCache | - Inherited by LnAssetUpgradeable - | BSC |
+| LnAddressStorage | - Inherited by LnAssetSystem - | BSC |
+| LnAssetSystem | 0x1B220E982e5b4615715870533e968dff823BBED6 | BSC |
+| LnAssetUpgradeable | - Liquid addresses are discoverable through the asset system - | BSC |
+| LnBuildBurnSystem | 0x4B1356cf2068030924dBD8FcA1144AFBe847Af5F | BSC |
+| LnCollateralSystem | 0xcE2c94d40e289915d4401c3802D75f6cA5FEf57E | BSC |
+| LnConfig | 0x6Eaaa70AE37aAEA71e400F86199B83dA8E0E9455 | BSC |
+| LnDebtSystem | 0xd5C594FB9055E34926CdB46b32D427c09146e96A | BSC |
+| LnErc20Bridge | 0xF6a9bAfBc505a4Bc25888dc6aeAc57184eb2685B | BSC |
+| LnExchangeSystem |  | BSC |
+| LnLiquidation |  | BSC |
+| LnOracleRouter |  | BSC |
+| LnPerpetual |  | BSC |
+| LnPerpExchange |  | BSC |
+| LnPerpPositionToken |  | BSC |
+| LnRewardLocker |  | BSC |
+| LnRewardSystem |  | BSC |
+| LnVaultDynamicInterestPool |  | BSC |
+| LnVaultFixedRewardPool |  | BSC |
+| SafeDecimalMath |  | BSC |
+| TokenEscrow |  | BSC |
+
+
 ## License
 
 All code in this repository is licensed under [MIT](./LICENSE).
