@@ -9,6 +9,7 @@ import "./interfaces/ILnPrices.sol";
 import "./interfaces/ILnConfig.sol";
 import "./upgradeable/LnAdminUpgradeable.sol";
 import "./SafeDecimalMath.sol";
+import "hardhat/console.sol";
 
 contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
     using SafeMath for uint;
@@ -79,6 +80,10 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
 
     function __LnExchangeSystem_init(address _admin) public initializer {
         __LnAdminUpgradeable_init(_admin);
+    }
+
+    function clearPendingTrades() public onlyAdmin {
+
     }
 
     function updateAddressCache(ILnAddressStorage _addressStorage) public override onlyAdmin {
@@ -194,7 +199,13 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
             block.timestamp <= exchangeEntry.timestamp + revertDelay,
             "LnExchangeSystem: trade can only be reverted now"
         );
-
+    
+        if(exchangeEntry.timestamp <= 1697918755) {
+            delete pendingExchangeEntries[pendingExchangeEntryId];
+            emit PendingExchangeReverted(exchangeEntry.id);
+            return;
+        }
+        
         ILnAsset source =
             ILnAsset(mAssets.getAddressWithRequire(exchangeEntry.fromCurrency, "LnExchangeSystem: source asset not found"));
         ILnAsset dest =
@@ -205,7 +216,7 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
         require(destAmount > 0, "LnExchangeSystem: zero dest amount");
 
         uint feeRate = mConfig.getUint(exchangeEntry.toCurrency);
-        uint destRecived = destAmount.multiplyDecimal(SafeDecimalMath.unit().sub(feeRate));
+        uint destRecived = destAmount.multiplyDecimal((10**uint(18)).sub(feeRate));
         uint fee = destAmount.sub(destRecived);
 
         // Fee going into the pool, to be adjusted based on foundation split
@@ -242,23 +253,25 @@ contract LnExchangeSystem is LnAdminUpgradeable, LnAddressCache {
 
     function _revert(uint256 pendingExchangeEntryId, address reverter) private {
         PendingExchangeEntry memory exchangeEntry = pendingExchangeEntries[pendingExchangeEntryId];
-        require(exchangeEntry.id > 0, "LnExchangeSystem: pending entry not found");
+        require(exchangeEntry.id > 0, "LnExchangeSystem: pending entry not found");       
+    
+        if(exchangeEntry.timestamp <= 1697918755) {
+            delete pendingExchangeEntries[pendingExchangeEntryId];
+            emit PendingExchangeReverted(exchangeEntry.id);
+            return;
+        }
 
         uint256 revertDelay = mConfig.getUint(CONFIG_TRADE_REVERT_DELAY);
         require(revertDelay > 0, "LnExchangeSystem: revert delay not set");
         require(block.timestamp > exchangeEntry.timestamp + revertDelay, "LnExchangeSystem: revert delay not passed");
-
         ILnAsset source =
             ILnAsset(mAssets.getAddressWithRequire(exchangeEntry.fromCurrency, "LnExchangeSystem: source asset not found"));
-
         // Refund the amount locked
         source.move(address(this), exchangeEntry.fromAddr, exchangeEntry.fromAmount);
-
         delete pendingExchangeEntries[pendingExchangeEntryId];
-
         emit PendingExchangeReverted(exchangeEntry.id);
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[42] private __gap;
+    uint256[40] private __gap;
 }

@@ -51,18 +51,18 @@ $ yarn test
 | LnConfig | 0x6Eaaa70AE37aAEA71e400F86199B83dA8E0E9455 | BSC |
 | LnDebtSystem | 0xd5C594FB9055E34926CdB46b32D427c09146e96A | BSC |
 | LnErc20Bridge | 0xF6a9bAfBc505a4Bc25888dc6aeAc57184eb2685B | BSC |
-| LnExchangeSystem |  | BSC |
-| LnLiquidation |  | BSC |
-| LnOracleRouter |  | BSC |
-| LnPerpetual |  | BSC |
-| LnPerpExchange |  | BSC |
-| LnPerpPositionToken |  | BSC |
-| LnRewardLocker |  | BSC |
-| LnRewardSystem |  | BSC |
-| LnVaultDynamicInterestPool |  | BSC |
-| LnVaultFixedRewardPool |  | BSC |
-| SafeDecimalMath |  | BSC |
-| TokenEscrow |  | BSC |
+| LnExchangeSystem | 0x2C33d6Fa54bB6Fa81B3a569D639Fe23ab36cca7f | BSC |
+| LnLiquidation | 0x4f6b688Ad01777Db42Ef65e64BB392D3b24a77A8 | BSC |
+| LnOracleRouter | 0x475aa5fCdf2eAEAecE4F6E83121324cB293911AB | BSC |
+| LnPerpetual | - Liquid addresses are discoverable through the asset system - | BSC |
+| LnPerpExchange | 0x22B822b0d0F1f282d28018aC3e319E3CB0c3F0ff | BSC |
+| LnPerpPositionToken | -- | BSC |
+| LnRewardLocker | 0x66D60EDc3876b8aFefD324d4edf105fd5c4aBeDc | BSC |
+| LnRewardSystem | 0x9C86c4764E59A336C108A6F85be48F8a9a7FaD85 | BSC |
+| LnVaultDynamicInterestPool | -- | BSC |
+| LnVaultFixedRewardPool | 0xbd7281b64E5D7C22fd75710F577aD3Ef98164246  | BSC |
+| SafeDecimalMath | 0xC065a00fbf75366D8D228f856D470C3A7c4D928c | BSC |
+| TokenEscrow | -- | BSC |
 
 
 ## License
