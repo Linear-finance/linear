@@ -120,6 +120,9 @@ describe("LnRewardSystem", function () {
       lnCollateralSystem.address, // _collateralSystemAddress
       lnRewardLocker.address, // _rewardLockerAddress
       admin.address, // _admin
+      604800,
+      2,
+      31449600,
     );
 
     // LnRewardSystem holds 1,000,000 lUSD to start

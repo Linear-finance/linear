@@ -435,7 +435,7 @@ describe("LnErc20Bridge", function () {
           1, // depositId
           hexlify(zeroPad(alice.address, 32)), // depositor
           hexlify(zeroPad(alice.address, 32)), // recipient
-          formatBytes32String("lUSD2"), // currency
+          formatBytes32String("lUSD"), // currency
           expandTo18Decimals(1_000), // amount
         );
 

@@ -79,36 +79,30 @@ export const deployLinearStack = async (
   );
 
   // Removed safe decimal math from libraries
-  const [ 
-    LnExchangeSystem,
-  ] = await Promise.all(
-    [
-      "LnExchangeSystem",   
-    ].map((contractName) => ethers.getContractFactory(contractName, deployer)),
+  const [LnExchangeSystem] = await Promise.all(
+    ["LnExchangeSystem"].map((contractName) =>
+      ethers.getContractFactory(contractName, deployer),
+    ),
   );
 
   // Load contract factories with external libraries
-  const [
-    LnBuildBurnSystem,
-    MockLnPrices,
-    LnDebtSystem,
-    LnLiquidation,
-  ] = await Promise.all(
-    [
-      "LnBuildBurnSystem",
-      "MockLnPrices",
-      "LnDebtSystem",
-      "LnLiquidation",
-    ].map((contractName) =>
-      ethers.getContractFactory(contractName, {
-        signer: deployer,
-        libraries: {
-          "contracts/SafeDecimalMath.sol:SafeDecimalMath":
-            safeDecimalMath.address,
-        },
-      }),
-    ),
-  );
+  const [LnBuildBurnSystem, MockLnPrices, LnDebtSystem, LnLiquidation] =
+    await Promise.all(
+      [
+        "LnBuildBurnSystem",
+        "MockLnPrices",
+        "LnDebtSystem",
+        "LnLiquidation",
+      ].map((contractName) =>
+        ethers.getContractFactory(contractName, {
+          signer: deployer,
+          libraries: {
+            "contracts/SafeDecimalMath.sol:SafeDecimalMath":
+              safeDecimalMath.address,
+          },
+        }),
+      ),
+    );
 
   /**
    * LINA token contract
@@ -516,7 +510,7 @@ export const deployLinearStack = async (
       admin.address, // _admin
       604800,
       2,
-      31449600
+      31449600,
     ],
     {
       initializer: "__LnRewardSystem_init",
