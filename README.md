@@ -60,10 +60,9 @@ $ yarn test
 | LnRewardLocker | 0x66D60EDc3876b8aFefD324d4edf105fd5c4aBeDc | BSC |
 | LnRewardSystem | 0x9C86c4764E59A336C108A6F85be48F8a9a7FaD85 | BSC |
 | LnVaultDynamicInterestPool | -- | BSC |
-| LnVaultFixedRewardPool | 0xbd7281b64E5D7C22fd75710F577aD3Ef98164246  | BSC |
+| LnVaultFixedRewardPool | 0xbd7281b64E5D7C22fd75710F577aD3Ef98164246 | BSC |
 | SafeDecimalMath | 0xC065a00fbf75366D8D228f856D470C3A7c4D928c | BSC |
 | TokenEscrow | -- | BSC |
-
 
 ## License
 

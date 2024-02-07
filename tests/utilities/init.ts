@@ -34,7 +34,7 @@ export interface DeployedStack {
 
 export const deployLinearStack = async (
   deployer: SignerWithAddress,
-  admin: SignerWithAddress
+  admin: SignerWithAddress,
 ): Promise<DeployedStack> => {
   // Disable OpenZepplin upgrade warnings for test runs
   upgrades.silenceWarnings();
@@ -45,7 +45,7 @@ export const deployLinearStack = async (
    */
   const SafeDecimalMath = await ethers.getContractFactory(
     "SafeDecimalMath",
-    deployer
+    deployer,
   );
   const safeDecimalMath = await SafeDecimalMath.deploy();
 
@@ -75,7 +75,16 @@ export const deployLinearStack = async (
       "LnPerpPositionToken",
       "LnRewardLocker",
       "LnRewardSystem",
-    ].map((contractName) => ethers.getContractFactory(contractName, deployer))
+    ].map((contractName) => ethers.getContractFactory(contractName, deployer)),
+  );
+
+  // Removed safe decimal math from libraries
+  const [ 
+    LnExchangeSystem,
+  ] = await Promise.all(
+    [
+      "LnExchangeSystem",   
+    ].map((contractName) => ethers.getContractFactory(contractName, deployer)),
   );
 
   // Load contract factories with external libraries
@@ -83,14 +92,12 @@ export const deployLinearStack = async (
     LnBuildBurnSystem,
     MockLnPrices,
     LnDebtSystem,
-    LnExchangeSystem,
     LnLiquidation,
   ] = await Promise.all(
     [
       "LnBuildBurnSystem",
       "MockLnPrices",
       "LnDebtSystem",
-      "LnExchangeSystem",
       "LnLiquidation",
     ].map((contractName) =>
       ethers.getContractFactory(contractName, {
@@ -99,8 +106,8 @@ export const deployLinearStack = async (
           "contracts/SafeDecimalMath.sol:SafeDecimalMath":
             safeDecimalMath.address,
         },
-      })
-    )
+      }),
+    ),
   );
 
   /**
@@ -113,7 +120,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LinearFinance_init",
-    }
+    },
   );
 
   /**
@@ -128,7 +135,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetSystem_init",
-    }
+    },
   );
 
   /**
@@ -143,7 +150,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnBuildBurnSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   /**
@@ -156,7 +163,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnConfig_init",
-    }
+    },
   );
 
   /**
@@ -169,14 +176,14 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAccessControl_init",
-    }
+    },
   );
 
   /**
    * Oracle contract for price data access
    */
   const lnPrices = await MockLnPrices.deploy(
-    Duration.fromObject({ hours: 12 }).as("seconds") // _stalePeriod
+    Duration.fromObject({ hours: 12 }).as("seconds"), // _stalePeriod
   );
 
   const lnDebtSystem = await upgrades.deployProxy(
@@ -185,7 +192,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnDebtSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   const lnCollateralSystem = await upgrades.deployProxy(
@@ -196,7 +203,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnCollateralSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   const lnRewardLocker = await upgrades.deployProxy(
@@ -208,7 +215,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardLocker_init",
-    }
+    },
   );
 
   const lnExchangeSystem = await upgrades.deployProxy(
@@ -219,7 +226,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnExchangeSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   const lnLiquidation = await upgrades.deployProxy(
@@ -236,7 +243,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnLiquidation_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   /**
@@ -276,7 +283,7 @@ export const deployLinearStack = async (
   ])
     await lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String(config.key), // key
-      config.value // value
+      config.value, // value
     );
 
   /**
@@ -310,7 +317,7 @@ export const deployLinearStack = async (
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("MOVE_ASSET"), // roleType
     [lnExchangeSystem.address], // addresses
-    [true] // setTo
+    [true], // setTo
   );
 
   /**
@@ -320,7 +327,7 @@ export const deployLinearStack = async (
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("MOVE_REWARD"), // roleType
     [lnLiquidation.address], // addresses
-    [true] // setTo
+    [true], // setTo
   );
 
   /**
@@ -352,7 +359,7 @@ export const deployLinearStack = async (
         lnRewardLocker.address,
         lnExchangeSystem.address,
         lnLiquidation.address,
-      ]
+      ],
     );
 
   /**
@@ -379,7 +386,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetUpgradeable_init",
-    }
+    },
   );
 
   /**
@@ -395,7 +402,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetUpgradeable_init",
-    }
+    },
   );
 
   /**
@@ -412,7 +419,7 @@ export const deployLinearStack = async (
     [],
     {
       initializer: "__LnPerpPositionToken_init",
-    }
+    },
   );
 
   /**
@@ -429,7 +436,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnPerpExchange_init",
-    }
+    },
   );
 
   /**
@@ -463,7 +470,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnPerpetual_init",
-    }
+    },
   );
 
   /**
@@ -485,7 +492,7 @@ export const deployLinearStack = async (
     ethers.utils.formatBytes32String("LINA"), // _currency
     linaToken.address, // _tokenAddr
     expandTo18Decimals(1), // _minCollateral
-    false // _close
+    false, // _close
   );
 
   /**
@@ -510,7 +517,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnRewardSystem_init",
-    }
+    },
   );
 
   /**
@@ -520,7 +527,7 @@ export const deployLinearStack = async (
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("LOCK_REWARD"), // roleType
     [lnRewardSystem.address], // addresses
-    [true] // setTo
+    [true], // setTo
   );
 
   /**
@@ -530,7 +537,7 @@ export const deployLinearStack = async (
     .connect(admin)
     .updateAll(
       [ethers.utils.formatBytes32String("LnRewardSystem")],
-      [lnRewardSystem.address]
+      [lnRewardSystem.address],
     );
   await lnExchangeSystem
     .connect(admin)

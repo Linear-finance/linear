@@ -4,10 +4,10 @@ import { BigNumber } from "ethers";
 export const zeroAddress: string = "0x0000000000000000000000000000000000000000";
 export const uint32Max: BigNumber = BigNumber.from("0xffffffff");
 export const uint128Max: BigNumber = BigNumber.from(
-  "0xffffffffffffffffffffffffffffffff"
+  "0xffffffffffffffffffffffffffffffff",
 );
 export const uint256Max: BigNumber = BigNumber.from(
-  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 );
 
 export function expandTo18Decimals(num: number): BigNumber {

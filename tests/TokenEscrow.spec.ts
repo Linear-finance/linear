@@ -37,20 +37,20 @@ describe("TokenEscrow", function () {
 
     erc20Token = await MockERC20.deploy(
       "Mock Token", // _name
-      "MOCK" // _symbol
+      "MOCK", // _symbol
     );
     await erc20Token.connect(deployer).mint(
       owner.address, // account
-      expandTo18Decimals(10_000_000_000) // amount
+      expandTo18Decimals(10_000_000_000), // amount
     );
 
     tokenEscrow = await TokenEscrow.deploy();
     await tokenEscrow.connect(deployer).__TokenEscrow_init(
-      erc20Token.address // _token
+      erc20Token.address, // _token
     );
 
     await tokenEscrow.connect(deployer).transferOwnership(
-      owner.address // newOwner
+      owner.address, // newOwner
     );
 
     deploymentTime = await getBlockDateTime(ethers.provider);
@@ -58,7 +58,7 @@ describe("TokenEscrow", function () {
     // Distribute 1B token to escrow
     await erc20Token.connect(owner).transfer(
       tokenEscrow.address, // recipient
-      expandTo18Decimals(1_000_000_000) // amount
+      expandTo18Decimals(1_000_000_000), // amount
     );
   });
 
@@ -69,8 +69,8 @@ describe("TokenEscrow", function () {
         1, // amount
         2, // startTime
         10, // endTime
-        2 // step
-      )
+        2, // step
+      ),
     ).to.be.revertedWith("Ownable: caller is not the owner");
 
     await tokenEscrow.connect(owner).setVestingSchedule(
@@ -78,7 +78,7 @@ describe("TokenEscrow", function () {
       1, // amount
       2, // startTime
       10, // endTime
-      2 // step
+      2, // step
     );
   });
 
@@ -87,14 +87,14 @@ describe("TokenEscrow", function () {
       tokenEscrow.connect(alice).setCliff(
         bob.address, // user
         1, // amount
-        1 // unlockTime
-      )
+        1, // unlockTime
+      ),
     ).to.be.revertedWith("Ownable: caller is not the owner");
 
     await tokenEscrow.connect(owner).setCliff(
       bob.address, // user
       1, // amount
-      1 // unlockTime
+      1, // unlockTime
     );
   });
 
@@ -104,23 +104,23 @@ describe("TokenEscrow", function () {
       1, // amount
       2, // startTime
       10, // endTime
-      2 // step
+      2, // step
     );
     expect(
-      (await tokenEscrow.vestingSchedules(bob.address)).amount
+      (await tokenEscrow.vestingSchedules(bob.address)).amount,
     ).to.not.equal(0);
 
     await expect(
       tokenEscrow.connect(alice).removeVestingSchedule(
-        bob.address // user
-      )
+        bob.address, // user
+      ),
     ).to.be.revertedWith("Ownable: caller is not the owner");
 
     await tokenEscrow.connect(owner).removeVestingSchedule(
-      bob.address // user
+      bob.address, // user
     );
     expect((await tokenEscrow.vestingSchedules(bob.address)).amount).to.equal(
-      0
+      0,
     );
   });
 
@@ -131,8 +131,8 @@ describe("TokenEscrow", function () {
         uint128Max.add(1), // amount
         2, // startTime
         10, // endTime
-        1 // step
-      )
+        1, // step
+      ),
     ).to.be.revertedWith("TokenEscrow: amount overflow");
 
     await expect(
@@ -141,8 +141,8 @@ describe("TokenEscrow", function () {
         1, // amount
         uint32Max.add(1), // startTime
         uint32Max.add(2), // endTime
-        1 // step
-      )
+        1, // step
+      ),
     ).to.be.revertedWith("TokenEscrow: startTime overflow");
 
     await expect(
@@ -151,8 +151,8 @@ describe("TokenEscrow", function () {
         1, // amount
         2, // startTime
         uint32Max.add(1), // endTime
-        1 // step
-      )
+        1, // step
+      ),
     ).to.be.revertedWith("TokenEscrow: endTime overflow");
   });
 
@@ -161,16 +161,16 @@ describe("TokenEscrow", function () {
       tokenEscrow.connect(owner).setCliff(
         bob.address, // user
         uint128Max.add(1), // amount
-        1 // unlockTime
-      )
+        1, // unlockTime
+      ),
     ).to.be.revertedWith("TokenEscrow: amount overflow");
 
     await expect(
       tokenEscrow.connect(owner).setCliff(
         bob.address, // user
         1, // amount
-        uint32Max.add(1) // unlockTime
-      )
+        uint32Max.add(1), // unlockTime
+      ),
     ).to.be.revertedWith("TokenEscrow: unlockTime overflow");
   });
 
@@ -181,8 +181,8 @@ describe("TokenEscrow", function () {
         100, // amount
         200, // startTime
         300, // endTime
-        50 // step
-      )
+        50, // step
+      ),
     )
       .to.emit(tokenEscrow, "VestingScheduleAdded")
       .withArgs(
@@ -190,7 +190,7 @@ describe("TokenEscrow", function () {
         100, // amount
         200, // startTime
         300, // endTime
-        50 // step
+        50, // step
       );
 
     await expect(
@@ -199,8 +199,8 @@ describe("TokenEscrow", function () {
         100, // amount
         200, // startTime
         300, // endTime
-        50 // step
-      )
+        50, // step
+      ),
     ).to.be.revertedWith("TokenEscrow: vesting schedule already exists");
   });
 
@@ -209,22 +209,22 @@ describe("TokenEscrow", function () {
       tokenEscrow.connect(owner).setCliff(
         bob.address, // user
         100, // amount
-        200 // unlockTime
-      )
+        200, // unlockTime
+      ),
     )
       .to.emit(tokenEscrow, "CliffAdded")
       .withArgs(
         bob.address, // user
         100, // amount
-        200 // unlockTime
+        200, // unlockTime
       );
 
     await expect(
       tokenEscrow.connect(owner).setCliff(
         bob.address, // user
         100, // amount
-        200 // unlockTime
-      )
+        200, // unlockTime
+      ),
     ).to.be.revertedWith("TokenEscrow: cliff already exists");
   });
 
@@ -237,21 +237,21 @@ describe("TokenEscrow", function () {
       10000, // amount
       startTime.toSeconds(), // startTime
       startTime.toSeconds() + step.as("seconds") * 10, // endTime
-      step.as("seconds") // step
+      step.as("seconds"), // step
     );
 
     // Cannot claim before reaching start time
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
 
     // Cannot claim before reaching the first step
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(step).minus({ seconds: 1 })
+      startTime.plus(step).minus({ seconds: 1 }),
     );
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
 
     await setNextBlockTimestamp(ethers.provider, startTime.plus(step));
@@ -262,12 +262,12 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        1000 // amount
+        1000, // amount
       );
 
     // Cannot claim again until next step
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
   });
 
@@ -280,13 +280,13 @@ describe("TokenEscrow", function () {
       10000, // amount
       startTime.toSeconds(), // startTime
       startTime.toSeconds() + step.as("seconds") * 10, // endTime
-      step.as("seconds") // step
+      step.as("seconds"), // step
     );
 
     // Claim 3 steps at once
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(step).plus(step).plus(step)
+      startTime.plus(step).plus(step).plus(step),
     );
     await expect(tokenEscrow.connect(alice).withdraw())
       .to.emit(tokenEscrow, "TokenVested")
@@ -295,13 +295,13 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        3000 // amount
+        3000, // amount
       );
 
     // Claim 3 steps at once
     await setNextBlockTimestamp(
       ethers.provider,
-      DateTime.fromSeconds(startTime.toSeconds() + step.as("seconds") * 5.5)
+      DateTime.fromSeconds(startTime.toSeconds() + step.as("seconds") * 5.5),
     );
     await expect(tokenEscrow.connect(alice).withdraw())
       .to.emit(tokenEscrow, "TokenVested")
@@ -310,7 +310,7 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        2000 // amount
+        2000, // amount
       );
 
     // Claim all remaining steps
@@ -322,12 +322,12 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        5000 // amount
+        5000, // amount
       );
 
     // Nothing to withdraw anymore
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
   });
 
@@ -337,16 +337,16 @@ describe("TokenEscrow", function () {
     await tokenEscrow.connect(owner).setCliff(
       alice.address, // user
       10000, // amount
-      unlockTime.toSeconds() // unlockTime
+      unlockTime.toSeconds(), // unlockTime
     );
 
     // Cannot claim before reaching the first step
     await setNextBlockTimestamp(
       ethers.provider,
-      unlockTime.minus({ seconds: 1 })
+      unlockTime.minus({ seconds: 1 }),
     );
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
 
     await setNextBlockTimestamp(ethers.provider, unlockTime);
@@ -357,12 +357,12 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        10000 // amount
+        10000, // amount
       );
 
     // Nothing to withdraw anymore
     await expect(tokenEscrow.connect(alice).withdraw()).to.be.revertedWith(
-      "TokenEscrow: nothing to withdraw"
+      "TokenEscrow: nothing to withdraw",
     );
   });
 
@@ -376,12 +376,12 @@ describe("TokenEscrow", function () {
       10000, // amount
       startTime.toSeconds(), // startTime
       startTime.toSeconds() + step.as("seconds") * 10, // endTime
-      step.as("seconds") // step
+      step.as("seconds"), // step
     );
     await tokenEscrow.connect(owner).setCliff(
       alice.address, // user
       10000, // amount
-      unlockTime.toSeconds() // unlockTime
+      unlockTime.toSeconds(), // unlockTime
     );
 
     await setNextBlockTimestamp(ethers.provider, unlockTime);
@@ -394,7 +394,7 @@ describe("TokenEscrow", function () {
       .withArgs(
         tokenEscrow.address, // sender
         alice.address, // recipient
-        12000 // amount
+        12000, // amount
       );
   });
 });

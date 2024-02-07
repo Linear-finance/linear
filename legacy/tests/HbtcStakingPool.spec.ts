@@ -36,7 +36,7 @@ describe("HbtcStakingPool", function () {
 
     hbtcToken = await MockERC20.deploy(
       "Huobi BTC", // _name
-      "HBTC" // _symbol
+      "HBTC", // _symbol
     );
 
     hbtcStakingPool = await HbtcStakingPool.deploy(
@@ -44,7 +44,7 @@ describe("HbtcStakingPool", function () {
       startTime.toSeconds(), // _startTime
       endTime.toSeconds(), // _endTime
       expandTo18Decimals(200), // _maxStakeAmount: 200 HBTC
-      expandTo18Decimals(20_000_000) // _totalRewardAmount: 20,000,000 LINA
+      expandTo18Decimals(20_000_000), // _totalRewardAmount: 20,000,000 LINA
     );
 
     // Mint 200 BTC to Alice and Bob
@@ -59,10 +59,10 @@ describe("HbtcStakingPool", function () {
   it("cannot stake before start time", async function () {
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.minus({ seconds: 1 }).toSeconds()
+      startTime.minus({ seconds: 1 }).toSeconds(),
     );
     await expect(
-      hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1))
+      hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1)),
     ).to.be.revertedWith("HbtcStakingPool: not started");
   });
 
@@ -74,7 +74,7 @@ describe("HbtcStakingPool", function () {
   it("cannot stake after end time", async function () {
     await setNextBlockTimestamp(ethers.provider, endTime.toSeconds());
     await expect(
-      hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1))
+      hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1)),
     ).to.be.revertedWith("HbtcStakingPool: already ended");
   });
 
@@ -99,28 +99,28 @@ describe("HbtcStakingPool", function () {
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1 }).toSeconds()
+      startTime.plus({ days: 1 }).toSeconds(),
     );
     await expect(
-      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1))
+      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1)),
     )
       .to.emit(hbtcStakingPool, "Unstaked")
       .withArgs(
         alice.address,
         expandTo18Decimals(0.1),
-        startTime.plus({ days: 1 }).toSeconds()
+        startTime.plus({ days: 1 }).toSeconds(),
       );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 2 }).toSeconds()
+      startTime.plus({ days: 2 }).toSeconds(),
     );
     await expect(hbtcStakingPool.connect(alice).unstakeAll())
       .to.emit(hbtcStakingPool, "Unstaked")
       .withArgs(
         alice.address,
         expandTo18Decimals(0.9),
-        startTime.plus({ days: 2 }).toSeconds()
+        startTime.plus({ days: 2 }).toSeconds(),
       );
   });
 
@@ -128,14 +128,14 @@ describe("HbtcStakingPool", function () {
     // Cannot unstake without staking first
     await setNextBlockTimestamp(ethers.provider, startTime.toSeconds());
     await expect(
-      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(1))
+      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(1)),
     ).to.be.revertedWith("SafeMath: subtraction overflow");
 
     // Cannot unstake once all of the staked amount has been unstaked
     await hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1));
     await hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(1));
     await expect(
-      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(1))
+      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(1)),
     ).to.be.revertedWith("SafeMath: subtraction overflow");
   });
 
@@ -145,7 +145,7 @@ describe("HbtcStakingPool", function () {
 
     // Just a little bit over max amount
     await expect(
-      hbtcStakingPool.connect(bob).stake(expandTo18Decimals(50).add(1))
+      hbtcStakingPool.connect(bob).stake(expandTo18Decimals(50).add(1)),
     ).to.be.revertedWith("HbtcStakingPool: maximum stake amount exceeded");
 
     // It's OK to stake to max amount
@@ -159,10 +159,10 @@ describe("HbtcStakingPool", function () {
       .withArgs(alice.address, hbtcStakingPool.address, expandTo18Decimals(1));
 
     expect(await hbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(199)
+      expandTo18Decimals(199),
     );
     expect(await hbtcToken.balanceOf(hbtcStakingPool.address)).to.equal(
-      expandTo18Decimals(1)
+      expandTo18Decimals(1),
     );
   });
 
@@ -172,23 +172,23 @@ describe("HbtcStakingPool", function () {
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1 }).toSeconds()
+      startTime.plus({ days: 1 }).toSeconds(),
     );
     await expect(
-      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1))
+      hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1)),
     )
       .to.emit(hbtcToken, "Transfer")
       .withArgs(
         hbtcStakingPool.address,
         alice.address,
-        expandTo18Decimals(0.1)
+        expandTo18Decimals(0.1),
       );
 
     expect(await hbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(199.1)
+      expandTo18Decimals(199.1),
     );
     expect(await hbtcToken.balanceOf(hbtcStakingPool.address)).to.equal(
-      expandTo18Decimals(0.9)
+      expandTo18Decimals(0.9),
     );
 
     await expect(hbtcStakingPool.connect(alice).unstakeAll())
@@ -196,11 +196,11 @@ describe("HbtcStakingPool", function () {
       .withArgs(
         hbtcStakingPool.address,
         alice.address,
-        expandTo18Decimals(0.9)
+        expandTo18Decimals(0.9),
       );
 
     expect(await hbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(200)
+      expandTo18Decimals(200),
     );
     expect(await hbtcToken.balanceOf(hbtcStakingPool.address)).to.equal(0);
   });
@@ -211,17 +211,17 @@ describe("HbtcStakingPool", function () {
     await setNextBlockTimestamp(ethers.provider, startTime.toSeconds());
     await hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1));
     expect(await hbtcStakingPool.totalStakeAmount()).to.equal(
-      expandTo18Decimals(1)
+      expandTo18Decimals(1),
     );
 
     await hbtcStakingPool.connect(bob).stake(expandTo18Decimals(3));
     expect(await hbtcStakingPool.totalStakeAmount()).to.equal(
-      expandTo18Decimals(4)
+      expandTo18Decimals(4),
     );
 
     await hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1));
     expect(await hbtcStakingPool.totalStakeAmount()).to.equal(
-      expandTo18Decimals(3.9)
+      expandTo18Decimals(3.9),
     );
   });
 
@@ -232,30 +232,30 @@ describe("HbtcStakingPool", function () {
     await setNextBlockTimestamp(ethers.provider, startTime.toSeconds());
     await hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1));
     expect(await hbtcStakingPool.stakeAmounts(alice.address)).to.equal(
-      expandTo18Decimals(1)
+      expandTo18Decimals(1),
     );
     expect(await hbtcStakingPool.stakeAmounts(bob.address)).to.equal(0);
 
     await hbtcStakingPool.connect(bob).stake(expandTo18Decimals(3));
     expect(await hbtcStakingPool.stakeAmounts(alice.address)).to.equal(
-      expandTo18Decimals(1)
+      expandTo18Decimals(1),
     );
     expect(await hbtcStakingPool.stakeAmounts(bob.address)).to.equal(
-      expandTo18Decimals(3)
+      expandTo18Decimals(3),
     );
 
     await hbtcStakingPool.connect(alice).unstake(expandTo18Decimals(0.1));
     expect(await hbtcStakingPool.stakeAmounts(alice.address)).to.equal(
-      expandTo18Decimals(0.9)
+      expandTo18Decimals(0.9),
     );
     expect(await hbtcStakingPool.stakeAmounts(bob.address)).to.equal(
-      expandTo18Decimals(3)
+      expandTo18Decimals(3),
     );
 
     await hbtcStakingPool.connect(alice).unstakeAll();
     expect(await hbtcStakingPool.stakeAmounts(alice.address)).to.equal(0);
     expect(await hbtcStakingPool.stakeAmounts(bob.address)).to.equal(
-      expandTo18Decimals(3)
+      expandTo18Decimals(3),
     );
   });
 
@@ -266,7 +266,7 @@ describe("HbtcStakingPool", function () {
     // Alice stakes one week after start
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ weeks: 1 }).toSeconds()
+      startTime.plus({ weeks: 1 }).toSeconds(),
     );
     await hbtcStakingPool.connect(alice).stake(expandTo18Decimals(1));
 
@@ -303,7 +303,7 @@ describe("HbtcStakingPool", function () {
     // Bob stakes 1 week after
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ weeks: 1 }).toSeconds()
+      startTime.plus({ weeks: 1 }).toSeconds(),
     );
     await hbtcStakingPool.connect(bob).stake(expandTo18Decimals(9));
 
@@ -316,7 +316,7 @@ describe("HbtcStakingPool", function () {
     // After 1 week, Bob unstakes such that his share is the same as Alice's
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ weeks: 2 }).toSeconds()
+      startTime.plus({ weeks: 2 }).toSeconds(),
     );
     await hbtcStakingPool.connect(bob).unstake(expandTo18Decimals(8));
 
@@ -331,7 +331,7 @@ describe("HbtcStakingPool", function () {
     // After 1 week, Bob unstakes everything such that Alice will earn all remaining rewards
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ weeks: 3 }).toSeconds()
+      startTime.plus({ weeks: 3 }).toSeconds(),
     );
     await hbtcStakingPool.connect(bob).unstakeAll();
 

@@ -34,7 +34,7 @@
     "hardhat": "^2.2.1",
     "luxon": "^1.25.0",
     "mocha": "^8.2.1",
-    "prettier": "^2.2.1",
+    "prettier": "3.2.5",
     "prettier-plugin-solidity": "^1.0.0-beta.1",
     "ts-node": "^9.1.0",
     "typechain": "^5.1.2",

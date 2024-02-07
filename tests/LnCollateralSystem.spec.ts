@@ -28,34 +28,28 @@ describe("LnCollateralSystem", function () {
   const mockLnLiquidationAddr = "0x0000000000000000000000000000000000000005";
 
   beforeEach(async function () {
-    [
-      deployer,
-      admin,
-      alice,
-      rewarder,
-      rewardLocker,
-    ] = await ethers.getSigners();
+    [deployer, admin, alice, rewarder, rewardLocker] =
+      await ethers.getSigners();
 
     const LnAccessControl = await ethers.getContractFactory("LnAccessControl");
-    const LnCollateralSystem = await ethers.getContractFactory(
-      "LnCollateralSystem"
-    );
+    const LnCollateralSystem =
+      await ethers.getContractFactory("LnCollateralSystem");
     const LnAssetSystem = await ethers.getContractFactory("LnAssetSystem");
     const LINAToken = await ethers.getContractFactory("MockERC20");
 
     lnAccessControl = await LnAccessControl.deploy();
     await lnAccessControl.connect(deployer).__LnAccessControl_init(
-      admin.address // admin
+      admin.address, // admin
     );
 
     lnCollateralSystem = await LnCollateralSystem.deploy();
     await lnCollateralSystem.connect(deployer).__LnCollateralSystem_init(
-      admin.address // admin
+      admin.address, // admin
     );
 
     linaToken = await LINAToken.deploy(
       "Linear Finance", // _name
-      "LINA" // _symbol
+      "LINA", // _symbol
     );
 
     lnAssetSystem = await LnAssetSystem.deploy();
@@ -83,7 +77,7 @@ describe("LnCollateralSystem", function () {
           mockLnBuildBurnSystemAddr,
           rewardLocker.address,
           mockLnLiquidationAddr,
-        ]
+        ],
       );
 
     await lnCollateralSystem
@@ -96,7 +90,7 @@ describe("LnCollateralSystem", function () {
         [ethers.utils.formatBytes32String("LINA")],
         [linaToken.address],
         [1],
-        [false]
+        [false],
       );
   });
 
@@ -108,8 +102,8 @@ describe("LnCollateralSystem", function () {
           alice.address,
           rewarder.address,
           ethers.utils.formatBytes32String("LINA"),
-          1
-        )
+          1,
+        ),
     ).to.be.revertedWith("LnCollateralSystem: not reward locker");
 
     await linaToken.mint(rewarder.address, expandTo18Decimals(10));
@@ -123,14 +117,14 @@ describe("LnCollateralSystem", function () {
         alice.address,
         rewarder.address,
         ethers.utils.formatBytes32String("LINA"),
-        expandTo18Decimals(10)
+        expandTo18Decimals(10),
       );
 
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(expandTo18Decimals(10));
   });
 
@@ -143,11 +137,11 @@ describe("LnCollateralSystem", function () {
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(BigNumber.from("0"));
     expect(await linaToken.balanceOf(lnCollateralSystem.address)).to.eq(
-      BigNumber.from("0")
+      BigNumber.from("0"),
     );
 
     await expect(
@@ -157,36 +151,36 @@ describe("LnCollateralSystem", function () {
           alice.address,
           rewarder.address,
           ethers.utils.formatBytes32String("LINA"),
-          expandTo18Decimals(10)
-        )
+          expandTo18Decimals(10),
+        ),
     )
       .to.emit(lnCollateralSystem, "CollateralUnlockReward")
       .withArgs(
         alice.address,
         ethers.utils.formatBytes32String("LINA"),
         expandTo18Decimals(10),
-        expandTo18Decimals(10)
+        expandTo18Decimals(10),
       )
       .to.emit(linaToken, "Transfer")
       .withArgs(
         rewarder.address,
         lnCollateralSystem.address,
-        expandTo18Decimals(10)
+        expandTo18Decimals(10),
       );
 
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(expandTo18Decimals(10));
     let tokeninfo = await lnCollateralSystem.tokenInfos(
-      ethers.utils.formatBytes32String("LINA")
+      ethers.utils.formatBytes32String("LINA"),
     );
     expect(tokeninfo.totalCollateral).to.equal(expandTo18Decimals(10));
 
     expect(await linaToken.balanceOf(lnCollateralSystem.address)).to.eq(
-      expandTo18Decimals(10)
+      expandTo18Decimals(10),
     );
   });
 
@@ -198,14 +192,14 @@ describe("LnCollateralSystem", function () {
           "0x0000000000000000000000000000000000000000",
           rewarder.address,
           ethers.utils.formatBytes32String("LINA"),
-          expandTo18Decimals(10)
-        )
+          expandTo18Decimals(10),
+        ),
     ).to.be.revertedWith("LnCollateralSystem: User address cannot be zero");
   });
 
   it("reward locker must pass a valid currency to collateralFromUnlockReward function", async () => {
     let ethTokeninfo = await lnCollateralSystem.tokenInfos(
-      ethers.utils.formatBytes32String("ETH")
+      ethers.utils.formatBytes32String("ETH"),
     );
     expect(ethTokeninfo.tokenAddr).to.be.eq(zeroAddress);
 
@@ -216,12 +210,12 @@ describe("LnCollateralSystem", function () {
           alice.address,
           rewarder.address,
           ethers.utils.formatBytes32String("ETH"),
-          expandTo18Decimals(10)
-        )
+          expandTo18Decimals(10),
+        ),
     ).to.be.revertedWith("LnCollateralSystem: Invalid token symbol");
 
     let linaTokeninfo = await lnCollateralSystem.tokenInfos(
-      ethers.utils.formatBytes32String("LINA")
+      ethers.utils.formatBytes32String("LINA"),
     );
     expect(linaTokeninfo.tokenAddr).to.be.eq(linaToken.address);
 
@@ -236,14 +230,14 @@ describe("LnCollateralSystem", function () {
         alice.address,
         rewarder.address,
         ethers.utils.formatBytes32String("LINA"),
-        expandTo18Decimals(1)
+        expandTo18Decimals(1),
       );
 
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(expandTo18Decimals(1));
   });
 
@@ -255,8 +249,8 @@ describe("LnCollateralSystem", function () {
           alice.address,
           rewarder.address,
           ethers.utils.formatBytes32String("LINA"),
-          BigNumber.from(0)
-        )
+          BigNumber.from(0),
+        ),
     ).to.be.revertedWith("LnCollateralSystem: Collateral amount must be > 0");
 
     await linaToken.mint(rewarder.address, expandTo18Decimals(1));
@@ -270,14 +264,14 @@ describe("LnCollateralSystem", function () {
         alice.address,
         rewarder.address,
         ethers.utils.formatBytes32String("LINA"),
-        expandTo18Decimals(1)
+        expandTo18Decimals(1),
       );
 
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(expandTo18Decimals(1));
   });
 
@@ -285,14 +279,14 @@ describe("LnCollateralSystem", function () {
     expect(
       await lnCollateralSystem.userCollateralData(
         alice.address,
-        ethers.utils.formatBytes32String("LINA")
-      )
+        ethers.utils.formatBytes32String("LINA"),
+      ),
     ).to.eq(BigNumber.from("0"));
     expect(await linaToken.balanceOf(lnCollateralSystem.address)).to.eq(
-      BigNumber.from("0")
+      BigNumber.from("0"),
     );
     expect(await linaToken.balanceOf(rewarder.address)).to.eq(
-      BigNumber.from("0")
+      BigNumber.from("0"),
     );
 
     await expect(
@@ -302,8 +296,8 @@ describe("LnCollateralSystem", function () {
           alice.address,
           rewarder.address,
           ethers.utils.formatBytes32String("LINA"),
-          expandTo18Decimals(10)
-        )
+          expandTo18Decimals(10),
+        ),
     ).to.be.revertedWith("TransferHelper: transferFrom failed");
   });
 });
