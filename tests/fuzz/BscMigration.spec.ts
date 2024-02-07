@@ -35,7 +35,7 @@ describe("Fuzz | BscMigration", function () {
     // Set LINA price to $1
     await stack.lnPrices.connect(admin).setPrice(
       ethers.utils.formatBytes32String("LINA"), // currencyKey
-      expandTo18Decimals(1) // price
+      expandTo18Decimals(1), // price
     );
 
     // All users stake 1M LINA
@@ -65,9 +65,8 @@ describe("Fuzz | BscMigration", function () {
       const user: SignerWithAddress =
         users[Math.floor(Math.random() * users.length)];
 
-      const currentCollateralAmount: BigNumber = await stack.lusdToken.balanceOf(
-        user.address
-      );
+      const currentCollateralAmount: BigNumber =
+        await stack.lusdToken.balanceOf(user.address);
 
       const isBuild: boolean =
         currentCollateralAmount.isZero() || Math.random() < 0.5;
@@ -76,7 +75,7 @@ describe("Fuzz | BscMigration", function () {
 
       if (isBuild) {
         const amountToBuild: BigNumber = expandTo18Decimals(
-          Math.round(Math.random() * 9999 + 1)
+          Math.round(Math.random() * 9999 + 1),
         );
 
         actionTx = await stack.lnBuildBurnSystem
@@ -84,7 +83,7 @@ describe("Fuzz | BscMigration", function () {
           .BuildAsset(amountToBuild);
       } else {
         let amountToBurn: BigNumber = currentCollateralAmount.div(
-          BigNumber.from(Math.floor(Math.random() * 10 + 1))
+          BigNumber.from(Math.floor(Math.random() * 10 + 1)),
         );
         if (amountToBurn.isZero()) amountToBurn = currentCollateralAmount;
 
@@ -132,7 +131,7 @@ describe("Fuzz | BscMigration", function () {
           [userDebtEvent.args.addr],
           [userDebtEvent.args.debtProportion],
           [userDebtEvent.args.debtFactor],
-          [userDebtEvent.args.timestamp]
+          [userDebtEvent.args.timestamp],
         );
 
       const logsFromTx: LogDescription[] = (await importTx.wait()).events
@@ -183,31 +182,31 @@ describe("Fuzz | BscMigration", function () {
 
     // Contract state must be the same
     expect(importContractState.userDebtState.alice[0]).to.equal(
-      contractState.userDebtState.alice[0]
+      contractState.userDebtState.alice[0],
     );
     expect(importContractState.userDebtState.alice[1]).to.equal(
-      contractState.userDebtState.alice[1]
+      contractState.userDebtState.alice[1],
     );
     expect(importContractState.userDebtState.bob[0]).to.equal(
-      contractState.userDebtState.bob[0]
+      contractState.userDebtState.bob[0],
     );
     expect(importContractState.userDebtState.bob[1]).to.equal(
-      contractState.userDebtState.bob[1]
+      contractState.userDebtState.bob[1],
     );
     expect(importContractState.userDebtState.charlie[0]).to.equal(
-      contractState.userDebtState.charlie[0]
+      contractState.userDebtState.charlie[0],
     );
     expect(importContractState.userDebtState.charlie[1]).to.equal(
-      contractState.userDebtState.charlie[1]
+      contractState.userDebtState.charlie[1],
     );
     expect(importContractState.userDebtState.david[0]).to.equal(
-      contractState.userDebtState.david[0]
+      contractState.userDebtState.david[0],
     );
     expect(importContractState.userDebtState.david[1]).to.equal(
-      contractState.userDebtState.david[1]
+      contractState.userDebtState.david[1],
     );
     expect(importContractState.debtCurrentIndex).to.equal(
-      contractState.debtCurrentIndex
+      contractState.debtCurrentIndex,
     );
     expect(importContractState.lastCloseAt).to.equal(contractState.lastCloseAt);
     expect(importContractState.lastDeletTo).to.equal(contractState.lastDeletTo);

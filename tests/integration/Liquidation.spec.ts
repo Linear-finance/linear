@@ -33,39 +33,38 @@ describe("Integration | Liquidation", function () {
       ethers.provider,
       (await getBlockDateTime(ethers.provider))
         .plus(liquidationDelay)
-        .plus({ seconds: 1 })
+        .plus({ seconds: 1 }),
     );
   };
 
   const setLinaPrice = async (price: number): Promise<void> => {
     await stack.lnPrices.connect(admin).setPrice(
       ethers.utils.formatBytes32String("LINA"), // currencyKey
-      expandTo18Decimals(price) // price
+      expandTo18Decimals(price), // price
     );
   };
 
   const stakeAndBuild = async (
     user: SignerWithAddress,
     stakeAmount: BigNumber,
-    buildAmount: BigNumber
+    buildAmount: BigNumber,
   ): Promise<void> => {
     await stack.lnCollateralSystem.connect(user).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
-      stakeAmount // _amount
+      stakeAmount, // _amount
     );
     await stack.lnBuildBurnSystem.connect(user).BuildAsset(
-      buildAmount // amount
+      buildAmount, // amount
     );
   };
 
   const assertUserLinaCollateral = async (
     user: string,
     staked: BigNumber,
-    locked: BigNumber
+    locked: BigNumber,
   ): Promise<void> => {
-    const breakdown = await stack.lnCollateralSystem.getUserLinaCollateralBreakdown(
-      user
-    );
+    const breakdown =
+      await stack.lnCollateralSystem.getUserLinaCollateralBreakdown(user);
 
     expect(breakdown.staked).to.equal(staked);
     expect(breakdown.locked).to.equal(locked);
@@ -73,22 +72,26 @@ describe("Integration | Liquidation", function () {
 
   const changeStakedCollateralToLocked = async (
     user: SignerWithAddress,
-    amount: BigNumber
+    amount: BigNumber,
   ): Promise<void> => {
     await stack.lnRewardLocker.connect(admin).migrateRewards(
       [user.address], // _users
       [amount], // _amounts
-      [(await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds()] // _lockTo
+      [
+        (await getBlockDateTime(ethers.provider))
+          .plus({ years: 1 })
+          .toSeconds(),
+      ], // _lockTo
     );
     await stack.lnCollateralSystem.connect(user).Redeem(
       formatBytes32String("LINA"), // _currency
-      amount // _amount
+      amount, // _amount
     );
   };
 
   const assertIdenticalAggregation = (
     expected: Map<number, BigNumber>,
-    actual: Map<number, BigNumber>
+    actual: Map<number, BigNumber>,
   ): void => {
     expect(actual.size).to.equal(expected.size);
 
@@ -98,25 +101,23 @@ describe("Integration | Liquidation", function () {
   };
 
   const aggregateLockedRewards = async (
-    addresses: string[]
+    addresses: string[],
   ): Promise<Map<number, BigNumber>> => {
     const aggregation = new Map<number, BigNumber>();
 
     for (const address of addresses) {
       for (let ind = 0; ; ind++) {
         try {
-          const rewardEntry: RewardData = await stack.lnRewardLocker.userRewards(
-            address,
-            ind
-          );
+          const rewardEntry: RewardData =
+            await stack.lnRewardLocker.userRewards(address, ind);
 
           if (rewardEntry.amount.gt(0)) {
             const time = rewardEntry.lockToTime.toNumber();
             aggregation.set(
               time,
               rewardEntry.amount.add(
-                aggregation.has(time) ? aggregation.get(time) : 0
-              )
+                aggregation.has(time) ? aggregation.get(time) : 0,
+              ),
             );
           }
         } catch {
@@ -159,14 +160,14 @@ describe("Integration | Liquidation", function () {
     await stakeAndBuild(
       alice,
       expandTo18Decimals(1_000),
-      expandTo18Decimals(20)
+      expandTo18Decimals(20),
     );
 
     // Bob staks 1,000,000 LINA nd builds 1,000 lUSD
     await stakeAndBuild(
       bob,
       expandTo18Decimals(1_000_000),
-      expandTo18Decimals(1_000)
+      expandTo18Decimals(1_000),
     );
   });
 
@@ -178,7 +179,7 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .markPositionAsUndercollateralized(alice.address)
+        .markPositionAsUndercollateralized(alice.address),
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // Price of LINA drops such that Alice's C-ratio falls below liquidation ratio
@@ -188,24 +189,24 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .markPositionAsUndercollateralized(alice.address)
+        .markPositionAsUndercollateralized(alice.address),
     )
       .to.emit(stack.lnLiquidation, "PositionMarked")
       .withArgs(
         alice.address, // user
-        bob.address // marker
+        bob.address, // marker
       );
 
     // Confirm mark
     expect(
       await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
-        alice.address
-      )
+        alice.address,
+      ),
     ).to.equal(true);
     expect(
       await stack.lnLiquidation.getUndercollateralizationMarkMarker(
-        alice.address
-      )
+        alice.address,
+      ),
     ).to.equal(bob.address);
   });
 
@@ -222,7 +223,7 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(alice)
-        .removeUndercollateralizationMark(alice.address)
+        .removeUndercollateralizationMark(alice.address),
     ).to.be.revertedWith("LnLiquidation: mark removal ratio violation");
 
     // LINA price goes to $0.09. Alice can now remove mark
@@ -230,11 +231,11 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(alice)
-        .removeUndercollateralizationMark(alice.address)
+        .removeUndercollateralizationMark(alice.address),
     )
       .to.emit(stack.lnLiquidation, "PositionUnmarked")
       .withArgs(
-        alice.address // user
+        alice.address, // user
       );
   });
 
@@ -243,7 +244,7 @@ describe("Integration | Liquidation", function () {
     await setLinaPrice(0.035);
 
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, []),
     ).to.be.revertedWith("LnLiquidation: not marked for undercollateralized");
   });
 
@@ -261,16 +262,16 @@ describe("Integration | Liquidation", function () {
     // Cannot liquidate before delay is passed
     await setNextBlockTimestamp(
       ethers.provider,
-      markTime.plus(liquidationDelay)
+      markTime.plus(liquidationDelay),
     );
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, []),
     ).to.be.revertedWith("LnLiquidation: liquidation delay not passed");
 
     // Can liquidate after delay is passed
     await setNextBlockTimestamp(
       ethers.provider,
-      markTime.plus(liquidationDelay).plus({ seconds: 1 })
+      markTime.plus(liquidationDelay).plus({ seconds: 1 }),
     );
     await stack.lnLiquidation
       .connect(bob)
@@ -290,7 +291,7 @@ describe("Integration | Liquidation", function () {
 
     // Position cannot be liquidated now
     await expect(
-      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, [])
+      stack.lnLiquidation.connect(bob).liquidatePosition(alice.address, 1, []),
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // C-ratio falls below issuance ratio
@@ -307,7 +308,11 @@ describe("Integration | Liquidation", function () {
     await stack.lnRewardLocker.connect(admin).migrateRewards(
       [alice.address], // _users
       [expandTo18Decimals(1_000)], // _amounts
-      [(await getBlockDateTime(ethers.provider)).plus({ years: 1 }).toSeconds()] // _lockTo
+      [
+        (await getBlockDateTime(ethers.provider))
+          .plus({ years: 1 })
+          .toSeconds(),
+      ], // _lockTo
     );
 
     // Alice has 2,000 LINA now, and will only be liquidated below $0.02
@@ -315,7 +320,7 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .markPositionAsUndercollateralized(alice.address)
+        .markPositionAsUndercollateralized(alice.address),
     ).to.be.revertedWith("LnLiquidation: not undercollateralized");
 
     // LINA price drops to $0.019 and Alice can be liquidated
@@ -346,7 +351,7 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .liquidatePosition(alice.address, maxLusdToBurn.add(1), [])
+        .liquidatePosition(alice.address, maxLusdToBurn.add(1), []),
     ).to.be.revertedWith("LnLiquidation: burn amount too large");
 
     // Can burn exactly the max amount
@@ -357,8 +362,8 @@ describe("Integration | Liquidation", function () {
     // Mark is removed after buring the max amount
     expect(
       await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
-        alice.address
-      )
+        alice.address,
+      ),
     ).to.equal(false);
   });
 
@@ -377,8 +382,8 @@ describe("Integration | Liquidation", function () {
     // Mark is removed after buring the max amount
     expect(
       await stack.lnLiquidation.isPositionMarkedAsUndercollateralized(
-        alice.address
-      )
+        alice.address,
+      ),
     ).to.equal(false);
   });
 
@@ -394,7 +399,7 @@ describe("Integration | Liquidation", function () {
     await expect(
       stack.lnLiquidation
         .connect(bob)
-        .liquidatePosition(alice.address, expandTo18Decimals(10), [])
+        .liquidatePosition(alice.address, expandTo18Decimals(10), []),
     )
       .to.emit(stack.lnLiquidation, "PositionLiquidated")
       .withArgs(
@@ -406,7 +411,7 @@ describe("Integration | Liquidation", function () {
         BigNumber.from("328571428571428571427"), // collateralWithdrawnFromStaked
         BigNumber.from(0), // collateralWithdrawnFromLocked
         BigNumber.from("14285714285714285714"), // markerReward
-        BigNumber.from("28571428571428571428") // liquidatorReward
+        BigNumber.from("28571428571428571428"), // liquidatorReward
       );
 
     /**
@@ -422,17 +427,17 @@ describe("Integration | Liquidation", function () {
     await assertUserLinaCollateral(
       alice.address,
       BigNumber.from("671428571428571428573"),
-      BigNumber.from(0)
+      BigNumber.from(0),
     );
     await assertUserLinaCollateral(
       bob.address,
       BigNumber.from("1000314285714285714285713"),
-      BigNumber.from(0)
+      BigNumber.from(0),
     );
     await assertUserLinaCollateral(
       charlie.address,
       BigNumber.from("14285714285714285714"),
-      BigNumber.from(0)
+      BigNumber.from(0),
     );
   });
 
@@ -456,17 +461,17 @@ describe("Integration | Liquidation", function () {
     await assertUserLinaCollateral(
       alice.address,
       BigNumber.from(0),
-      BigNumber.from("671428571428571428573")
+      BigNumber.from("671428571428571428573"),
     );
     await assertUserLinaCollateral(
       bob.address,
       BigNumber.from("1000000000000000000000000"),
-      BigNumber.from("314285714285714285713")
+      BigNumber.from("314285714285714285713"),
     );
     await assertUserLinaCollateral(
       charlie.address,
       BigNumber.from(0),
-      BigNumber.from("14285714285714285714")
+      BigNumber.from("14285714285714285714"),
     );
 
     assertIdenticalAggregation(aggregation, await buildAggregation());
@@ -515,17 +520,17 @@ describe("Integration | Liquidation", function () {
     await assertUserLinaCollateral(
       alice.address,
       BigNumber.from(0),
-      BigNumber.from("671428571428571428573")
+      BigNumber.from("671428571428571428573"),
     );
     await assertUserLinaCollateral(
       bob.address,
       BigNumber.from("1000295238095238095238095"),
-      BigNumber.from("19047619047619047618")
+      BigNumber.from("19047619047619047618"),
     );
     await assertUserLinaCollateral(
       charlie.address,
       BigNumber.from("4761904761904761905"),
-      BigNumber.from("9523809523809523809")
+      BigNumber.from("9523809523809523809"),
     );
 
     assertIdenticalAggregation(aggregation, await buildAggregation());
@@ -566,17 +571,17 @@ describe("Integration | Liquidation", function () {
     await assertUserLinaCollateral(
       alice.address,
       BigNumber.from(0),
-      BigNumber.from("671428571428571428573")
+      BigNumber.from("671428571428571428573"),
     );
     await assertUserLinaCollateral(
       bob.address,
       BigNumber.from("1000200000000000000000000"),
-      BigNumber.from("114285714285714285713")
+      BigNumber.from("114285714285714285713"),
     );
     await assertUserLinaCollateral(
       charlie.address,
       BigNumber.from("0"),
-      BigNumber.from("14285714285714285714")
+      BigNumber.from("14285714285714285714"),
     );
 
     assertIdenticalAggregation(aggregation, await buildAggregation());
@@ -605,17 +610,17 @@ describe("Integration | Liquidation", function () {
     await assertUserLinaCollateral(
       alice.address,
       BigNumber.from(0),
-      BigNumber.from("671428571428571428573")
+      BigNumber.from("671428571428571428573"),
     );
     await assertUserLinaCollateral(
       bob.address,
       BigNumber.from("1000200000000000000000000"),
-      BigNumber.from("114285714285714285713")
+      BigNumber.from("114285714285714285713"),
     );
     await assertUserLinaCollateral(
       charlie.address,
       BigNumber.from("0"),
-      BigNumber.from("14285714285714285714")
+      BigNumber.from("14285714285714285714"),
     );
 
     assertIdenticalAggregation(aggregation, await buildAggregation());

@@ -27,20 +27,20 @@ describe("Integration | Exchange", function () {
   const setLbtcPrice = async (price: number): Promise<void> => {
     await stack.lnPrices.connect(admin).setPrice(
       ethers.utils.formatBytes32String("lBTC"), // currencyKey
-      expandTo18Decimals(price) // price
+      expandTo18Decimals(price), // price
     );
   };
 
   const passSettlementDelay = async (): Promise<void> => {
     await setNextBlockTimestamp(
       ethers.provider,
-      (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
+      (await getBlockDateTime(ethers.provider)).plus(settlementDelay),
     );
   };
 
   const settleTrade = (entryId: number): Promise<any> => {
     return stack.lnExchangeSystem.connect(settler).settle(
-      entryId // pendingExchangeEntryId
+      entryId, // pendingExchangeEntryId
     );
   };
 
@@ -61,30 +61,30 @@ describe("Integration | Exchange", function () {
     await stack.lnPrices.connect(admin).setPriceAndTime(
       ethers.utils.formatBytes32String("LINA"), // currencyKey
       expandTo18Decimals(0.01), // price
-      priceUpdateTime.toSeconds() // updateTime
+      priceUpdateTime.toSeconds(), // updateTime
     );
     await stack.lnPrices.connect(admin).setPriceAndTime(
       ethers.utils.formatBytes32String("lBTC"), // currencyKey
       expandTo18Decimals(20_000), // price
-      priceUpdateTime.toSeconds() // updateTime
+      priceUpdateTime.toSeconds(), // updateTime
     );
 
     // Set BTC exchange fee rate to 1%
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("lBTC"), // key
-      expandTo18Decimals(0.01) // value
+      expandTo18Decimals(0.01), // value
     );
 
     // Set settlement delay
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeSettlementDelay"), // key
-      settlementDelay.as("seconds")
+      settlementDelay.as("seconds"),
     );
 
     // Set revert delay
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeRevertDelay"), // key
-      revertDelay.as("seconds")
+      revertDelay.as("seconds"),
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -98,12 +98,12 @@ describe("Integration | Exchange", function () {
       .approve(stack.lnCollateralSystem.address, uint256Max);
     await stack.lnCollateralSystem.connect(alice).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
-      expandTo18Decimals(1_000_000) // _amount
+      expandTo18Decimals(1_000_000), // _amount
     );
 
     // Alice builds 1,000 lUSD
     await stack.lnBuildBurnSystem.connect(alice).BuildAsset(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
   });
 
@@ -111,7 +111,7 @@ describe("Integration | Exchange", function () {
     // Set fee split ratio to 30%
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("FoundationFeeSplit"), // key
-      expandTo18Decimals(0.3) // value
+      expandTo18Decimals(0.3), // value
     );
 
     // Alice exchanges 500 lUSD for 0.025 lBTC
@@ -119,28 +119,28 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
     await settleTradeWithDelay(1);
 
     // All fees (0.025 * 0.01 * 20000 = 5) go to pool
     expect(
-      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
     ).to.equal(expandTo18Decimals(5));
 
     // Proceedings after fees: 500 / 20000 * (1 - 0.01) = 0.02475 BTC
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(500)
+      expandTo18Decimals(500),
     );
     expect(await stack.lbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(0.02475)
+      expandTo18Decimals(0.02475),
     );
   });
 
   it("fee not splitted when split ratio is not set", async () => {
     // Set fee holder to bob
     await stack.lnExchangeSystem.connect(admin).setFoundationFeeHolder(
-      bob.address // _foundationFeeHolder
+      bob.address, // _foundationFeeHolder
     );
 
     // Alice exchanges 500 lUSD for 0.025 lBTC
@@ -148,22 +148,22 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
     await settleTradeWithDelay(1);
 
     // All fees (0.025 * 0.01 * 20000 = 5) go to pool
     expect(
-      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
     ).to.equal(expandTo18Decimals(5));
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(0);
 
     // Proceedings after fees: 500 / 20000 * (1 - 0.01) = 0.02475 BTC
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(500)
+      expandTo18Decimals(500),
     );
     expect(await stack.lbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(0.02475)
+      expandTo18Decimals(0.02475),
     );
   });
 
@@ -171,12 +171,12 @@ describe("Integration | Exchange", function () {
     // Set fee split ratio to 30%
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("FoundationFeeSplit"), // key
-      expandTo18Decimals(0.3) // value
+      expandTo18Decimals(0.3), // value
     );
 
     // Set fee holder to bob
     await stack.lnExchangeSystem.connect(admin).setFoundationFeeHolder(
-      bob.address // _foundationFeeHolder
+      bob.address, // _foundationFeeHolder
     );
 
     // Alice exchanges 500 lUSD for 0.025 lBTC
@@ -184,7 +184,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
     await passSettlementDelay();
     await expect(settleTrade(1))
@@ -194,7 +194,7 @@ describe("Integration | Exchange", function () {
         settler.address, // settler
         expandTo18Decimals(0.02475), // destRecived
         expandTo18Decimals(3.5), // feeForPool
-        expandTo18Decimals(1.5) // feeForFoundation
+        expandTo18Decimals(1.5), // feeForFoundation
       );
 
     /**
@@ -204,18 +204,18 @@ describe("Integration | Exchange", function () {
      *   Pool = 5 - 1.5 = 3.5 lUSD
      */
     expect(
-      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
     ).to.equal(expandTo18Decimals(3.5));
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-      expandTo18Decimals(1.5)
+      expandTo18Decimals(1.5),
     );
 
     // Proceedings after fees: 500 / 20000 * (1 - 0.01) = 0.02475 BTC
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(500)
+      expandTo18Decimals(500),
     );
     expect(await stack.lbtcToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(0.02475)
+      expandTo18Decimals(0.02475),
     );
   });
 
@@ -225,13 +225,13 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
         expandTo18Decimals(500), // sourceAmount
         alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
+        ethers.utils.formatBytes32String("lBTC"), // destKey
       );
 
     // Temporarily set delay to avoid settlement issue
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeRevertDelay"), // key
-      Duration.fromObject({ days: 10 }).as("seconds")
+      Duration.fromObject({ days: 10 }).as("seconds"),
     );
 
     // Make 2 exchanges
@@ -241,17 +241,17 @@ describe("Integration | Exchange", function () {
     // Can settle when price is not staled
     await setNextBlockTimestamp(
       ethers.provider,
-      priceUpdateTime.plus(stalePeriod)
+      priceUpdateTime.plus(stalePeriod),
     );
     await settleTrade(1);
 
     // Cannot settle once price becomes staled
     await setNextBlockTimestamp(
       ethers.provider,
-      priceUpdateTime.plus(stalePeriod).plus({ seconds: 1 })
+      priceUpdateTime.plus(stalePeriod).plus({ seconds: 1 }),
     );
     await expect(settleTrade(2)).to.be.revertedWith(
-      "MockLnPrices: staled price data"
+      "MockLnPrices: staled price data",
     );
   });
 
@@ -260,7 +260,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
     await settleTradeWithDelay(1);
 
@@ -271,7 +271,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lBTC"), // sourceKey
       expandTo18Decimals(0.01), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lUSD") // destKey
+      ethers.utils.formatBytes32String("lUSD"), // destKey
     );
   });
 
@@ -280,7 +280,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     await stack.lnExchangeSystem.connect(admin).setExitPositionOnly(true);
@@ -291,8 +291,8 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
         expandTo18Decimals(500), // sourceAmount
         alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
-      )
+        ethers.utils.formatBytes32String("lBTC"), // destKey
+      ),
     ).to.be.revertedWith("LnExchangeSystem: can only exit position");
   });
 
@@ -301,7 +301,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     await stack.lnExchangeSystem
@@ -314,10 +314,10 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
         expandTo18Decimals(500), // sourceAmount
         alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
-      )
+        ethers.utils.formatBytes32String("lBTC"), // destKey
+      ),
     ).to.be.revertedWith(
-      "LnExchangeSystem: can only exit position for this asset"
+      "LnExchangeSystem: can only exit position for this asset",
     );
 
     // Not affected by settings for other assets (unlike global flag)
@@ -325,7 +325,7 @@ describe("Integration | Exchange", function () {
       .connect(admin)
       .setAssetExitPositionOnly(
         ethers.utils.formatBytes32String("lBTC"),
-        false
+        false,
       );
     await stack.lnExchangeSystem
       .connect(admin)
@@ -334,7 +334,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
   });
 
@@ -344,8 +344,8 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
         expandTo18Decimals(500), // sourceAmount
         alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
-      )
+        ethers.utils.formatBytes32String("lBTC"), // destKey
+      ),
     )
       .to.emit(stack.lnExchangeSystem, "PendingExchangeAdded")
       .withArgs(
@@ -354,7 +354,7 @@ describe("Integration | Exchange", function () {
         alice.address, // destAddr
         expandTo18Decimals(500), // fromAmount
         ethers.utils.formatBytes32String("lUSD"), // fromCurrency
-        ethers.utils.formatBytes32String("lBTC") // toCurrency
+        ethers.utils.formatBytes32String("lBTC"), // toCurrency
       );
 
     /**
@@ -371,7 +371,7 @@ describe("Integration | Exchange", function () {
         settler.address, // settler
         expandTo18Decimals(0.012375), // destRecived
         expandTo18Decimals(5), // feeForPool
-        0 // feeForFoundation
+        0, // feeForFoundation
       );
   });
 
@@ -380,7 +380,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     // Cannot settle before delay is reached
@@ -388,16 +388,16 @@ describe("Integration | Exchange", function () {
       ethers.provider,
       (await getBlockDateTime(ethers.provider))
         .plus(settlementDelay)
-        .minus({ seconds: 1 })
+        .minus({ seconds: 1 }),
     );
     await expect(settleTrade(1)).to.be.revertedWith(
-      "LnExchangeSystem: settlement delay not passed"
+      "LnExchangeSystem: settlement delay not passed",
     );
 
     // Can settle once delay is reached
     await setNextBlockTimestamp(
       ethers.provider,
-      (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
+      (await getBlockDateTime(ethers.provider)).plus(settlementDelay),
     );
     await settleTrade(1);
   });
@@ -408,21 +408,21 @@ describe("Integration | Exchange", function () {
         ethers.utils.formatBytes32String("lUSD"), // sourceKey
         expandTo18Decimals(400), // sourceAmount
         alice.address, // destAddr
-        ethers.utils.formatBytes32String("lBTC") // destKey
-      )
+        ethers.utils.formatBytes32String("lBTC"), // destKey
+      ),
     )
       .to.emit(stack.lusdToken, "Transfer")
       .withArgs(
         alice.address, // from
         stack.lnExchangeSystem.address, // to
-        expandTo18Decimals(400) // value
+        expandTo18Decimals(400), // value
       );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(600)
+      expandTo18Decimals(600),
     );
     expect(
-      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address),
     ).to.equal(expandTo18Decimals(400));
   });
 
@@ -431,7 +431,7 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     // Trade settled
@@ -439,7 +439,7 @@ describe("Integration | Exchange", function () {
 
     // Cannot double-settle a trade
     await expect(settleTrade(1)).to.be.revertedWith(
-      "LnExchangeSystem: pending entry not found"
+      "LnExchangeSystem: pending entry not found",
     );
   });
 
@@ -448,46 +448,46 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     const exchangeTime = await getBlockDateTime(ethers.provider);
 
     await setNextBlockTimestamp(
       ethers.provider,
-      exchangeTime.plus(revertDelay)
+      exchangeTime.plus(revertDelay),
     );
     await expect(
       stack.lnExchangeSystem.connect(settler).revert(
-        1 // pendingExchangeEntryId
-      )
+        1, // pendingExchangeEntryId
+      ),
     ).to.be.revertedWith("LnExchangeSystem: revert delay not passed");
 
     await setNextBlockTimestamp(
       ethers.provider,
-      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 }),
     );
     await expect(
       stack.lnExchangeSystem.connect(settler).revert(
-        1 // pendingExchangeEntryId
-      )
+        1, // pendingExchangeEntryId
+      ),
     )
       .to.emit(stack.lnExchangeSystem, "PendingExchangeReverted")
       .withArgs(
-        1 // id
+        1, // id
       )
       .and.emit(stack.lusdToken, "Transfer")
       .withArgs(
         stack.lnExchangeSystem.address, // from
         alice.address, // to
-        expandTo18Decimals(500) // value
+        expandTo18Decimals(500), // value
       );
 
     expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(1_000)
+      expandTo18Decimals(1_000),
     );
     expect(
-      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnExchangeSystem.address),
     ).to.equal(0);
   });
 
@@ -496,17 +496,17 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     const exchangeTime = await getBlockDateTime(ethers.provider);
 
     await setNextBlockTimestamp(
       ethers.provider,
-      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 }),
     );
     await expect(settleTrade(1)).to.be.revertedWith(
-      "LnExchangeSystem: trade can only be reverted now"
+      "LnExchangeSystem: trade can only be reverted now",
     );
   });
 
@@ -515,24 +515,24 @@ describe("Integration | Exchange", function () {
       ethers.utils.formatBytes32String("lUSD"), // sourceKey
       expandTo18Decimals(500), // sourceAmount
       alice.address, // destAddr
-      ethers.utils.formatBytes32String("lBTC") // destKey
+      ethers.utils.formatBytes32String("lBTC"), // destKey
     );
 
     const exchangeTime = await getBlockDateTime(ethers.provider);
 
     await setNextBlockTimestamp(
       ethers.provider,
-      exchangeTime.plus(revertDelay).plus({ seconds: 1 })
+      exchangeTime.plus(revertDelay).plus({ seconds: 1 }),
     );
     await stack.lnExchangeSystem.connect(settler).revert(
-      1 // pendingExchangeEntryId
+      1, // pendingExchangeEntryId
     );
 
     // Cannot revert again
     await expect(
       stack.lnExchangeSystem.connect(settler).revert(
-        1 // pendingExchangeEntryId
-      )
+        1, // pendingExchangeEntryId
+      ),
     ).to.be.revertedWith("LnExchangeSystem: pending entry not found");
   });
 });
