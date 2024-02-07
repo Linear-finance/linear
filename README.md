@@ -40,6 +40,7 @@ $ yarn test
 ## Contract Addresses
 
 | Contract | Address | Chain |
+| ------- | ------- | ------- |
 | LinearFinance | 0x762539b45A1dCcE3D36d080F74d1AED37844b878 | BSC |
 | LnAccessControl | 0x7b260D7851d9DC9EE27Dc8d6fAbDB2d568711708 | BSC |
 | LnAddressCache | - Inherited by LnAssetUpgradeable - | BSC |
