@@ -137,34 +137,34 @@ describe("LnRewardSystem", function () {
     );
   });
 
-  // it("only admin can change signer", async () => {
-  //   expect(await lnRewardSystem.rewardSigners(0)).to.equal(
-  //     rewardSigner1.address,
-  //   );
-  //   expect(await lnRewardSystem.rewardSigners(1)).to.equal(
-  //     rewardSigner2.address,
-  //   );
+  it("only admin can change signer", async () => {
+    expect(await lnRewardSystem.rewardSigners(0)).to.equal(
+      rewardSigner1.address,
+    );
+    expect(await lnRewardSystem.rewardSigners(1)).to.equal(
+      rewardSigner2.address,
+    );
 
-  //   await expect(
-  //     lnRewardSystem.connect(alice).setRewardSigners([alice.address]),
-  //   ).to.revertedWith(
-  //     "LnAdminUpgradeable: only the contract admin can perform this action",
-  //   );
+    await expect(
+      lnRewardSystem.connect(alice).setRewardSigners([alice.address]),
+    ).to.revertedWith(
+      "LnAdminUpgradeable: only the contract admin can perform this action",
+    );
 
-  //   await lnRewardSystem
-  //     .connect(admin)
-  //     .setRewardSigners([
-  //       "0x0000000000000000000000000000000000000001",
-  //       "0x0000000000000000000000000000000000000002",
-  //     ]);
+    await lnRewardSystem
+      .connect(admin)
+      .setRewardSigners([
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      ]);
 
-  //   expect(await lnRewardSystem.rewardSigners(0)).to.equal(
-  //     "0x0000000000000000000000000000000000000001",
-  //   );
-  //   expect(await lnRewardSystem.rewardSigners(1)).to.equal(
-  //     "0x0000000000000000000000000000000000000002",
-  //   );
-  // });
+    expect(await lnRewardSystem.rewardSigners(0)).to.equal(
+      "0x0000000000000000000000000000000000000001",
+    );
+    expect(await lnRewardSystem.rewardSigners(1)).to.equal(
+      "0x0000000000000000000000000000000000000002",
+    );
+  });
 
   it("can claim reward with valid signature", async () => {
     await setNextBlockTimestamp(ethers.provider, getPeriodEndTime(1));

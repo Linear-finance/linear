@@ -514,6 +514,9 @@ export const deployLinearStack = async (
       lnCollateralSystem.address, // _collateralSystemAddress
       lnRewardLocker.address, // _rewardLockerAddress
       admin.address, // _admin
+      604800,
+      2,
+      31449600
     ],
     {
       initializer: "__LnRewardSystem_init",
