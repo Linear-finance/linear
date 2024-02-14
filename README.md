@@ -37,6 +37,33 @@ $ yarn test
 
 [![Discord](https://img.shields.io/discord/738363983031173151?label=discord&logo=discord&style=plastic)](https://discordapp.com/channels/738363983031173151/) [![Twitter Follow](https://img.shields.io/twitter/follow/LinearFinance?label=LinearFinance&style=social)](https://twitter.com/LinearFinance) [![Chat on Telegram](https://img.shields.io/badge/Telegram-brightgreen.svg?logo=telegram&color=%234b4e52)](https://t.me/joinchat/Tb3iAhuMZsyfspxhEWQLvw)
 
+## Contract Addresses
+
+| Contract | Address | Chain |
+| LinearFinance | 0x762539b45A1dCcE3D36d080F74d1AED37844b878 | BSC |
+| LnAccessControl | 0x7b260D7851d9DC9EE27Dc8d6fAbDB2d568711708 | BSC |
+| LnAddressCache | - Inherited by LnAssetUpgradeable - | BSC |
+| LnAddressStorage | - Inherited by LnAssetSystem - | BSC |
+| LnAssetSystem | 0x1B220E982e5b4615715870533e968dff823BBED6 | BSC |
+| LnAssetUpgradeable | - Liquid addresses are discoverable through the asset system - | BSC |
+| LnBuildBurnSystem | 0x4B1356cf2068030924dBD8FcA1144AFBe847Af5F | BSC |
+| LnCollateralSystem | 0xcE2c94d40e289915d4401c3802D75f6cA5FEf57E | BSC |
+| LnConfig | 0x6Eaaa70AE37aAEA71e400F86199B83dA8E0E9455 | BSC |
+| LnDebtSystem | 0xd5C594FB9055E34926CdB46b32D427c09146e96A | BSC |
+| LnErc20Bridge | 0xF6a9bAfBc505a4Bc25888dc6aeAc57184eb2685B | BSC |
+| LnExchangeSystem | 0x2C33d6Fa54bB6Fa81B3a569D639Fe23ab36cca7f | BSC |
+| LnLiquidation | 0x4f6b688Ad01777Db42Ef65e64BB392D3b24a77A8 | BSC |
+| LnOracleRouter | 0x475aa5fCdf2eAEAecE4F6E83121324cB293911AB | BSC |
+| LnPerpetual | - Liquid addresses are discoverable through the asset system - | BSC |
+| LnPerpExchange | 0x22B822b0d0F1f282d28018aC3e319E3CB0c3F0ff | BSC |
+| LnPerpPositionToken | -- | BSC |
+| LnRewardLocker | 0x66D60EDc3876b8aFefD324d4edf105fd5c4aBeDc | BSC |
+| LnRewardSystem | 0x9C86c4764E59A336C108A6F85be48F8a9a7FaD85 | BSC |
+| LnVaultDynamicInterestPool | -- | BSC |
+| LnVaultFixedRewardPool | 0xbd7281b64E5D7C22fd75710F577aD3Ef98164246 | BSC |
+| SafeDecimalMath | 0xC065a00fbf75366D8D228f856D470C3A7c4D928c | BSC |
+| TokenEscrow | -- | BSC |
+
 ## License
 
 All code in this repository is licensed under [MIT](./LICENSE).

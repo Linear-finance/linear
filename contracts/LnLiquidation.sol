@@ -76,7 +76,6 @@ contract LnLiquidation is LnAdminUpgradeable {
         uint256 stakedCollateral;
         uint256 lockedCollateral;
     }
-
     ILnBuildBurnSystem public lnBuildBurnSystem;
     ILnCollateralSystem public lnCollateralSystem;
     ILnConfig public lnConfig;
@@ -127,6 +126,16 @@ contract LnLiquidation is LnAdminUpgradeable {
     function setLnPrices(ILnPrices newLnPrices) external onlyAdmin {
         require(address(newLnPrices) != address(0), "LnLiquidation: zero address");
         lnPrices = newLnPrices;
+    }
+
+    function removeUncollateralizedMarksFromUsers(address[] calldata addresses) external onlyAdmin { 
+        for (uint256 i = 0; i < addresses.length; i++) 
+        {
+            require(isPositionMarkedAsUndercollateralized(addresses[i]), "LnLiquidation: not marked");
+            delete undercollateralizationMarks[addresses[i]];
+            emit PositionUnmarked(addresses[i]);
+        }
+
     }
 
     function markPositionAsUndercollateralized(address user) external {

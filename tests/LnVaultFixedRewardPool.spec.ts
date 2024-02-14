@@ -25,7 +25,7 @@ describe("LnVaultFixedRewardPool", function () {
 
   const assertUserStakeAmount = async (
     address: string,
-    stakeAmount: number | BigNumber
+    stakeAmount: number | BigNumber,
   ): Promise<void> => {
     const userData = await pool.userData(address);
     expect(userData.stakeAmount).to.equal(stakeAmount);
@@ -48,7 +48,7 @@ describe("LnVaultFixedRewardPool", function () {
   const assertClaimableReward = (
     timestamp: DateTime,
     address: string,
-    amount: number | BigNumber
+    amount: number | BigNumber,
   ): Promise<void> => {
     return runAndRevert(async () => {
       await mineBlock(ethers.provider, timestamp);
@@ -61,7 +61,7 @@ describe("LnVaultFixedRewardPool", function () {
 
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     const LnVaultFixedRewardPool = await ethers.getContractFactory(
-      "LnVaultFixedRewardPool"
+      "LnVaultFixedRewardPool",
     );
 
     startTime = (await getBlockDateTime(ethers.provider)).plus({ days: 1 });
@@ -86,22 +86,22 @@ describe("LnVaultFixedRewardPool", function () {
       ],
       {
         initializer: "__LnVaultFixedRewardPool_init",
-      }
+      },
     );
 
     await rewardToken.connect(deployer).mint(
       pool.address, // account
-      expandTo18Decimals(1_000_000) // amount
+      expandTo18Decimals(1_000_000), // amount
     );
 
     for (const user of [alice, bob]) {
       await stakeToken.connect(deployer).mint(
         user.address, // account
-        expandTo18Decimals(10_000) // amount
+        expandTo18Decimals(10_000), // amount
       );
       await stakeToken.connect(user).approve(
         pool.address, // spender
-        uint256Max // amount
+        uint256Max, // amount
       );
     }
   });
@@ -109,10 +109,10 @@ describe("LnVaultFixedRewardPool", function () {
   it("cannot stake before start time", async () => {
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.minus({ seconds: 1 }).toSeconds()
+      startTime.minus({ seconds: 1 }).toSeconds(),
     );
     await expect(
-      pool.connect(alice).stake(expandTo18Decimals(1))
+      pool.connect(alice).stake(expandTo18Decimals(1)),
     ).to.be.revertedWith("LnVaultFixedRewardPool: pool not started");
   });
 
@@ -128,7 +128,7 @@ describe("LnVaultFixedRewardPool", function () {
       .withArgs(
         alice.address, // staker
         stakeToken.address, // token
-        expandTo18Decimals(1) // amount
+        expandTo18Decimals(1), // amount
       );
   });
 
@@ -138,14 +138,14 @@ describe("LnVaultFixedRewardPool", function () {
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1 }).toSeconds()
+      startTime.plus({ days: 1 }).toSeconds(),
     );
     await expect(pool.connect(alice).unstake(expandTo18Decimals(0.1)))
       .to.emit(pool, "Unstaked")
       .withArgs(
         alice.address, // staker
         stakeToken.address, // token
-        expandTo18Decimals(0.1) // amount
+        expandTo18Decimals(0.1), // amount
       );
   });
 
@@ -153,14 +153,14 @@ describe("LnVaultFixedRewardPool", function () {
     // Cannot unstake without staking first
     await setNextBlockTimestamp(ethers.provider, startTime.toSeconds());
     await expect(
-      pool.connect(alice).unstake(expandTo18Decimals(1))
+      pool.connect(alice).unstake(expandTo18Decimals(1)),
     ).to.be.revertedWith("SafeMath: subtraction overflow");
 
     // Cannot unstake once all of the staked amount has been unstaked
     await pool.connect(alice).stake(expandTo18Decimals(1));
     await pool.connect(alice).unstake(expandTo18Decimals(1));
     await expect(
-      pool.connect(alice).unstake(expandTo18Decimals(1))
+      pool.connect(alice).unstake(expandTo18Decimals(1)),
     ).to.be.revertedWith("SafeMath: subtraction overflow");
   });
 
@@ -171,14 +171,14 @@ describe("LnVaultFixedRewardPool", function () {
       .withArgs(
         alice.address, // from
         pool.address, // to
-        expandTo18Decimals(1) // amount
+        expandTo18Decimals(1), // amount
       );
 
     expect(await stakeToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(9999)
+      expandTo18Decimals(9999),
     );
     expect(await stakeToken.balanceOf(pool.address)).to.equal(
-      expandTo18Decimals(1)
+      expandTo18Decimals(1),
     );
   });
 
@@ -188,21 +188,21 @@ describe("LnVaultFixedRewardPool", function () {
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1 }).toSeconds()
+      startTime.plus({ days: 1 }).toSeconds(),
     );
     await expect(pool.connect(alice).unstake(expandTo18Decimals(0.1)))
       .to.emit(stakeToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(0.1) // amount
+        expandTo18Decimals(0.1), // amount
       );
 
     expect(await stakeToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(9999.1)
+      expandTo18Decimals(9999.1),
     );
     expect(await stakeToken.balanceOf(pool.address)).to.equal(
-      expandTo18Decimals(0.9)
+      expandTo18Decimals(0.9),
     );
   });
 
@@ -254,48 +254,48 @@ describe("LnVaultFixedRewardPool", function () {
     await assertClaimableReward(
       startTime.plus({ days: 1, seconds: 10 }),
       alice.address,
-      expandTo18Decimals(10)
+      expandTo18Decimals(10),
     );
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1, seconds: 10 })
+      startTime.plus({ days: 1, seconds: 10 }),
     );
     await expect(pool.connect(alice).claimReward())
       .to.emit(pool, "RewardClaimed")
       .withArgs(
         alice.address, // staker
         rewardToken.address, // token
-        expandTo18Decimals(10) // amount
+        expandTo18Decimals(10), // amount
       )
       .and.emit(rewardToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(10) // amount
+        expandTo18Decimals(10), // amount
       );
 
     // Should earn all rewards from the following 5 seconds
     await assertClaimableReward(
       startTime.plus({ days: 1, seconds: 15 }),
       alice.address,
-      expandTo18Decimals(5)
+      expandTo18Decimals(5),
     );
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ days: 1, seconds: 15 })
+      startTime.plus({ days: 1, seconds: 15 }),
     );
     await expect(pool.connect(alice).claimReward())
       .to.emit(pool, "RewardClaimed")
       .withArgs(
         alice.address, // staker
         rewardToken.address, // token
-        expandTo18Decimals(5) // amount
+        expandTo18Decimals(5), // amount
       )
       .and.emit(rewardToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(5) // amount
+        expandTo18Decimals(5), // amount
       );
   });
 
@@ -304,7 +304,7 @@ describe("LnVaultFixedRewardPool", function () {
     const assertRewards = (
       timestamp: DateTime,
       aliceReward: number | BigNumber,
-      bobReward: number | BigNumber
+      bobReward: number | BigNumber,
     ): Promise<void> => {
       return runAndRevert(async () => {
         await mineBlock(ethers.provider, timestamp);
@@ -321,13 +321,13 @@ describe("LnVaultFixedRewardPool", function () {
     await assertRewards(
       startTime.plus({ seconds: 10 }),
       expandTo18Decimals(10),
-      0
+      0,
     );
 
     // Bob stakes so that he takes up 90% of the pool
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ seconds: 10 })
+      startTime.plus({ seconds: 10 }),
     );
     await pool.connect(bob).stake(expandTo18Decimals(9));
 
@@ -335,13 +335,13 @@ describe("LnVaultFixedRewardPool", function () {
     await assertRewards(
       startTime.plus({ seconds: 20 }),
       expandTo18Decimals(11),
-      expandTo18Decimals(9)
+      expandTo18Decimals(9),
     );
 
     // Bob unstakes such that his share is the same as Alice's
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ seconds: 20 })
+      startTime.plus({ seconds: 20 }),
     );
     await pool.connect(bob).unstake(expandTo18Decimals(8));
 
@@ -349,13 +349,13 @@ describe("LnVaultFixedRewardPool", function () {
     await assertRewards(
       startTime.plus({ seconds: 30 }),
       expandTo18Decimals(16),
-      expandTo18Decimals(14)
+      expandTo18Decimals(14),
     );
 
     // Bob unstakes everything such that Alice will earn all remaining rewards
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus({ seconds: 30 })
+      startTime.plus({ seconds: 30 }),
     );
     await pool.connect(bob).unstake(expandTo18Decimals(1));
 
@@ -363,7 +363,7 @@ describe("LnVaultFixedRewardPool", function () {
     await assertRewards(
       startTime.plus({ seconds: 40 }),
       expandTo18Decimals(26),
-      expandTo18Decimals(14)
+      expandTo18Decimals(14),
     );
 
     // We can't just naively make two transactions for claiming their rewards here
@@ -371,39 +371,39 @@ describe("LnVaultFixedRewardPool", function () {
     await runAndRevert(async () => {
       await setNextBlockTimestamp(
         ethers.provider,
-        startTime.plus({ seconds: 40 })
+        startTime.plus({ seconds: 40 }),
       );
       await expect(pool.connect(alice).claimReward())
         .to.emit(pool, "RewardClaimed")
         .withArgs(
           alice.address, // staker
           rewardToken.address, // token
-          expandTo18Decimals(26) // amount
+          expandTo18Decimals(26), // amount
         )
         .and.emit(rewardToken, "Transfer")
         .withArgs(
           pool.address, // from
           alice.address, // to
-          expandTo18Decimals(26) // amount
+          expandTo18Decimals(26), // amount
         );
     });
     await runAndRevert(async () => {
       await setNextBlockTimestamp(
         ethers.provider,
-        startTime.plus({ seconds: 40 })
+        startTime.plus({ seconds: 40 }),
       );
       await expect(pool.connect(bob).claimReward())
         .to.emit(pool, "RewardClaimed")
         .withArgs(
           bob.address, // staker
           rewardToken.address, // token
-          expandTo18Decimals(14) // amount
+          expandTo18Decimals(14), // amount
         )
         .and.emit(rewardToken, "Transfer")
         .withArgs(
           pool.address, // from
           bob.address, // to
-          expandTo18Decimals(14) // amount
+          expandTo18Decimals(14), // amount
         );
     });
   });

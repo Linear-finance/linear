@@ -28,7 +28,7 @@ describe("Integration | Perpetual", function () {
   const passSettlementDelay = async (): Promise<void> => {
     await setNextBlockTimestamp(
       ethers.provider,
-      (await getBlockDateTime(ethers.provider)).plus(settlementDelay)
+      (await getBlockDateTime(ethers.provider)).plus(settlementDelay),
     );
   };
 
@@ -37,7 +37,7 @@ describe("Integration | Perpetual", function () {
       ethers.provider,
       (await getBlockDateTime(ethers.provider))
         .plus(revertDelay)
-        .plus({ seconds: 1 })
+        .plus({ seconds: 1 }),
     );
   };
 
@@ -54,12 +54,12 @@ describe("Integration | Perpetual", function () {
   const closePosition = async (
     actionId: number,
     user: SignerWithAddress,
-    positionId: number
+    positionId: number,
   ): Promise<void> => {
     await stack.lnPerpExchange.connect(user).closePosition(
       formatBytes32String("lBTC"), // underlying
       positionId, // positionId
-      user.address // to
+      user.address, // to
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(actionId);
@@ -72,7 +72,7 @@ describe("Integration | Perpetual", function () {
 
     await stack.lnPrices.connect(admin).setPrice(
       formatBytes32String("lBTC"), // currencyKey
-      actualPrice // price
+      actualPrice, // price
     );
   };
 
@@ -87,23 +87,23 @@ describe("Integration | Perpetual", function () {
     // Set settlement & revert delay
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeSettlementDelay"), // key
-      settlementDelay.as("seconds")
+      settlementDelay.as("seconds"),
     );
     await stack.lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String("TradeRevertDelay"), // key
-      revertDelay.as("seconds")
+      revertDelay.as("seconds"),
     );
 
     // Set LINA price to $0.1 and lBTC to $20,000
     await stack.lnPrices.connect(admin).setPriceAndTime(
       formatBytes32String("LINA"), // currencyKey
       expandTo18Decimals(0.1), // price
-      priceUpdateTime.toSeconds() // updateTime
+      priceUpdateTime.toSeconds(), // updateTime
     );
     await stack.lnPrices.connect(admin).setPriceAndTime(
       formatBytes32String("lBTC"), // currencyKey
       expandTo18Decimals(20_000), // price
-      priceUpdateTime.toSeconds() // updateTime
+      priceUpdateTime.toSeconds(), // updateTime
     );
 
     // Mint 1,000,000 LINA to Alice
@@ -118,17 +118,17 @@ describe("Integration | Perpetual", function () {
     await stack.collaterals.lina.collateralSystem.connect(alice).stakeAndBuild(
       formatBytes32String("LINA"), // stakeCurrnecy
       expandTo18Decimals(1_000_000), // stakeAmount
-      expandTo18Decimals(10_000) // buildAmount
+      expandTo18Decimals(10_000), // buildAmount
     );
 
     // Alice sends 10,000 lUSD to Bob
     await stack.lusdToken.connect(alice).transfer(
       bob.address, // recipient
-      expandTo18Decimals(10_000) // amount
+      expandTo18Decimals(10_000), // amount
     );
     await stack.lusdToken.connect(bob).approve(
       stack.lnPerpExchange.address, // spender
-      uint256Max // amount
+      uint256Max, // amount
     );
   });
 
@@ -143,18 +143,18 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(220).sub(1) // collateral
+      expandTo18Decimals(220).sub(1), // collateral
     );
     await passSettlementDelay();
     await expect(
-      stack.lnPerpExchange.connect(alice).settleAction(1)
+      stack.lnPerpExchange.connect(alice).settleAction(1),
     ).to.be.revertedWith("LnPerpetual: min init margin not reached");
 
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(220) // collateral
+      expandTo18Decimals(220), // collateral
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(2);
@@ -166,18 +166,18 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       false, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(220).sub(1) // collateral
+      expandTo18Decimals(220).sub(1), // collateral
     );
     await passSettlementDelay();
     await expect(
-      stack.lnPerpExchange.connect(alice).settleAction(1)
+      stack.lnPerpExchange.connect(alice).settleAction(1),
     ).to.be.revertedWith("LnPerpetual: min init margin not reached");
 
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       false, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(220) // collateral
+      expandTo18Decimals(220), // collateral
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(2);
@@ -185,7 +185,7 @@ describe("Integration | Perpetual", function () {
 
   it("collateral is locked up for queuing openPosition actions", async () => {
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-      expandTo18Decimals(10_000)
+      expandTo18Decimals(10_000),
     );
 
     await expect(
@@ -193,18 +193,18 @@ describe("Integration | Perpetual", function () {
         formatBytes32String("lBTC"), // underlying
         true, // isLong
         expandTo18Decimals(0.1), // size
-        expandTo18Decimals(1000) // collateral
-      )
+        expandTo18Decimals(1000), // collateral
+      ),
     )
       .to.emit(stack.lusdToken, "Transfer")
       .withArgs(
         bob.address, // from
         stack.lnPerpExchange.address, // to
-        expandTo18Decimals(1000)
+        expandTo18Decimals(1000),
       );
 
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-      expandTo18Decimals(9_000)
+      expandTo18Decimals(9_000),
     );
   });
 
@@ -213,10 +213,10 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(1000) // collateral
+      expandTo18Decimals(1000), // collateral
     );
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-      expandTo18Decimals(9_000)
+      expandTo18Decimals(9_000),
     );
 
     await passRevertDelay();
@@ -225,10 +225,10 @@ describe("Integration | Perpetual", function () {
       .withArgs(
         stack.lnPerpExchange.address, // from
         bob.address, // to
-        expandTo18Decimals(1000)
+        expandTo18Decimals(1000),
       );
     expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-      expandTo18Decimals(10_000)
+      expandTo18Decimals(10_000),
     );
   });
 
@@ -237,12 +237,12 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(1000) // collateral
+      expandTo18Decimals(1000), // collateral
     );
     await passSettlementDelay();
 
     expect(
-      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address)
+      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address),
     ).to.equal(expandTo18Decimals(1000));
 
     await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
@@ -250,16 +250,16 @@ describe("Integration | Perpetual", function () {
       .withArgs(
         stack.lnPerpExchange.address, // from
         stack.lbtcPerp.address, // to
-        expandTo18Decimals(1000) // amount
+        expandTo18Decimals(1000), // amount
       );
     expect(
-      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address)
+      await stack.lusdToken.balanceOf(stack.lnPerpExchange.address),
     ).to.equal(0);
   });
 
   it("fees are sent to pool fee holder", async () => {
     expect(
-      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
     ).to.equal(0);
 
     // 20 lUSD in fees
@@ -267,13 +267,13 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(1000) // collateral
+      expandTo18Decimals(1000), // collateral
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(1);
 
     expect(
-      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+      await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
     ).to.equal(expandTo18Decimals(20));
   });
 
@@ -285,13 +285,13 @@ describe("Integration | Perpetual", function () {
       formatBytes32String("lBTC"), // underlying
       true, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(1_000) // collateral
+      expandTo18Decimals(1_000), // collateral
     );
     await stack.lnPerpExchange.connect(bob).openPosition(
       formatBytes32String("lBTC"), // underlying
       false, // isLong
       expandTo18Decimals(0.1), // size
-      expandTo18Decimals(1_000) // collateral
+      expandTo18Decimals(1_000), // collateral
     );
     await passSettlementDelay();
     await stack.lnPerpExchange.connect(alice).settleAction(1);
@@ -316,7 +316,7 @@ describe("Integration | Perpetual", function () {
         formatBytes32String("lBTC"), // underlying
         true, // isLong
         expandTo18Decimals(0.1), // size
-        expandTo18Decimals(1_000) // collateral
+        expandTo18Decimals(1_000), // collateral
       );
       await passSettlementDelay();
       await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
@@ -324,13 +324,13 @@ describe("Integration | Perpetual", function () {
         .withArgs(
           zeroAddress, // from
           bob.address, // to
-          1 // tokenId
+          1, // tokenId
         );
     });
 
     it("position token should be minted", async () => {
       expect(await stack.lnPerpPositionToken.balanceOf(bob.address)).to.equal(
-        1
+        1,
       );
       expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
     });
@@ -349,41 +349,41 @@ describe("Integration | Perpetual", function () {
 
     it("entry fees should be sent to fee holder", async () => {
       expect(
-        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
       ).to.equal(expandTo18Decimals(20));
     });
 
     describe("Add collateral", function () {
       it("lUSD should be transferred to perp contract", async () => {
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(9_000)
+          expandTo18Decimals(9_000),
         );
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(980));
 
         await stack.lusdToken.connect(bob).approve(
           stack.lbtcPerp.address, // spender
-          expandTo18Decimals(1_000) // amount
+          expandTo18Decimals(1_000), // amount
         );
         await expect(
           stack.lbtcPerp.connect(bob).addCollateral(
             1, // positionId
-            expandTo18Decimals(1_000) // amount
-          )
+            expandTo18Decimals(1_000), // amount
+          ),
         )
           .to.emit(stack.lusdToken, "Transfer")
           .withArgs(
             bob.address, // from
             stack.lbtcPerp.address, // to
-            expandTo18Decimals(1_000) // amount
+            expandTo18Decimals(1_000), // amount
           );
 
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(8_000)
+          expandTo18Decimals(8_000),
         );
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(1_980));
       });
     });
@@ -402,19 +402,19 @@ describe("Integration | Perpetual", function () {
           stack.lbtcPerp.connect(bob).removeCollateral(
             1, // positionId
             expandTo18Decimals(780).add(1), // amount
-            bob.address // to
-          )
+            bob.address, // to
+          ),
         ).to.be.revertedWith("LnPerpetual: min init margin not reached");
 
         // Removing the exact maximum
         await stack.lbtcPerp.connect(bob).removeCollateral(
           1, // positionId
           expandTo18Decimals(780), // amount
-          bob.address // to
+          bob.address, // to
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(200));
       });
 
@@ -422,7 +422,7 @@ describe("Integration | Perpetual", function () {
         await stack.lbtcPerp.connect(bob).removeCollateral(
           1, // positionId
           expandTo18Decimals(480), // amount
-          bob.address // to
+          bob.address, // to
         );
 
         const position = await stack.lbtcPerp.positions(1);
@@ -437,18 +437,18 @@ describe("Integration | Perpetual", function () {
           stack.lbtcPerp.connect(bob).removeCollateral(
             1, // positionId
             expandTo18Decimals(480), // amount
-            alice.address // to
-          )
+            alice.address, // to
+          ),
         )
           .to.emit(stack.lusdToken, "Transfer")
           .withArgs(
             stack.lbtcPerp.address, // from
             alice.address, // to
-            expandTo18Decimals(480) // amount
+            expandTo18Decimals(480), // amount
           );
 
         expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-          expandTo18Decimals(480)
+          expandTo18Decimals(480),
         );
       });
     });
@@ -464,7 +464,7 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         /**
@@ -473,15 +473,15 @@ describe("Integration | Perpetual", function () {
          * PnL = 0.1 * (30,000 - 20,000) - 20 - 30 = 950 lUSD
          */
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(10_950)
+          expandTo18Decimals(10_950),
         );
 
         // Perp contract should have nothing left
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
         expect(
-          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
       });
 
@@ -494,11 +494,11 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
         ).to.equal(expandTo18Decimals(50));
       });
     });
@@ -514,7 +514,7 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         /**
@@ -523,15 +523,15 @@ describe("Integration | Perpetual", function () {
          * PnL = 0.1 * (15,000 - 20,000) - 20 - 15 = -535 lUSD
          */
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(9_465)
+          expandTo18Decimals(9_465),
         );
 
         // Perp contract should have nothing left
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
         expect(
-          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
       });
 
@@ -544,11 +544,11 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
         ).to.equal(expandTo18Decimals(35));
       });
     });
@@ -564,21 +564,21 @@ describe("Integration | Perpetual", function () {
 
         // Cannot liquidate yet since ratio is not *below* maintenance margin
         expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(
-          expandTo18Decimals(0.05)
+          expandTo18Decimals(0.05),
         );
         await expect(
           stack.lbtcPerp.connect(alice).liquidatePosition(
             1, // positionId
             expandTo18Decimals(0.005), // amount
-            alice.address // rewardTo
-          )
+            alice.address, // rewardTo
+          ),
         ).to.be.revertedWith("LnPerpetual: not lower than maintenance margin");
 
         await setLbtcPrice(11199);
         await stack.lbtcPerp.connect(alice).liquidatePosition(
           1, // positionId
           expandTo18Decimals(0.005), // amount
-          alice.address // rewardTo
+          alice.address, // rewardTo
         );
       });
     });
@@ -591,7 +591,7 @@ describe("Integration | Perpetual", function () {
         formatBytes32String("lBTC"), // underlying
         false, // isLong
         expandTo18Decimals(0.1), // size
-        expandTo18Decimals(1_000) // collateral
+        expandTo18Decimals(1_000), // collateral
       );
       await passSettlementDelay();
       await expect(stack.lnPerpExchange.connect(alice).settleAction(1))
@@ -599,13 +599,13 @@ describe("Integration | Perpetual", function () {
         .withArgs(
           zeroAddress, // from
           bob.address, // to
-          1 // tokenId
+          1, // tokenId
         );
     });
 
     it("position token should be minted", async () => {
       expect(await stack.lnPerpPositionToken.balanceOf(bob.address)).to.equal(
-        1
+        1,
       );
       expect(await stack.lnPerpPositionToken.ownerOf(1)).to.equal(bob.address);
     });
@@ -624,41 +624,41 @@ describe("Integration | Perpetual", function () {
 
     it("entry fees should be sent to fee holder", async () => {
       expect(
-        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+        await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
       ).to.equal(expandTo18Decimals(20));
     });
 
     describe("Add collateral", function () {
       it("lUSD should be transferred to perp contract", async () => {
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(9_000)
+          expandTo18Decimals(9_000),
         );
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(2_980));
 
         await stack.lusdToken.connect(bob).approve(
           stack.lbtcPerp.address, // spender
-          expandTo18Decimals(1_000) // amount
+          expandTo18Decimals(1_000), // amount
         );
         await expect(
           stack.lbtcPerp.connect(bob).addCollateral(
             1, // positionId
-            expandTo18Decimals(1_000) // amount
-          )
+            expandTo18Decimals(1_000), // amount
+          ),
         )
           .to.emit(stack.lusdToken, "Transfer")
           .withArgs(
             bob.address, // from
             stack.lbtcPerp.address, // to
-            expandTo18Decimals(1_000) // amount
+            expandTo18Decimals(1_000), // amount
           );
 
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(8_000)
+          expandTo18Decimals(8_000),
         );
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(3_980));
       });
     });
@@ -677,19 +677,19 @@ describe("Integration | Perpetual", function () {
           stack.lbtcPerp.connect(bob).removeCollateral(
             1, // positionId
             expandTo18Decimals(780).add(1), // amount
-            bob.address // to
-          )
+            bob.address, // to
+          ),
         ).to.be.revertedWith("LnPerpetual: min init margin not reached");
 
         // Removing the exact maximum
         await stack.lbtcPerp.connect(bob).removeCollateral(
           1, // positionId
           expandTo18Decimals(780), // amount
-          bob.address // to
+          bob.address, // to
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(expandTo18Decimals(2_200));
       });
 
@@ -697,7 +697,7 @@ describe("Integration | Perpetual", function () {
         await stack.lbtcPerp.connect(bob).removeCollateral(
           1, // positionId
           expandTo18Decimals(480), // amount
-          bob.address // to
+          bob.address, // to
         );
 
         const position = await stack.lbtcPerp.positions(1);
@@ -712,18 +712,18 @@ describe("Integration | Perpetual", function () {
           stack.lbtcPerp.connect(bob).removeCollateral(
             1, // positionId
             expandTo18Decimals(480), // amount
-            alice.address // to
-          )
+            alice.address, // to
+          ),
         )
           .to.emit(stack.lusdToken, "Transfer")
           .withArgs(
             stack.lbtcPerp.address, // from
             alice.address, // to
-            expandTo18Decimals(480) // amount
+            expandTo18Decimals(480), // amount
           );
 
         expect(await stack.lusdToken.balanceOf(alice.address)).to.equal(
-          expandTo18Decimals(480)
+          expandTo18Decimals(480),
         );
       });
     });
@@ -739,7 +739,7 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         /**
@@ -748,15 +748,15 @@ describe("Integration | Perpetual", function () {
          * PnL = 0.1 * (20,000 - 25,000) - 20 - 25 = -545 lUSD
          */
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(9_455)
+          expandTo18Decimals(9_455),
         );
 
         // Perp contract should have nothing left
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
         expect(
-          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
       });
 
@@ -769,11 +769,11 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
         ).to.equal(expandTo18Decimals(45));
       });
     });
@@ -789,7 +789,7 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         /**
@@ -798,15 +798,15 @@ describe("Integration | Perpetual", function () {
          * PnL = 0.1 * (20,000 - 15,000) - 20 - 15 = 465 lUSD
          */
         expect(await stack.lusdToken.balanceOf(bob.address)).to.equal(
-          expandTo18Decimals(10_465)
+          expandTo18Decimals(10_465),
         );
 
         // Perp contract should have nothing left
         expect(
-          await stack.lusdToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lusdToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
         expect(
-          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address)
+          await stack.lbtcToken.balanceOf(stack.lbtcPerp.address),
         ).to.equal(0);
       });
 
@@ -819,11 +819,11 @@ describe("Integration | Perpetual", function () {
         await closePosition(
           2, // actionId
           bob, // user
-          1 // positionId
+          1, // positionId
         );
 
         expect(
-          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address)
+          await stack.lusdToken.balanceOf(stack.lnRewardSystem.address),
         ).to.equal(expandTo18Decimals(35));
       });
     });
@@ -840,21 +840,21 @@ describe("Integration | Perpetual", function () {
 
         // // Cannot liquidate yet since ratio is not *below* maintenance margin
         expect(await stack.lbtcPerp.getCollateralizationRatio(1)).to.equal(
-          expandTo18Decimals(0.05)
+          expandTo18Decimals(0.05),
         );
         await expect(
           stack.lbtcPerp.connect(alice).liquidatePosition(
             1, // positionId
             expandTo18Decimals(0.005), // amount
-            alice.address // rewardTo
-          )
+            alice.address, // rewardTo
+          ),
         ).to.be.revertedWith("LnPerpetual: not lower than maintenance margin");
 
         await setLbtcPrice(liquidationPrice.add(expandTo18Decimals(1)));
         await stack.lbtcPerp.connect(alice).liquidatePosition(
           1, // positionId
           expandTo18Decimals(0.005), // amount
-          alice.address // rewardTo
+          alice.address, // rewardTo
         );
       });
     });

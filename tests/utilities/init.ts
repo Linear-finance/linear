@@ -50,7 +50,7 @@ export interface CollateralContracts {
 
 export const deployLinearStack = async (
   deployer: SignerWithAddress,
-  admin: SignerWithAddress
+  admin: SignerWithAddress,
 ): Promise<DeployedStack> => {
   // Disable OpenZepplin upgrade warnings for test runs
   upgrades.silenceWarnings();
@@ -61,7 +61,7 @@ export const deployLinearStack = async (
    */
   const SafeDecimalMath = await ethers.getContractFactory(
     "SafeDecimalMath",
-    deployer
+    deployer,
   );
   const safeDecimalMath = await SafeDecimalMath.deploy();
 
@@ -93,7 +93,14 @@ export const deployLinearStack = async (
       "LnRewardLocker",
       "LnRewardSystem",
       "MockERC20",
-    ].map((contractName) => ethers.getContractFactory(contractName, deployer))
+    ].map((contractName) => ethers.getContractFactory(contractName, deployer)),
+  );
+
+  // Removed safe decimal math from libraries
+  const [LnExchangeSystem] = await Promise.all(
+    ["LnExchangeSystem"].map((contractName) =>
+      ethers.getContractFactory(contractName, deployer),
+    ),
   );
 
   // Load contract factories with external libraries
@@ -102,7 +109,6 @@ export const deployLinearStack = async (
     MockLnPrices,
     LnDebtSystem,
     DebtDistribution,
-    LnExchangeSystem,
     LnLiquidation,
   ] = await Promise.all(
     [
@@ -110,7 +116,6 @@ export const deployLinearStack = async (
       "MockLnPrices",
       "LnDebtSystem",
       "DebtDistribution",
-      "LnExchangeSystem",
       "LnLiquidation",
     ].map((contractName) =>
       ethers.getContractFactory(contractName, {
@@ -133,7 +138,29 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LinearFinance_init",
-    }
+    },
+  );
+
+  const wbtcToken = await MockERC20.deploy(
+    "Wrapped BTC", // _name
+    "WBTC", // _symbol
+    8 // _decimals
+  );
+
+  /**
+   * Create the base synthetic asset lUSD
+   */
+  const lusdToken = await upgrades.deployProxy(
+    LnAssetUpgradeable,
+    [
+      ethers.utils.formatBytes32String("lUSD"), // bytes32 _key,
+      "lUSD", // _name,
+      "lUSD", // _symbol
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnAssetUpgradeable_init",
+    },
   );
 
   const wbtcToken = await MockERC20.deploy(
@@ -170,7 +197,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetSystem_init",
-    }
+    },
   );
 
   /**
@@ -183,7 +210,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnConfig_init",
-    }
+    },
   );
 
   /**
@@ -196,7 +223,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAccessControl_init",
-    }
+    },
   );
 
   /**
@@ -242,7 +269,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnDebtSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   /**
@@ -296,7 +323,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnCollateralSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   // Not setting _mRewardLocker as it's only relevant for the native currency
@@ -317,6 +344,104 @@ export const deployLinearStack = async (
     }
   );
 
+  const debtDistribution = await upgrades.deployProxy(
+    DebtDistribution,
+    [lnAssetSystem.address],
+    {
+      initializer: "__DebtDistribution_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const linaDebtSystem = await upgrades.deployProxy(
+    LnDebtSystem,
+    [admin.address, lnAccessControl.address, lnAssetSystem.address],
+    {
+      initializer: "__LnDebtSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const wbtcDebtSystem = await upgrades.deployProxy(
+    LnDebtSystem,
+    [admin.address, lnAccessControl.address, lnAssetSystem.address],
+    {
+      initializer: "__LnDebtSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    },
+  );
+
+  /**
+   * The contract for controlling issuance and burning of synthetic assets
+   */
+  const linaBuildBurnSystem = await upgrades.deployProxy(
+    LnBuildBurnSystem,
+    [
+      admin.address, // admin
+      lusdToken.address, // _lUSDToken
+      linaDebtSystem.address, // _debtSystem
+      lnPrices.address, // _priceGetter
+      mockAddress, // _collaterSys
+      lnConfig.address, // _mConfig
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnBuildBurnSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const wbtcBuildBurnSystem = await upgrades.deployProxy(
+    LnBuildBurnSystem,
+    [
+      admin.address, // admin
+      lusdToken.address, // _lUSDToken
+      wbtcDebtSystem.address, // _debtSystem
+      lnPrices.address, // _priceGetter
+      mockAddress, // _collaterSys
+      lnConfig.address, // _mConfig
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnBuildBurnSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const linaCollateralSystem = await upgrades.deployProxy(
+    LnCollateralSystem,
+    [
+      admin.address, // admin
+      lnPrices.address, // _priceGetter
+      linaDebtSystem.address, // _debtSystem
+      lnConfig.address, // _mConfig
+      lnRewardLocker.address, // _mRewardLocker
+      linaBuildBurnSystem.address, // _buildBurnSystem
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnCollateralSystem_init",
+      unsafeAllowLinkedLibraries: true,
+    },
+  );
+
+  // Not setting _mRewardLocker as it's only relevant for the native currency
+  const wbtcCollateralSystem = await upgrades.deployProxy(
+    LnCollateralSystem,
+    [
+      admin.address, // admin
+      lnPrices.address, // _priceGetter
+      wbtcDebtSystem.address, // _debtSystem
+      lnConfig.address, // _mConfig
+      mockAddress, // _mRewardLocker
+      wbtcBuildBurnSystem.address, // _buildBurnSystem
+      mockAddress, // _liquidation
+    ],
+    {
+      initializer: "__LnRewardLocker_init",
+    }
+  );
+
   const lnExchangeSystem = await upgrades.deployProxy(
     LnExchangeSystem,
     [
@@ -325,7 +450,7 @@ export const deployLinearStack = async (
     {
       initializer: "__LnExchangeSystem_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
   );
 
   const linaLiquidation = await upgrades.deployProxy(
@@ -342,7 +467,25 @@ export const deployLinearStack = async (
     {
       initializer: "__LnLiquidation_init",
       unsafeAllowLinkedLibraries: true,
-    }
+    },
+  );
+
+  // Not setting _lnRewardLocker as it's only relevant for the native currency
+  const wbtcLiquidation = await upgrades.deployProxy(
+    LnLiquidation,
+    [
+      wbtcBuildBurnSystem.address, // _lnBuildBurnSystem
+      wbtcCollateralSystem.address, // _lnCollateralSystem
+      lnConfig.address, // _lnConfig
+      wbtcDebtSystem.address, // _lnDebtSystem
+      lnPrices.address, // _lnPrices
+      mockAddress, // _lnRewardLocker
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnLiquidation_init",
+      unsafeAllowLinkedLibraries: true,
+    },
   );
 
   // Not setting _lnRewardLocker as it's only relevant for the native currency
@@ -400,7 +543,43 @@ export const deployLinearStack = async (
   ])
     await lnConfig.connect(admin).setUint(
       ethers.utils.formatBytes32String(config.key), // key
-      config.value // value
+      config.value, // value
+    );
+
+  /**
+   * Set config items for WBTC collateral:
+   *
+   * - BuildRatio: 0.5
+   * - LiquidationRatio: 0.5
+   * - LiquidationMarkerReward: 0.02
+   * - LiquidationLiquidatorReward: 0.05
+   * - LiquidationDelay: 1 day
+   */
+  for (const item of [
+    {
+      key: "WBTC_BuildRatio",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "WBTC_LiqRatio",
+      value: expandTo18Decimals(0.5),
+    },
+    {
+      key: "WBTC_LiqMarkerReward",
+      value: expandTo18Decimals(0.02),
+    },
+    {
+      key: "WBTC_LiqLiquidatorReward",
+      value: expandTo18Decimals(0.05),
+    },
+    {
+      key: "WBTC_LiqDelay",
+      value: Duration.fromObject({ days: 1 }).as("seconds"),
+    },
+  ])
+    await lnConfig.connect(admin).setUint(
+      ethers.utils.formatBytes32String(item.key), // key
+      item.value // value
     );
 
   /**
@@ -479,7 +658,7 @@ export const deployLinearStack = async (
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("MOVE_ASSET"), // roleType
     [lnExchangeSystem.address], // addresses
-    [true] // setTo
+    [true], // setTo
   );
 
   /**
@@ -515,7 +694,8 @@ export const deployLinearStack = async (
         lnPrices.address,
         lnRewardLocker.address,
         lnExchangeSystem.address,
-      ]
+        lnLiquidation.address,
+      ],
     );
 
   /**
@@ -547,6 +727,21 @@ export const deployLinearStack = async (
   await wbtcToken
     .connect(admin)
     .mint(admin.address, expandTo8Decimals(1_000_000));
+  /**
+   * Create the base synthetic asset lUSD
+   */
+  const lusdToken = await upgrades.deployProxy(
+    LnAssetUpgradeable,
+    [
+      ethers.utils.formatBytes32String("lUSD"), // bytes32 _key,
+      "lUSD", // _name,
+      "lUSD", // _symbol
+      admin.address, // _admin
+    ],
+    {
+      initializer: "__LnAssetUpgradeable_init",
+    },
+  );
 
   /**
    * Create synthetic asset lBTC
@@ -561,7 +756,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnAssetUpgradeable_init",
-    }
+    },
   );
 
   /**
@@ -578,7 +773,7 @@ export const deployLinearStack = async (
     [],
     {
       initializer: "__LnPerpPositionToken_init",
-    }
+    },
   );
 
   /**
@@ -595,7 +790,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnPerpExchange_init",
-    }
+    },
   );
 
   /**
@@ -629,7 +824,7 @@ export const deployLinearStack = async (
     ],
     {
       initializer: "__LnPerpetual_init",
-    }
+    },
   );
 
   /**
@@ -681,10 +876,13 @@ export const deployLinearStack = async (
       linaCollateralSystem.address, // _collateralSystemAddress
       lnRewardLocker.address, // _rewardLockerAddress
       admin.address, // _admin
+      604800,
+      2,
+      31449600,
     ],
     {
       initializer: "__LnRewardSystem_init",
-    }
+    },
   );
 
   /**
@@ -694,7 +892,7 @@ export const deployLinearStack = async (
   await lnAccessControl.connect(admin).SetRoles(
     formatBytes32String("LOCK_REWARD"), // roleType
     [lnRewardSystem.address], // addresses
-    [true] // setTo
+    [true], // setTo
   );
 
   /**
@@ -704,7 +902,7 @@ export const deployLinearStack = async (
     .connect(admin)
     .updateAll(
       [ethers.utils.formatBytes32String("LnRewardSystem")],
-      [lnRewardSystem.address]
+      [lnRewardSystem.address],
     );
   await lnExchangeSystem
     .connect(admin)

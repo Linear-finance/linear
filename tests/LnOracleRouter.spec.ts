@@ -8,13 +8,8 @@ import { getBlockDateTime } from "./utilities/timeTravel";
 
 import { LnOracleRouter, MockChainlinkAggregator } from "../typechain";
 
-const {
-  arrayify,
-  formatBytes32String,
-  getAddress,
-  hexlify,
-  zeroPad,
-} = ethers.utils;
+const { arrayify, formatBytes32String, getAddress, hexlify, zeroPad } =
+  ethers.utils;
 
 use(waffle.solidity);
 
@@ -27,10 +22,10 @@ describe("LnOracleRouter", function () {
   const assertPriceAndUpdateTime = async (
     currency: string,
     price: number | BigNumber,
-    upateTime: number | BigNumber
+    upateTime: number | BigNumber,
   ): Promise<void> => {
     const priceAndUpdateTime = await oracleRouter.getPriceAndUpdatedTime(
-      formatBytes32String(currency) // currencyKey
+      formatBytes32String(currency), // currencyKey
     );
     expect(priceAndUpdateTime.price).to.equal(price);
     expect(priceAndUpdateTime.time).to.equal(upateTime);
@@ -50,7 +45,7 @@ describe("LnOracleRouter", function () {
       },
     });
     const MockChainlinkAggregator = await ethers.getContractFactory(
-      "MockChainlinkAggregator"
+      "MockChainlinkAggregator",
     );
 
     oracleRouter = (await upgrades.deployProxy(
@@ -61,7 +56,7 @@ describe("LnOracleRouter", function () {
       {
         initializer: "__LnOracleRouter_init",
         unsafeAllowLinkedLibraries: true,
-      }
+      },
     )) as LnOracleRouter;
     chainlinkAggregator = await MockChainlinkAggregator.deploy();
   });
@@ -71,7 +66,7 @@ describe("LnOracleRouter", function () {
     await oracleRouter.connect(admin).addChainlinkOracle(
       formatBytes32String("LINK"), // currencyKey
       chainlinkAggregator.address, // oracleAddress
-      false // removeExisting
+      false, // removeExisting
     );
 
     // 8 decimals
@@ -81,7 +76,7 @@ describe("LnOracleRouter", function () {
       expandToNDecimals(10, 8), // newAnswer
       100, // newStartedAt
       200, // newUpdatedAt
-      1 // newAnsweredInRound
+      1, // newAnsweredInRound
     );
     await assertPriceAndUpdateTime("LINK", expandTo18Decimals(10), 200);
 
@@ -92,7 +87,7 @@ describe("LnOracleRouter", function () {
       expandToNDecimals(10, 18), // newAnswer
       100, // newStartedAt
       200, // newUpdatedAt
-      1 // newAnsweredInRound
+      1, // newAnsweredInRound
     );
     await assertPriceAndUpdateTime("LINK", expandTo18Decimals(10), 200);
 
@@ -103,7 +98,7 @@ describe("LnOracleRouter", function () {
       expandToNDecimals(10, 20), // newAnswer
       100, // newStartedAt
       200, // newUpdatedAt
-      1 // newAnsweredInRound
+      1, // newAnsweredInRound
     );
     await assertPriceAndUpdateTime("LINK", expandTo18Decimals(10), 200);
   });
@@ -112,15 +107,15 @@ describe("LnOracleRouter", function () {
     await oracleRouter.connect(admin).addTerminalPriceOracle(
       formatBytes32String("LINK"), // currencyKey
       getAddress(
-        hexlify(zeroPad(arrayify(expandTo18Decimals(999).toHexString()), 20))
+        hexlify(zeroPad(arrayify(expandTo18Decimals(999).toHexString()), 20)),
       ), // oracleAddress
-      false // removeExisting
+      false, // removeExisting
     );
 
     await assertPriceAndUpdateTime(
       "LINK",
       expandTo18Decimals(999),
-      (await getBlockDateTime(ethers.provider)).toSeconds()
+      (await getBlockDateTime(ethers.provider)).toSeconds(),
     );
   });
 });

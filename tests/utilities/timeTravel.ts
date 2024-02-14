@@ -8,7 +8,7 @@ import { DateTime } from "luxon";
  */
 export function setNextBlockTimestamp(
   provider: providers.JsonRpcProvider,
-  timestamp: number | DateTime
+  timestamp: number | DateTime,
 ): Promise<void> {
   return provider.send("evm_setNextBlockTimestamp", [
     typeof timestamp === "number" ? timestamp : timestamp.toSeconds(),
@@ -23,13 +23,13 @@ export function setNextBlockTimestamp(
  */
 export function mineBlock(
   provider: providers.JsonRpcProvider,
-  timestamp?: number | DateTime
+  timestamp?: number | DateTime,
 ): Promise<void> {
   return provider.send(
     "evm_mine",
     timestamp
       ? [typeof timestamp === "number" ? timestamp : timestamp.toSeconds()]
-      : []
+      : [],
   );
 }
 
@@ -38,7 +38,7 @@ export function mineBlock(
  * @param provider JSON RPC provider
  */
 export async function getBlockDateTime(
-  provider: providers.JsonRpcProvider
+  provider: providers.JsonRpcProvider,
 ): Promise<DateTime> {
   const lastestBlock = provider.getBlock("latest");
   return DateTime.fromSeconds((await lastestBlock).timestamp);

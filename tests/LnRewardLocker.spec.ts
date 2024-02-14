@@ -30,33 +30,27 @@ describe("LnRewardLocker", function () {
   const mockLinaAddress = "0x0000000000000000000000000000000000000001";
 
   beforeEach(async function () {
-    [
-      deployer,
-      admin,
-      alice,
-      bob,
-      charlie,
-      rewarder,
-    ] = await ethers.getSigners();
+    [deployer, admin, alice, bob, charlie, rewarder] =
+      await ethers.getSigners();
 
     const LnAccessControl = await ethers.getContractFactory("LnAccessControl");
     const LnRewardLocker = await ethers.getContractFactory("LnRewardLocker");
 
     lnAccessControl = await LnAccessControl.deploy();
     await lnAccessControl.connect(deployer).__LnAccessControl_init(
-      admin.address // admin
+      admin.address, // admin
     );
 
     lnRewardLocker = await LnRewardLocker.deploy();
     await lnRewardLocker.connect(deployer).__LnRewardLocker_init(
       mockLinaAddress, // _linaTokenAddr
       lnAccessControl.address, // _accessCtrl
-      admin.address // _admin
+      admin.address, // _admin
     );
 
     lnCollateralSystem = await waffle.deployMockContract(
       deployer,
-      ILnCollateralSystem.abi
+      ILnCollateralSystem.abi,
     );
     await lnCollateralSystem.mock.collateralFromUnlockReward.returns();
   });
@@ -66,29 +60,29 @@ describe("LnRewardLocker", function () {
       lnRewardLocker.connect(alice).addReward(
         bob.address, // user
         10, // amount
-        20 // unlockTime
-      )
+        20, // unlockTime
+      ),
     ).to.be.revertedWith("LnRewardLocker: not LOCK_REWARD role");
 
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
       [alice.address], // addresses
-      [true] // setTo
+      [true], // setTo
     );
 
     await expect(
       lnRewardLocker.connect(alice).addReward(
         bob.address, // user
         10, // amount
-        20 // unlockTime
-      )
+        20, // unlockTime
+      ),
     )
       .to.emit(lnRewardLocker, "RewardEntryAdded")
       .withArgs(
         1, //entryId
         bob.address, // user
         10, // amount
-        20 // unlockTime
+        20, // unlockTime
       );
 
     const rewardEntry = await lnRewardLocker.rewardEntries(1, bob.address);
@@ -96,7 +90,7 @@ describe("LnRewardLocker", function () {
     expect(rewardEntry.unlockTime).to.equal(20);
 
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      10
+      10,
     );
     expect(await lnRewardLocker.totalLockedAmount()).to.equal(10);
   });
@@ -106,32 +100,32 @@ describe("LnRewardLocker", function () {
       lnRewardLocker.connect(alice).migrateRewards(
         [alice.address, bob.address], // users
         [10, 20], // amounts
-        [30, 40] // unlockTimes
-      )
+        [30, 40], // unlockTimes
+      ),
     ).to.be.revertedWith(
-      "LnAdminUpgradeable: only the contract admin can perform this action"
+      "LnAdminUpgradeable: only the contract admin can perform this action",
     );
 
     await expect(
       lnRewardLocker.connect(admin).migrateRewards(
         [alice.address, bob.address], // users
         [10, 20], // amounts
-        [30, 40] // unlockTimes
-      )
+        [30, 40], // unlockTimes
+      ),
     )
       .to.emit(lnRewardLocker, "RewardEntryAdded")
       .withArgs(
         1, //entryId
         alice.address, // user
         10, // amount
-        30 // unlockTime
+        30, // unlockTime
       )
       .and.emit(lnRewardLocker, "RewardEntryAdded")
       .withArgs(
         2, //entryId
         bob.address, // user
         20, // amount
-        40 // unlockTime
+        40, // unlockTime
       );
 
     const aliceEntry = await lnRewardLocker.rewardEntries(1, alice.address);
@@ -143,10 +137,10 @@ describe("LnRewardLocker", function () {
     expect(bobEntry.unlockTime).to.equal(40);
 
     expect(
-      await lnRewardLocker.lockedAmountByAddresses(alice.address)
+      await lnRewardLocker.lockedAmountByAddresses(alice.address),
     ).to.equal(10);
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      20
+      20,
     );
     expect(await lnRewardLocker.totalLockedAmount()).to.equal(30);
   });
@@ -158,21 +152,21 @@ describe("LnRewardLocker", function () {
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
       [alice.address], // addresses
-      [true] // setTo
+      [true], // setTo
     );
 
     await expect(
       lnRewardLocker.connect(alice).addReward(
         alice.address, // user
         uint216Max.add(1), // amount
-        10 // unlockTime
-      )
+        10, // unlockTime
+      ),
     ).to.revertedWith("LnRewardLocker: reward amount overflow");
 
     await lnRewardLocker.connect(alice).addReward(
       alice.address, // user
       uint216Max, // amount
-      10 // unlockTime
+      10, // unlockTime
     );
   });
 
@@ -183,21 +177,21 @@ describe("LnRewardLocker", function () {
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
       [alice.address], // addresses
-      [true] // setTo
+      [true], // setTo
     );
 
     await expect(
       lnRewardLocker.connect(alice).addReward(
         alice.address, // user
         10, // amount
-        uint40Max.add(1) // unlockTime
-      )
+        uint40Max.add(1), // unlockTime
+      ),
     ).to.revertedWith("LnRewardLocker: unlock time overflow");
 
     await lnRewardLocker.connect(alice).addReward(
       alice.address, // user
       10, // amount
-      uint40Max // unlockTime
+      uint40Max, // unlockTime
     );
   });
 
@@ -209,17 +203,17 @@ describe("LnRewardLocker", function () {
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
       [alice.address], // addresses
-      [true] // setTo
+      [true], // setTo
     );
 
     await lnRewardLocker.connect(alice).addReward(
       bob.address, // user
       10, // amount
-      unlockTime.toSeconds() // unlockTime
+      unlockTime.toSeconds(), // unlockTime
     );
 
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      10
+      10,
     );
 
     await setNextBlockTimestamp(ethers.provider, unlockTime);
@@ -231,14 +225,14 @@ describe("LnRewardLocker", function () {
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     )
       .to.emit(lnRewardLocker, "RewardEntryUnlocked")
       .withArgs(
         1, //entryId
         bob.address, // user
-        10 // amount
+        10, // amount
       );
 
     const rewardEntry = await lnRewardLocker.rewardEntries(1, bob.address);
@@ -246,7 +240,7 @@ describe("LnRewardLocker", function () {
     expect(rewardEntry.unlockTime).to.equal(0);
 
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      0
+      0,
     );
     expect(await lnRewardLocker.totalLockedAmount()).to.equal(0);
   });
@@ -256,25 +250,25 @@ describe("LnRewardLocker", function () {
     await expect(
       lnRewardLocker
         .connect(alice)
-        .updateCollateralSystemAddress(lnCollateralSystem.address)
+        .updateCollateralSystemAddress(lnCollateralSystem.address),
     ).to.be.revertedWith(
-      "LnAdminUpgradeable: only the contract admin can perform this action"
+      "LnAdminUpgradeable: only the contract admin can perform this action",
     );
 
     await lnRewardLocker
       .connect(admin)
       .updateCollateralSystemAddress(lnCollateralSystem.address);
     expect(await lnRewardLocker.collateralSystemAddr()).to.be.eq(
-      lnCollateralSystem.address
+      lnCollateralSystem.address,
     );
   });
 
   it("only admin can set rewarder address", async () => {
     expect(await lnRewardLocker.rewarderAddress()).to.be.eq(zeroAddress);
     await expect(
-      lnRewardLocker.connect(alice).updateRewarderAddress(rewarder.address)
+      lnRewardLocker.connect(alice).updateRewarderAddress(rewarder.address),
     ).to.be.revertedWith(
-      "LnAdminUpgradeable: only the contract admin can perform this action"
+      "LnAdminUpgradeable: only the contract admin can perform this action",
     );
 
     await lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
@@ -285,16 +279,16 @@ describe("LnRewardLocker", function () {
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     ).to.be.revertedWith("LnRewardLocker: Rewarder address not set");
 
     lnRewardLocker.connect(admin).updateRewarderAddress(rewarder.address);
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     ).to.be.revertedWith("LnRewardLocker: Collateral system address not set");
   });
 
@@ -307,10 +301,10 @@ describe("LnRewardLocker", function () {
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     ).to.be.revertedWith(
-      "LnRewardLocker: Reward entry amount is 0, no reward to unlock"
+      "LnRewardLocker: Reward entry amount is 0, no reward to unlock",
     );
   });
 
@@ -322,17 +316,17 @@ describe("LnRewardLocker", function () {
     await lnAccessControl.connect(admin).SetRoles(
       formatBytes32String("LOCK_REWARD"), // roleType
       [alice.address], // addresses
-      [true] // setTo
+      [true], // setTo
     );
 
     await lnRewardLocker.connect(alice).addReward(
       bob.address, // user
       10, // amount
-      unlockTime.toSeconds() // unlockTime
+      unlockTime.toSeconds(), // unlockTime
     );
 
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      10
+      10,
     );
 
     lnRewardLocker
@@ -342,31 +336,31 @@ describe("LnRewardLocker", function () {
 
     await setNextBlockTimestamp(
       ethers.provider,
-      unlockTime.minus({ seconds: 10 }).toSeconds()
+      unlockTime.minus({ seconds: 10 }).toSeconds(),
     );
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     ).to.be.revertedWith("LnRewardLocker: Unlock time not reached");
 
     await setNextBlockTimestamp(
       ethers.provider,
-      unlockTime.plus({ seconds: 1 }).toSeconds()
+      unlockTime.plus({ seconds: 1 }).toSeconds(),
     );
 
     await expect(
       lnRewardLocker.connect(charlie).unlockReward(
         bob.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     )
       .to.emit(lnRewardLocker, "RewardEntryUnlocked")
       .withArgs(
         1, //entryId
         bob.address, // user
-        10 // amount
+        10, // amount
       );
 
     const rewardEntry = await lnRewardLocker.rewardEntries(1, bob.address);
@@ -374,7 +368,7 @@ describe("LnRewardLocker", function () {
     expect(rewardEntry.unlockTime).to.equal(0);
 
     expect(await lnRewardLocker.lockedAmountByAddresses(bob.address)).to.equal(
-      0
+      0,
     );
     expect(await lnRewardLocker.totalLockedAmount()).to.equal(0);
   });

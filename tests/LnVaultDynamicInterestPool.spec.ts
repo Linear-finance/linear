@@ -37,12 +37,12 @@ describe("LnVaultDynamicInterestPool", function () {
     periodId: number,
     principal: BigNumber | number,
     interestRate: BigNumber | number,
-    interest: BigNumber | number
+    interest: BigNumber | number,
   ): Promise<void> => {
     return expect(
       pool.connect(user).withdrawInterest(
-        periodId // periodId
-      )
+        periodId, // periodId
+      ),
     )
       .to.emit(pool, "InterestWithdrawn")
       .withArgs(
@@ -50,13 +50,13 @@ describe("LnVaultDynamicInterestPool", function () {
         periodId, // periodId
         principal, // principal
         interestRate, // interestRate
-        interest // interest
+        interest, // interest
       )
       .and.emit(interestToken, "Transfer")
       .withArgs(
         pool.address, // from
         user.address, // to
-        interest // amount
+        interest, // amount
       );
   };
 
@@ -77,7 +77,7 @@ describe("LnVaultDynamicInterestPool", function () {
   const assertWithdrawablePrincipal = (
     timestamp: DateTime,
     address: string,
-    amount: number | BigNumber
+    amount: number | BigNumber,
   ): Promise<void> => {
     return runAndRevert(async () => {
       await mineBlock(ethers.provider, timestamp);
@@ -90,12 +90,12 @@ describe("LnVaultDynamicInterestPool", function () {
     address: string,
     fromPeriodId: number,
     toPeriodId: number,
-    amount: number | BigNumber
+    amount: number | BigNumber,
   ): Promise<void> => {
     return runAndRevert(async () => {
       await mineBlock(ethers.provider, timestamp);
       const withdrawables = await pool.getWithdrawableInterests(
-        address // user
+        address, // user
       );
       expect(withdrawables.fromPeriodId).to.equal(fromPeriodId);
       expect(withdrawables.toPeriodId).to.equal(toPeriodId);
@@ -108,7 +108,7 @@ describe("LnVaultDynamicInterestPool", function () {
 
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     const LnVaultDynamicInterestPool = await ethers.getContractFactory(
-      "LnVaultDynamicInterestPool"
+      "LnVaultDynamicInterestPool",
     );
 
     startTime = (await getBlockDateTime(ethers.provider)).plus({ days: 1 });
@@ -135,22 +135,22 @@ describe("LnVaultDynamicInterestPool", function () {
       ],
       {
         initializer: "__LnVaultDynamicInterestPool_init",
-      }
+      },
     );
 
     await interestToken.connect(deployer).mint(
       pool.address, // account
-      expandTo18Decimals(1_000_000) // amount
+      expandTo18Decimals(1_000_000), // amount
     );
 
     for (const user of [alice, bob, charlie]) {
       await stakeToken.connect(deployer).mint(
         user.address, // account
-        expandTo18Decimals(10_000) // amount
+        expandTo18Decimals(10_000), // amount
       );
       await stakeToken.connect(user).approve(
         pool.address, // spender
-        uint256Max // amount
+        uint256Max, // amount
       );
     }
   });
@@ -158,49 +158,49 @@ describe("LnVaultDynamicInterestPool", function () {
   it("cannot subscribe more than user subscription limit", async () => {
     await expect(
       pool.connect(alice).subscribe(
-        expandTo18Decimals(1_000).add(1) // amount
-      )
+        expandTo18Decimals(1_000).add(1), // amount
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: user oversubscribed");
 
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await expect(
       pool.connect(alice).subscribe(
-        1 // amount
-      )
+        1, // amount
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: user oversubscribed");
   });
 
   it("cannot subscribe more than total subscription limit", async () => {
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
     await pool.connect(bob).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await expect(
       pool.connect(charlie).subscribe(
-        expandTo18Decimals(500).add(1) // amount
-      )
+        expandTo18Decimals(500).add(1), // amount
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: total oversubscribed");
   });
 
   it("amount subscribed before start should earn interest for the first period", async () => {
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1000) // amount
+      expandTo18Decimals(1000), // amount
     );
 
     await pool.connect(deployer).setInterestRate(
       1, // periodId
-      expandTo18Decimals(0.01) // interestRate
+      expandTo18Decimals(0.01), // interestRate
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration)
+      startTime.plus(periodDuration),
     );
 
     // Interest = 1000 * 1% = 10
@@ -209,7 +209,7 @@ describe("LnVaultDynamicInterestPool", function () {
       1, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.01), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
   });
 
@@ -217,33 +217,33 @@ describe("LnVaultDynamicInterestPool", function () {
     // In period 2
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration)
+      startTime.plus(periodDuration),
     );
 
     await pool.connect(deployer).setInterestRate(
       2, // periodId
-      expandTo18Decimals(0.02) // interestRate
+      expandTo18Decimals(0.02), // interestRate
     );
     await pool.connect(deployer).setInterestRate(
       3, // periodId
-      expandTo18Decimals(0.03) // interestRate
+      expandTo18Decimals(0.03), // interestRate
     );
 
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1000) // amount
+      expandTo18Decimals(1000), // amount
     );
 
     // In period 4
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(3))
+      startTime.plus(multiplyDuration(3)),
     );
 
     // No interest for period 2
     await expect(
       pool.connect(alice).withdrawInterest(
-        2 // periodId
-      )
+        2, // periodId
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: invalid period id");
 
     // Interest = 1000 * 3% = 30
@@ -252,33 +252,33 @@ describe("LnVaultDynamicInterestPool", function () {
       3, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.03), // interestRate
-      expandTo18Decimals(30) // interest
+      expandTo18Decimals(30), // interest
     );
   });
 
   it("subscription amount addition should not affect interests until next period", async () => {
     await pool.connect(deployer).setInterestRate(
       2, // periodId
-      expandTo18Decimals(0.02) // interestRate
+      expandTo18Decimals(0.02), // interestRate
     );
     await pool.connect(deployer).setInterestRate(
       3, // periodId
-      expandTo18Decimals(0.03) // interestRate
+      expandTo18Decimals(0.03), // interestRate
     );
 
     // Subscribe 500 in period 1
     await setNextBlockTimestamp(ethers.provider, startTime);
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(500) // amount
+      expandTo18Decimals(500), // amount
     );
 
     // Add 200 in period 2
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(1))
+      startTime.plus(multiplyDuration(1)),
     );
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(200) // amount
+      expandTo18Decimals(200), // amount
     );
 
     await assertWithdrawableInterests(
@@ -286,59 +286,59 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       2,
       3,
-      expandTo18Decimals(31)
+      expandTo18Decimals(31),
     );
 
     // Period 2 principal excludes 200
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(2))
+      startTime.plus(multiplyDuration(2)),
     );
     await withdrawInterestWithAssertion(
       alice, // user
       2, // periodId
       expandTo18Decimals(500), // principal
       expandTo18Decimals(0.02), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
 
     // Period 3 principal includes 200
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(3))
+      startTime.plus(multiplyDuration(3)),
     );
     await withdrawInterestWithAssertion(
       alice, // user
       3, // periodId
       expandTo18Decimals(700), // principal
       expandTo18Decimals(0.03), // interestRate
-      expandTo18Decimals(21) // interest
+      expandTo18Decimals(21), // interest
     );
   });
 
   it("subscription amount removal should not affect interests until next period", async () => {
     await pool.connect(deployer).setInterestRate(
       2, // periodId
-      expandTo18Decimals(0.02) // interestRate
+      expandTo18Decimals(0.02), // interestRate
     );
     await pool.connect(deployer).setInterestRate(
       3, // periodId
-      expandTo18Decimals(0.03) // interestRate
+      expandTo18Decimals(0.03), // interestRate
     );
 
     // Subscribe 500 in period 1
     await setNextBlockTimestamp(ethers.provider, startTime);
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(500) // amount
+      expandTo18Decimals(500), // amount
     );
 
     // Remove 200 in period 2
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(1))
+      startTime.plus(multiplyDuration(1)),
     );
     await pool.connect(alice).unsubscribe(
-      expandTo18Decimals(200) // amount
+      expandTo18Decimals(200), // amount
     );
 
     await assertWithdrawableInterests(
@@ -346,65 +346,65 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       2,
       3,
-      expandTo18Decimals(19)
+      expandTo18Decimals(19),
     );
 
     // Period 2 principal still includes 200
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(2))
+      startTime.plus(multiplyDuration(2)),
     );
     await withdrawInterestWithAssertion(
       alice, // user
       2, // periodId
       expandTo18Decimals(500), // principal
       expandTo18Decimals(0.02), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
 
     // Period 3 principal excludes the 200 removed
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(3))
+      startTime.plus(multiplyDuration(3)),
     );
     await withdrawInterestWithAssertion(
       alice, // user
       3, // periodId
       expandTo18Decimals(300), // principal
       expandTo18Decimals(0.03), // interestRate
-      expandTo18Decimals(9) // interest
+      expandTo18Decimals(9), // interest
     );
   });
 
   it("amount unsubscribe before start is locked until the first period starts", async () => {
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     expect(await stakeToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(9_000)
+      expandTo18Decimals(9_000),
     );
     expect(await stakeToken.balanceOf(pool.address)).to.equal(
-      expandTo18Decimals(1_000)
+      expandTo18Decimals(1_000),
     );
 
     await expect(
       pool.connect(alice).unsubscribe(
-        expandTo18Decimals(1_000) // amount
-      )
+        expandTo18Decimals(1_000), // amount
+      ),
     )
       .to.emit(pool, "Unsubscribed")
       .withArgs(
         alice.address, // user
         0, // periodId
-        expandTo18Decimals(1_000) // amount
+        expandTo18Decimals(1_000), // amount
       );
 
     expect(await stakeToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(9_000)
+      expandTo18Decimals(9_000),
     );
     expect(await stakeToken.balanceOf(pool.address)).to.equal(
-      expandTo18Decimals(1_000)
+      expandTo18Decimals(1_000),
     );
 
     await assertWithdrawablePrincipal(
@@ -412,23 +412,23 @@ describe("LnVaultDynamicInterestPool", function () {
         seconds: 1,
       }),
       alice.address,
-      0
+      0,
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
       startTime.minus({
         seconds: 1,
-      })
+      }),
     );
     await expect(pool.connect(alice).withdrawPrincipal()).to.be.revertedWith(
-      "LnVaultDynamicInterestPool: refund still pending"
+      "LnVaultDynamicInterestPool: refund still pending",
     );
 
     await assertWithdrawablePrincipal(
       startTime,
       alice.address,
-      expandTo18Decimals(1_000)
+      expandTo18Decimals(1_000),
     );
 
     await setNextBlockTimestamp(ethers.provider, startTime);
@@ -437,69 +437,69 @@ describe("LnVaultDynamicInterestPool", function () {
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(1_000) // amount
+        expandTo18Decimals(1_000), // amount
       );
 
     expect(await stakeToken.balanceOf(alice.address)).to.equal(
-      expandTo18Decimals(10_000)
+      expandTo18Decimals(10_000),
     );
     expect(await stakeToken.balanceOf(pool.address)).to.equal(0);
   });
 
   it("amount unsubscribe in any period should not be withdrawable until the next period starts", async () => {
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     // Unsubscribe 300 in period 1
     await setNextBlockTimestamp(ethers.provider, startTime);
     await pool.connect(alice).unsubscribe(
-      expandTo18Decimals(300) // amount
+      expandTo18Decimals(300), // amount
     );
 
     await assertWithdrawablePrincipal(
       startTime.plus(periodDuration).minus({ seconds: 1 }),
       alice.address,
-      0
+      0,
     );
 
     // Cannot withdraw before period 1 ends
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration).minus({ seconds: 1 })
+      startTime.plus(periodDuration).minus({ seconds: 1 }),
     );
     await expect(pool.connect(alice).withdrawPrincipal()).to.be.revertedWith(
-      "LnVaultDynamicInterestPool: refund still pending"
+      "LnVaultDynamicInterestPool: refund still pending",
     );
 
     await assertWithdrawablePrincipal(
       startTime.plus(periodDuration),
       alice.address,
-      expandTo18Decimals(300)
+      expandTo18Decimals(300),
     );
 
     // Can withdraw when period 1 ends
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration)
+      startTime.plus(periodDuration),
     );
     await expect(pool.connect(alice).withdrawPrincipal())
       .to.emit(stakeToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(300) // amount
+        expandTo18Decimals(300), // amount
       );
   });
 
   it("cannot claim interest until period ends", async () => {
     await pool.connect(deployer).setInterestRate(
       1, // periodId
-      expandTo18Decimals(0.01) // interestRate
+      expandTo18Decimals(0.01), // interestRate
     );
 
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await assertWithdrawableInterests(
@@ -507,17 +507,17 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       0,
       0,
-      0
+      0,
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration).minus({ seconds: 1 })
+      startTime.plus(periodDuration).minus({ seconds: 1 }),
     );
     await expect(
       pool.connect(alice).withdrawInterest(
-        1 // periodId
-      )
+        1, // periodId
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: period not ended");
 
     await assertWithdrawableInterests(
@@ -525,25 +525,25 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       1,
       1,
-      expandTo18Decimals(10)
+      expandTo18Decimals(10),
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration)
+      startTime.plus(periodDuration),
     );
     await withdrawInterestWithAssertion(
       alice, // user
       1, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.01), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
   });
 
   it("cannot claim interest before rate is set", async () => {
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await assertWithdrawableInterests(
@@ -551,22 +551,22 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       0,
       0,
-      0
+      0,
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(periodDuration)
+      startTime.plus(periodDuration),
     );
     await expect(
       pool.connect(alice).withdrawInterest(
-        1 // periodId
-      )
+        1, // periodId
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: interest rate not set");
 
     await pool.connect(deployer).setInterestRate(
       1, // periodId
-      expandTo18Decimals(0.01) // interestRate
+      expandTo18Decimals(0.01), // interestRate
     );
 
     await assertWithdrawableInterests(
@@ -574,7 +574,7 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       1,
       1,
-      expandTo18Decimals(10)
+      expandTo18Decimals(10),
     );
 
     await withdrawInterestWithAssertion(
@@ -582,22 +582,22 @@ describe("LnVaultDynamicInterestPool", function () {
       1, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.01), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
   });
 
   it("cannot skip periods when claiming interests", async () => {
     await pool.connect(deployer).setInterestRate(
       1, // periodId
-      expandTo18Decimals(0.01) // interestRate
+      expandTo18Decimals(0.01), // interestRate
     );
     await pool.connect(deployer).setInterestRate(
       2, // periodId
-      expandTo18Decimals(0.02) // interestRate
+      expandTo18Decimals(0.02), // interestRate
     );
 
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await assertWithdrawableInterests(
@@ -605,19 +605,19 @@ describe("LnVaultDynamicInterestPool", function () {
       alice.address,
       1,
       2,
-      expandTo18Decimals(30)
+      expandTo18Decimals(30),
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(2))
+      startTime.plus(multiplyDuration(2)),
     );
 
     // Cannot claim period 2 since period 1 is not claimed yet
     await expect(
       pool.connect(alice).withdrawInterest(
-        2 // periodId
-      )
+        2, // periodId
+      ),
     ).to.be.revertedWith("LnVaultDynamicInterestPool: invalid period id");
 
     // Can claim period 2 after claiming period 1
@@ -626,41 +626,41 @@ describe("LnVaultDynamicInterestPool", function () {
       1, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.01), // interestRate
-      expandTo18Decimals(10) // interest
+      expandTo18Decimals(10), // interest
     );
     await withdrawInterestWithAssertion(
       alice, // user
       2, // periodId
       expandTo18Decimals(1_000), // principal
       expandTo18Decimals(0.02), // interestRate
-      expandTo18Decimals(20) // interest
+      expandTo18Decimals(20), // interest
     );
   });
 
   it("can withdraw interests for multiple periods at once", async () => {
     await pool.connect(deployer).setInterestRate(
       1, // periodId
-      expandTo18Decimals(0.01) // interestRate
+      expandTo18Decimals(0.01), // interestRate
     );
     await pool.connect(deployer).setInterestRate(
       2, // periodId
-      expandTo18Decimals(0.02) // interestRate
+      expandTo18Decimals(0.02), // interestRate
     );
 
     await pool.connect(alice).subscribe(
-      expandTo18Decimals(1_000) // amount
+      expandTo18Decimals(1_000), // amount
     );
 
     await setNextBlockTimestamp(
       ethers.provider,
-      startTime.plus(multiplyDuration(2))
+      startTime.plus(multiplyDuration(2)),
     );
 
     await expect(
       pool.connect(alice).withdrawInterests(
         1, // fromPeriodId
-        2 // toPeriodId
-      )
+        2, // toPeriodId
+      ),
     )
       .to.emit(pool, "InterestWithdrawn")
       .withArgs(
@@ -668,13 +668,13 @@ describe("LnVaultDynamicInterestPool", function () {
         1, // periodId
         expandTo18Decimals(1_000), // principal
         expandTo18Decimals(0.01), // interestRate
-        expandTo18Decimals(10) // interest
+        expandTo18Decimals(10), // interest
       )
       .and.emit(interestToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(10) // amount
+        expandTo18Decimals(10), // amount
       )
       .and.emit(pool, "InterestWithdrawn")
       .withArgs(
@@ -682,13 +682,13 @@ describe("LnVaultDynamicInterestPool", function () {
         2, // periodId
         expandTo18Decimals(1_000), // principal
         expandTo18Decimals(0.02), // interestRate
-        expandTo18Decimals(20) // interest
+        expandTo18Decimals(20), // interest
       )
       .and.emit(interestToken, "Transfer")
       .withArgs(
         pool.address, // from
         alice.address, // to
-        expandTo18Decimals(10) // amount
+        expandTo18Decimals(10), // amount
       );
   });
 });

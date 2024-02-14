@@ -27,7 +27,7 @@ describe("Integration | Unlock Reward", function () {
     periodId: BigNumber,
     recipient: string,
     stakingReward: BigNumber,
-    feeReward: BigNumber
+    feeReward: BigNumber,
   ): Promise<string[]> => {
     const domain = {
       name: "Linear",
@@ -53,7 +53,7 @@ describe("Integration | Unlock Reward", function () {
     };
 
     return await Promise.all(
-      signers.map((signer) => signer._signTypedData(domain, types, value))
+      signers.map((signer) => signer._signTypedData(domain, types, value)),
     );
   };
 
@@ -64,7 +64,7 @@ describe("Integration | Unlock Reward", function () {
     rewardSigner2 = Wallet.createRandom();
     if (
       BigNumber.from(rewardSigner1.address).gt(
-        BigNumber.from(rewardSigner2.address)
+        BigNumber.from(rewardSigner2.address),
       )
     ) {
       const temp = rewardSigner1;
@@ -103,7 +103,7 @@ describe("Integration | Unlock Reward", function () {
       BigNumber.from(1),
       alice.address,
       expandTo18Decimals(100),
-      BigNumber.from(0)
+      BigNumber.from(0),
     );
   });
 
@@ -111,7 +111,7 @@ describe("Integration | Unlock Reward", function () {
     // Alice stakes 9,000 LINA
     await stack.collaterals.lina.collateralSystem.connect(alice).Collateral(
       ethers.utils.formatBytes32String("LINA"), // _currency
-      expandTo18Decimals(9_000) // _amount
+      expandTo18Decimals(9_000), // _amount
     );
 
     // Returns 9,000 when locked amount is zero
@@ -122,12 +122,13 @@ describe("Integration | Unlock Reward", function () {
     ).to.equal(expandTo18Decimals(9_000));
 
     // Fast forward to 1st period end
-    const rewardSystemFirstPeriod = await stack.lnRewardSystem.firstPeriodStartTime();
+    const rewardSystemFirstPeriod =
+      await stack.lnRewardSystem.firstPeriodStartTime();
     await setNextBlockTimestamp(
       ethers.provider,
       DateTime.fromSeconds(parseInt(rewardSystemFirstPeriod.toString())).plus(
-        periodDuration
-      )
+        periodDuration,
+      ),
     );
 
     // Alice claim reward
@@ -136,19 +137,19 @@ describe("Integration | Unlock Reward", function () {
         1, // periodId
         expandTo18Decimals(100), // stakingReward
         BigNumber.from(0), // feeReward
-        aliceSignaturePeriod1 // signature
-      )
+        aliceSignaturePeriod1, // signature
+      ),
     )
       .to.emit(stack.lnRewardSystem, "RewardClaimed")
       .withArgs(
         alice.address, // recipient
         1, // periodId
         expandTo18Decimals(100), // stakingReward
-        BigNumber.from(0) // feeReward
+        BigNumber.from(0), // feeReward
       );
 
     expect(
-      await stack.lnRewardLocker.lockedAmountByAddresses(alice.address)
+      await stack.lnRewardLocker.lockedAmountByAddresses(alice.address),
     ).to.equal(expandTo18Decimals(100));
 
     // Fast forward to unlock time
@@ -156,7 +157,7 @@ describe("Integration | Unlock Reward", function () {
       ethers.provider,
       DateTime.fromSeconds(parseInt(rewardSystemFirstPeriod.toString()))
         .plus(periodDuration)
-        .plus(stakingRewardLockTime)
+        .plus(stakingRewardLockTime),
     );
 
     // Approve lnCollateralSystem to spend LINA from rewarder
@@ -170,14 +171,14 @@ describe("Integration | Unlock Reward", function () {
     await expect(
       stack.lnRewardLocker.connect(rewardUnlocker).unlockReward(
         alice.address, // user
-        1 // rewardEntryId
-      )
+        1, // rewardEntryId
+      ),
     )
       .to.emit(stack.lnRewardLocker, "RewardEntryUnlocked")
       .withArgs(
         1, //entryId
         alice.address, // user
-        expandTo18Decimals(100) // amount
+        expandTo18Decimals(100), // amount
       )
       .to.emit(
         stack.collaterals.lina.collateralSystem,
@@ -187,7 +188,7 @@ describe("Integration | Unlock Reward", function () {
         alice.address,
         ethers.utils.formatBytes32String("LINA"),
         expandTo18Decimals(100),
-        expandTo18Decimals(9_100)
+        expandTo18Decimals(9_100),
       )
       .to.emit(stack.collaterals.lina.token, "Transfer")
       .withArgs(
@@ -206,20 +207,20 @@ describe("Integration | Unlock Reward", function () {
     await expect(
       stack.collaterals.lina.collateralSystem
         .connect(alice)
-        .RedeemMax(ethers.utils.formatBytes32String("LINA"))
+        .RedeemMax(ethers.utils.formatBytes32String("LINA")),
     )
       .to.emit(stack.collaterals.lina.collateralSystem, "RedeemCollateral")
       .withArgs(
         alice.address,
         ethers.utils.formatBytes32String("LINA"),
         expandTo18Decimals(9_100),
-        BigNumber.from("0")
+        BigNumber.from("0"),
       )
       .to.emit(stack.collaterals.lina.token, "Transfer")
       .withArgs(
         stack.collaterals.lina.collateralSystem.address,
         alice.address,
-        expandTo18Decimals(9_100)
+        expandTo18Decimals(9_100),
       );
 
     expect(await stack.collaterals.lina.token.balanceOf(alice.address)).to.eq(
